@@ -11,12 +11,14 @@ export const info = {
     'A cada jugador le toca un personaje secreto del mazo.',
     'En tu turno escribís una pregunta de sí o no; el otro la responde y le toca preguntar a él.',
     'Bajás o levantás tus cartas cuando quieras, sea o no tu turno.',
-    'En vez de preguntar podés arriesgar quién es. Si acertás ganás; si le errás, perdés.',
+    'En vez de preguntar podés arriesgar quién es. Si acertás, ganás.',
+    'Si le errás, pasa el turno al otro (y esa carta se te baja sola). Si quien armó la sala marcó "si le erra, pierde", perdés.',
     'Los mazos de fotos se arman desde "Crear o editar mazos".',
   ],
 };
 
-const POR_DEFECTO = {mazo: 'famosos-ar', nombre: 'Famosos argentinos', cantidad: 28};
+// pierde: si arriesgar mal hace perder (true) o solo pasa el turno (false)
+const POR_DEFECTO = {mazo: 'famosos-ar', nombre: 'Famosos argentinos', cantidad: 28, pierde: false};
 const azar = k => Math.floor(Math.random() * k);
 
 // fase: 'pregunta' (turno pregunta) -> 'respuesta' (turno pasa al otro, que responde)
@@ -63,8 +65,14 @@ export function aplicar(e, j, nombre) {
       if (e.fase !== 'pregunta' || !(j.i >= 0 && j.i < e.bajadas[p].length)) return null;
       const acierto = j.i === e.secretos[otro];
       e.historial.push({p, q: '', arriesgo: j.i, r: acierto ? 'Sí' : 'No'});   // para mostrar a quién arriesgó
-      e.ganador = acierto ? p : otro;
-      e.ultima = acierto ? `${nombre(p)} arriesgó y acertó` : `${nombre(p)} arriesgó y le erró`;
+      if (acierto || e.opciones.pierde) {
+        e.ganador = acierto ? p : otro;
+        e.ultima = acierto ? `${nombre(p)} arriesgó y acertó` : `${nombre(p)} arriesgó y le erró`;
+        return e;
+      }
+      // Le erró pero sigue la partida: esa carta seguro no es, se le baja; pregunta el otro
+      e.bajadas[p][j.i] = 1;
+      Object.assign(e, {fase: 'pregunta', pregunta: '', respuesta: '', turno: otro, ultima: `${nombre(p)} arriesgó y le erró: sigue ${nombre(otro)}`});
       return e;
     }
   }

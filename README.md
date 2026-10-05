@@ -5,7 +5,8 @@ Juegos de mesa por turnos, local u online (Firebase Realtime Database + GitHub P
 ## Estructura
 ```
 index.html            portada: crear partida (elegís juego) y unirte con código
-icono.svg             ícono (+ icono-180/512.png y manifest.webmanifest)
+icono.svg             ícono (+ icono-180/192/512.png y manifest.webmanifest)
+sw.js                 service worker: hace que se pueda instalar como app (PWA) y abrir sin conexión
 capturas/             imagen de muestra de cada juego (<id>.webp) para las tarjetas
 shared/
   firebase.js         config de Firebase (una sola para todos)

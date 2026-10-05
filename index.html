@@ -10,6 +10,10 @@
 <link rel="apple-touch-icon" href="icono-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1d1449">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 .cabecera{display:flex;align-items:center;gap:16px;margin:8px 0 22px}
 .cabecera .logo{width:clamp(60px,16vw,104px);height:auto;flex:none;filter:drop-shadow(0 8px 0 rgba(10,5,40,.4));
@@ -25,6 +29,11 @@
 .marca .esp{width:.25em}
 @keyframes letra{from{opacity:0;transform:translateY(-40px) scale(.5)}}
 
+.instalar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:2px solid var(--line);
+  border-radius:20px;padding:10px 10px 10px 14px;margin-bottom:16px;animation:entra .4s cubic-bezier(.3,1.5,.5,1)}
+.instalar-ico{font-size:26px}
+.instalar-txt{flex:1;line-height:1.35}
+.instalar .chico{flex:none}
 .acciones{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:14px}
 .accion{border-radius:26px;padding:20px;box-shadow:var(--sombra);position:relative;overflow:hidden;
   animation:entra .45s cubic-bezier(.3,1.5,.5,1) backwards}
@@ -54,7 +63,9 @@
 .juego:hover{transform:translateY(-4px) rotate(-1.5deg)}
 .juego:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(10,5,40,.45)}
 .juego b{font-size:20px;display:block;line-height:1.1;padding:0 4px}
-.juego small{align-self:flex-start;margin:0 4px;background:rgba(255,255,255,.55);padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
+.juego .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 4px}
+.juego small{background:rgba(255,255,255,.55);padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
+.juego small.veces{background:var(--oscuro);color:var(--ink)}
 /* Imagen de muestra del tablero (capturas/<id>.webp); si falta, se ve el ícono */
 .muestra{display:grid;place-items:center;aspect-ratio:1;border-radius:18px;background:rgba(255,255,255,.3);overflow:hidden}
 .muestra img{width:94%;height:94%;object-fit:contain;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
@@ -93,6 +104,13 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
     <button class="icono b-sonido"></button>
   </header>
 
+  <div class="instalar" id="instalar" hidden>
+    <span class="instalar-ico">📲</span>
+    <span class="instalar-txt" id="instalarTxt">Instalá <b>A Juegar</b> en tu celu y abrilo como una app.</span>
+    <button class="main chico" id="bInstalar" hidden>Instalar</button>
+    <button class="chico" id="bInstalarNo" aria-label="No, gracias">✕</button>
+  </div>
+
   <section class="acciones">
     <div class="accion crear">
       <h2>🎲 Crear partida</h2>
@@ -111,7 +129,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 
   <div class="yo"><label for="nombre">😎 Tu nombre</label><input id="nombre" maxlength="14" placeholder="¿Cómo te llamás?" autocomplete="off"></div>
 
-  <h2 class="titulo-seccion">Juegos</h2>
+  <h2 class="titulo-seccion" id="tituloJuegos">Juegos</h2>
   <div class="juegos" id="juegos"></div>
 </main>
 
@@ -133,7 +151,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
-         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar } from './shared/salas.js';
+         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar, ordenarJuegos, jugadas } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 
 const $ = id => document.getElementById(id);
@@ -147,13 +165,48 @@ document.querySelector('.marca').innerHTML = [...'¡A Juegar!'].map((ch, i) =>
 const muestra = j => `<span class="muestra">${iconoJuego(j.id)}<img src="capturas/${j.id}.webp" alt="Tablero de ${esc(j.nombre)}"
   loading="lazy" onerror="this.parentNode.classList.add('sin-img'); this.remove()"></span>`;
 
-$('juegos').innerHTML = JUEGOS.map((j, i) =>
+// Los que más jugaste (en este dispositivo) van primero
+const veces = jugadas(), ORDEN = ordenarJuegos(JUEGOS);
+$('juegos').innerHTML = ORDEN.map((j, i) =>
   `<a class="juego" href="./${j.id}/" style="--c:${j.color};--i:${i}" title="${esc(j.desc)}">${muestra(j)}
-     <b>${esc(j.nombre)}</b><small>${esc(j.jugadores)} jugadores</small></a>`).join('');
+     <b>${esc(j.nombre)}</b><span class="tags"><small>${esc(j.jugadores)} jugadores</small>${
+       veces[j.id] ? `<small class="veces" title="Partidas que jugaste">🎮 ×${veces[j.id].n}</small>` : ''}</span></a>`).join('');
+if (Object.keys(veces).length) $('tituloJuegos').textContent = 'Tus juegos';
 
 botonesSonido();
 document.addEventListener('click', ev => { if (ev.target.closest('button:not(.b-sonido), .juego')) sonar('tap'); });
 document.addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
+
+// ---------- Instalar como app (PWA) ----------
+// Android/Chrome: el navegador avisa que se puede instalar y usamos su ventanita.
+// iPhone: no hay ventanita, así que se explica cómo hacerlo desde Compartir.
+const yaInstalada = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+const noInstalar = (() => { try { return localStorage.getItem('minijuegos-no-instalar') === '1'; } catch { return false; } })();
+let pedidoInstalar = null;
+if (!yaInstalada && !noInstalar) {
+  addEventListener('beforeinstallprompt', ev => {
+    ev.preventDefault();
+    pedidoInstalar = ev;
+    $('bInstalar').hidden = false;
+    $('instalar').hidden = false;
+  });
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    $('instalarTxt').innerHTML = 'Para tenerlo como app: tocá <b>Compartir</b> <span aria-hidden="true">⬆️</span> y después <b>Agregar a inicio</b>.';
+    $('instalar').hidden = false;
+  }
+}
+$('bInstalar').onclick = async () => {
+  if (!pedidoInstalar) return;
+  pedidoInstalar.prompt();
+  await pedidoInstalar.userChoice.catch(() => {});
+  pedidoInstalar = null;
+  $('instalar').hidden = true;
+};
+$('bInstalarNo').onclick = () => {
+  $('instalar').hidden = true;
+  try { localStorage.setItem('minijuegos-no-instalar', '1'); } catch {}
+};
+addEventListener('appinstalled', () => { $('instalar').hidden = true; });
 
 // ---------- Nombre (se comparte con todos los juegos) ----------
 $('nombre').value = nombreGuardado();
@@ -178,7 +231,7 @@ $('fUnirme').onsubmit = async ev => {
 
 // ---------- Crear partida: elegir juego, jugadores y listo ----------
 let elegido = null;   // {j, reglas, juego}
-$('paso1').innerHTML = JUEGOS.map((j, i) =>
+$('paso1').innerHTML = ORDEN.map((j, i) =>
   `<button data-id="${j.id}" style="--c:${j.color};--i:${i}">${muestra(j)}${esc(j.nombre)}</button>`).join('');
 
 function abrirHoja() {

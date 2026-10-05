@@ -37,7 +37,9 @@ export function menu(el) {
     <select id="mazo">${Object.entries(MAZOS_INCLUIDOS).map(([id, m]) =>
         `<option value="${id}" data-n="${m.cantidad}" data-nombre="${esc(m.nombre)}">${esc(m.nombre)} (${m.cantidad})</option>`).join('')}</select>
     <a href="${new URL('mazos.html', import.meta.url).href}">Crear o editar mazos</a>
-    <a href="${new URL('creditos.html', import.meta.url).href}">📸 Créditos de las fotos</a></div>`;
+    <a href="${new URL('creditos.html', import.meta.url).href}">📸 Créditos de las fotos</a></div>
+    <label class="opcion-check"><input type="checkbox" id="qsPierde"> Si alguien arriesga y le erra, pierde
+      <span class="note">(si no, pasa el turno)</span></label>`;
   conectar()
     .then(fb => fb.get(fb.ref(fb.db, 'mazos/indice')))
     .then(snap => {
@@ -53,7 +55,7 @@ export function menu(el) {
 }
 export function opciones() {
   const o = document.getElementById('mazo').selectedOptions[0];
-  return {mazo: o.value, nombre: o.dataset.nombre, cantidad: +o.dataset.n};
+  return {mazo: o.value, nombre: o.dataset.nombre, cantidad: +o.dataset.n, pierde: !!document.getElementById('qsPierde')?.checked};
 }
 
 // ---------- Partida ----------
@@ -152,9 +154,13 @@ export function dibujar(ctx) {
   const tuyo = `<div class="fila">${mini(mio, 'Tu personaje')}</div>`;
   // La última respuesta que recibiste (si la última pregunta fue tuya): para que bajes cartas
   const ult = e.historial[e.historial.length - 1];
-  const tuRespuesta = ult && ult.p === yo
+  const tuRespuesta = ult && ult.p === yo && ult.arriesgo == null
     ? `<p class="preg">“${esc(ult.q)}” <span class="r ${ult.r === 'Sí' ? 'si' : 'no'}">${ult.r}</span></p>
        <p class="note">Tocá las cartas que no cumplen para bajarlas (podés hacerlo cuando quieras).</p>` : '';
+  // Si recién alguien arriesgó y le erró (y la partida sigue), se avisa a los dos por quién arriesgó
+  const fallo = ult && ult.arriesgo != null && !termino
+    ? `<p class="qs-fallo">😅 ${ult.p === yo ? 'Arriesgaste' : esc(ctx.nombre(ult.p)) + ' arriesgó'} por <b>${nom(+ult.arriesgo)}</b> y ${ult.p === yo ? 'le erraste' : 'le erró'}</p>` : '';
+  const siErra = e.opciones && e.opciones.pierde ? 'Si le errás, perdés.' : 'Si le errás, pasa el turno.';
   if (!ctx.listos) h = `${tuyo}<p class="note">Cuando entre el otro jugador, arranca la partida.</p>`;
   else if (termino) {
     // Si terminó porque alguien arriesgó, se muestra por quién arriesgó
@@ -167,13 +173,13 @@ export function dibujar(ctx) {
     if (puedo && arriesgo) {
       h = elegida < 0
         ? `<p>Tocá la carta que creés que es el personaje de ${rival}.</p><div class="row"><button data-a="cancelar">Cancelar</button></div>`
-        : `<p>¿Arriesgás a <b>${nom(elegida)}</b>? Si le errás, perdés.</p><div class="row"><button class="main" data-a="confirmar">Arriesgar</button><button data-a="cancelar">Cancelar</button></div>`;
+        : `<p>¿Arriesgás a <b>${nom(elegida)}</b>? ${siErra}</p><div class="row"><button class="main" data-a="confirmar">Arriesgar</button><button data-a="cancelar">Cancelar</button></div>`;
     } else if (puedo) {
-      h = `${tuyo}<div class="row"><input id="qsTexto" placeholder="¿Tiene anteojos?" maxlength="120" autocomplete="off">
+      h = `${fallo}${tuyo}<div class="row"><input id="qsTexto" placeholder="¿Tiene anteojos?" maxlength="120" autocomplete="off">
            <button class="main" data-a="preguntar">Preguntar</button></div>
            <div class="row"><button data-a="arriesgar">Arriesgar</button><span class="note">Tocá cartas para bajarlas o levantarlas cuando quieras.</span></div>`;
     } else h = tuRespuesta ? `${tuRespuesta}<p>Mientras tanto, ${rival} piensa su pregunta…</p>`
-                           : `${tuyo}<p>${rival} está pensando una pregunta…</p>`;
+                           : `${fallo}${tuyo}<p>${rival} está pensando una pregunta…</p>`;
   } else {   // fase 'respuesta'
     h = puedo
       ? `<p class="preg">“${esc(e.pregunta)}”</p><div class="fila">${mini(mio, 'Tu personaje')}</div>

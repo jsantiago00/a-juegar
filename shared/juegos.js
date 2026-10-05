@@ -24,7 +24,7 @@ export const JUEGOS = [
     resumen: ['Escribí una palabra secreta para el otro.', 'Los dos adivinan a la vez, sin turnos: cada letra que no está es un error.', 'Gana quien adivina con menos errores (con 6, te ahorcan).'] },
   { id: 'quien-soy', nombre: '¿Quién soy?', jugadores: '2', color: '#ffd23f',
     desc: 'Adiviná el personaje del otro. Con mazos de tus fotos.',
-    resumen: ['Cada uno tiene un personaje secreto.', 'Preguntá cosas de sí o no y bajá las cartas que no van.', 'Arriesgá quién es: si le errás, perdés.'] },
+    resumen: ['Cada uno tiene un personaje secreto.', 'Preguntá cosas de sí o no y bajá las cartas que no van.', 'Arriesgá quién es: si le errás, pasa el turno (o perdés, si así se armó la sala).'] },
   { id: 'ta-te-ti', nombre: 'Ta-te-ti', jugadores: '2', color: '#5cc3f5',
     desc: 'El clásico. También sirve de plantilla.',
     resumen: ['Por turnos, marcá una casilla.', 'Tres en línea gana.'] },

@@ -1,15 +1,18 @@
 {
+  "id": "./",
   "name": "A Juegar",
   "short_name": "A Juegar",
   "description": "Juegos de mesa por turnos, en la misma pantalla u online con amigos.",
+  "lang": "es",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#1d1449",
   "theme_color": "#1d1449",
   "icons": [
-    { "src": "icono.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icono-180.png", "sizes": "180x180", "type": "image/png" }
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icono.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

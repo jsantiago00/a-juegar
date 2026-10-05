@@ -29,6 +29,9 @@ import { ICONOS } from './iconos.js';
 import { sonar, confeti, botonesSonido, animar } from './efectos.js';
 import { crearChat } from './chat.js';
 
+// App instalable (PWA): el service worker está en la raíz (sw.js) y lo registra cualquier página
+if ('serviceWorker' in navigator) navigator.serviceWorker.register(new URL('../sw.js', import.meta.url)).catch(() => {});
+
 const FB_VER = '10.12.2';
 export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480'];
 export const NOMBRES = ['Rojo', 'Azul', 'Amarillo', 'Verde'];
@@ -60,6 +63,20 @@ const miId = (() => {
   if (!v) { v = Math.random().toString(36).slice(2, 10); guardar('minijuegos-id', v); }
   return v;
 })();
+// ---------- Cuántas veces jugaste cada juego (en este dispositivo) ----------
+// {id: {n: partidas, t: última vez}}. Sirve para mostrar primero los que más jugás.
+export function jugadas() { try { return JSON.parse(leer('minijuegos-jugadas')) || {}; } catch { return {}; } }
+export function registrarPartida(id) {
+  const j = jugadas(), x = j[id] || {n: 0, t: 0};
+  j[id] = {n: x.n + 1, t: Date.now()};
+  guardar('minijuegos-jugadas', JSON.stringify(j));
+}
+// Más jugados primero; empate: el último que jugaste; los que nunca jugaste, en el orden de siempre
+export function ordenarJuegos(lista) {
+  const j = jugadas(), n = id => (j[id] ? j[id].n : 0), t = id => (j[id] ? j[id].t : 0);
+  return lista.map((g, i) => ({g, i})).sort((a, b) => n(b.g.id) - n(a.g.id) || t(b.g.id) - t(a.g.id) || a.i - b.i).map(x => x.g);
+}
+
 export const nombreGuardado = () => leer('minijuegos-nombre') || '';
 export const guardarNombre = n => guardar('minijuegos-nombre', n);
 
@@ -310,7 +327,7 @@ export function montar({ reglas, juego }) {
       aviso(listos() ? '¡Están todos! A jugar' : 'Se sumó alguien');
     }
     if (!antes || !e || JSON.stringify(antes) === JSON.stringify(e)) return;
-    if (antes.ganador !== EN_JUEGO && e.ganador === EN_JUEGO) { sonar('entrar'); return; }   // revancha
+    if (antes.ganador !== EN_JUEGO && e.ganador === EN_JUEGO) { sonar('entrar'); registrarPartida(info.id); return; }   // revancha
     const s = juego.sonido ? juego.sonido(antes, e, ctx) : 'colocar';
     if (s) sonar(s, antes.turno);
     if (antes.ganador === EN_JUEGO && e.ganador !== EN_JUEGO) {
@@ -396,6 +413,9 @@ export function montar({ reglas, juego }) {
     chat?.reiniciar();
     sonar('entrar');
     $('secInvitado').hidden = true;
+    // Cuenta como partida jugada (una vez por sala: recargar la página no suma)
+    const contada = `minijuegos-contada-${info.id}-${cod}`;
+    try { if (!sessionStorage.getItem(contada)) { sessionStorage.setItem(contada, '1'); registrarPartida(info.id); } } catch { registrarPartida(info.id); }
     // Si te sumaste a la sala de otro y nunca viste este juego, te mostramos las reglas rapidito
     if (asiento > 0 && !leer('reglas-vistas-' + info.id)) $('ayuda').hidden = false;
     st.cortar = fb.onValue(fb.ref(fb.db, ruta()), snap => {
@@ -458,6 +478,7 @@ export function montar({ reglas, juego }) {
   function jugarOffline(n) {
     if (info.soloOnline) return;
     Object.assign(st, {online: false, estado: reglas.nuevoJuego(n, juego.opciones?.()), pantalla: 'play', finVisto: false});
+    registrarPartida(info.id);
     juego.reiniciar?.(); render();
   }
   if ($('bLocal')) $('bLocal').onclick = () => jugarOffline(jugadoresElegidos(info, 'cantN'));
@@ -510,7 +531,7 @@ export function montar({ reglas, juego }) {
     if (!st.online || !st.sala) return;
     cambiarA = null;
     $('cambiarLista').hidden = false; $('cambiarOpc').hidden = true;
-    const n = st.sala.n, otros = JUEGOS.filter(j => j.id !== info.id);
+    const n = st.sala.n, otros = ordenarJuegos(JUEGOS.filter(j => j.id !== info.id));
     const infos = await Promise.all(otros.map(j => reglasDe(j.id).then(m => m.info).catch(() => null)));
     $('cambiarLista').innerHTML = otros.map((j, k) => {
       const inf = infos[k], va = !!inf && inf.min <= n && n <= inf.max;
