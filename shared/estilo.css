@@ -149,6 +149,13 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
   padding:10px 6px 12px;border-radius:18px;font-size:15px;line-height:1.15;box-shadow:0 4px 0 rgba(10,5,40,.25)}
 .cambiar-lista .ico{width:56px;height:56px;border-radius:16px;animation:none;transform:none;box-shadow:none;background:rgba(255,255,255,.4)}
 .cambiar-lista small{font-size:11px;font-weight:500}
+.cambiar-opc{text-align:left;margin:14px 0 16px}
+.cambiar-elegido{display:flex;align-items:center;gap:12px;margin-bottom:14px;font-size:20px}
+.fin-caja .cambiar-elegido .ico{width:56px;height:56px;border-radius:16px;animation:none;margin:0}
+.cambiar-opc label{color:#6b5a8f}
+.cambiar-opc select{background:#fff;color:var(--oscuro);border-color:#d8cfee}
+.cambiar-opc a{display:none}   /* links del menú del juego (ej. editar mazos): acá sacarían de la sala */
+.cambiar-opc .grande{width:100%;margin-top:8px}
 
 /* Reglas rapidito: pasos numerados en burbujas */
 .rapidito{list-style:none;counter-reset:paso;padding:0;margin:0;display:grid;gap:10px}

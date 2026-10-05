@@ -14,9 +14,6 @@ async function cargarMazo(id) {
 }
 const imagen = c => `<img src="${esc(c.img)}" alt="">`;
 
-// Chat de sala para charlar (y chicanear) mientras juegan online
-export const chat = true;
-
 // Sonido de cada paso. Las cartas que baja el rival no suenan (solo las tuyas).
 export function sonido(a, e, ctx) {
   if (a.fase === 'pregunta' && e.fase === 'respuesta') return 'pregunta';

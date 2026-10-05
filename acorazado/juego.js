@@ -2,9 +2,6 @@
 // (el del otro, donde tirás, y el tuyo, donde ves lo que te tiran).
 import { N, COLS, BARCOS, celdasDe, flotaValida, flotaAlAzar, barcoEn, hundido } from './reglas.js';
 
-// Chat de sala para chicanear entre tiro y tiro
-export const chat = true;
-
 let ctx, $, sel = -1, ultVista, bannerT;
 export function reiniciar() { sel = -1; }
 

@@ -3,9 +3,6 @@ import { MAX_ERRORES, ABC, MIN_LARGO, MAX_LARGO, limpiar, objetivo, adivinadas }
 import { esc } from '../shared/salas.js';
 import { animaciones } from '../shared/efectos.js';
 
-// Chat de sala para chicanear mientras adivinan
-export const chat = true;
-
 let ctx, $, clave = '', erroresVistos = null;
 const anim = animaciones(500);
 export function reiniciar() { clave = ''; erroresVistos = null; }

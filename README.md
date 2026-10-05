@@ -12,7 +12,7 @@ shared/
   salas.js            motor: menú, salas, turnos, invitar, revancha, sonidos y festejo
   efectos.js          sonidos sintetizados (Web Audio), confeti y animaciones
   iconos.js           ícono SVG de cada juego
-  chat.js             chat de sala (lo activa un juego con `export const chat = true` en su juego.js)
+  chat.js             chat de sala (está en todos los juegos online; un juego lo apaga con `export const chat = false`)
   estilo.css          estilos comunes
   juegos.js           lista de juegos de la portada
 al-centro/            un juego = index.html + reglas.js + juego.js

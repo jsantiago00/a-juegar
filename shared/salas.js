@@ -12,7 +12,7 @@
 //             estado.opciones para que la revancha lo reuse.
 //             sonido(antes, despues, ctx) [opcional]: nombre del sonido de esa jugada
 //             (ver shared/efectos.js); null = silencio. Si no está, suena 'colocar'.
-//             chat = true [opcional]: chat de sala cuando se juega online (ver shared/chat.js)
+//             Online siempre hay chat de sala (ver shared/chat.js); chat = false lo apaga.
 //             estado(ctx) [opcional]: texto propio para el cartel de arriba (ej. "Armá tu flota");
 //             si devuelve vacío, se muestra el de siempre ("¡Tu turno!", "Turno de…").
 //             resumenFin(ctx) [opcional]: texto chico del cartel de fin (si no, la última jugada).
@@ -201,6 +201,11 @@ export function montar({ reglas, juego }) {
         <h2>🎮 ¿A qué jugamos ahora?</h2>
         <p>Se mudan todos los de la sala, con el mismo código.</p>
         <div class="cambiar-lista" id="cambiarLista"></div>
+        <div class="cambiar-opc" id="cambiarOpc" hidden>
+          <div class="cambiar-elegido" id="cambiarElegido"></div>
+          <div id="cambiarExtra"></div>
+          <button class="main grande" id="bCambiarSi">¡Vamos!</button>
+        </div>
         <button id="bCambiarNo">Cancelar</button>
       </div>
     </div>
@@ -225,7 +230,7 @@ export function montar({ reglas, juego }) {
 
   // ---------- Chat de sala (si el juego lo pide) ----------
   const MAX_CHAT = 80;
-  const chat = juego.chat ? crearChat($('play'), {
+  const chat = juego.chat !== false ? crearChat($('play'), {
     async enviar(t) {
       if (!st.online) return;
       const s = asientoDe(st.asiento);
@@ -498,9 +503,13 @@ export function montar({ reglas, juego }) {
   // Se crea la sala del otro juego con el mismo código, los mismos asientos y el chat, y se deja
   // "siguiente" en esta sala: todos los que la están mirando se mudan solos (ver entrarSala).
   const reglasDe = id => import(new URL(`../${id}/reglas.js`, import.meta.url).href);
+  const juegoDe = id => import(new URL(`../${id}/juego.js`, import.meta.url).href);
+  let cambiarA = null;   // {id, juego} del juego elegido, si tiene opciones (ej. el mazo de ¿Quién soy?)
   async function abrirCambiar() {
     sonar('tap');
     if (!st.online || !st.sala) return;
+    cambiarA = null;
+    $('cambiarLista').hidden = false; $('cambiarOpc').hidden = true;
     const n = st.sala.n, otros = JUEGOS.filter(j => j.id !== info.id);
     const infos = await Promise.all(otros.map(j => reglasDe(j.id).then(m => m.info).catch(() => null)));
     $('cambiarLista').innerHTML = otros.map((j, k) => {
@@ -510,13 +519,24 @@ export function montar({ reglas, juego }) {
     }).join('');
     $('cambiar').hidden = false;
   }
-  async function mudar(id) {
+  // Si el juego tiene opciones de menú (ej. elegir mazo), se muestran antes de mudarse
+  async function elegirJuego(id) {
+    const [mod, {info: inf}] = await Promise.all([juegoDe(id), reglasDe(id)]);
+    if (!mod.menu) { mudar(id); return; }
+    cambiarA = {id, juego: mod};
+    const j = datosJuego(id);
+    $('cambiarElegido').innerHTML = `<span class="ico" style="--c:${j.color}">${iconoJuego(id)}</span><b>${esc(inf.nombre)}</b>`;
+    mod.menu($('cambiarExtra'));
+    $('cambiarLista').hidden = true; $('cambiarOpc').hidden = false; $('bCambiarSi').disabled = false;
+  }
+  async function mudar(id, opciones) {
     $('cambiarLista').querySelectorAll('button').forEach(b => { b.disabled = true; });
+    $('bCambiarSi').disabled = true;
     try {
       const {nuevoJuego} = await reglasDe(id);
       const n = st.sala.n, yo = asientoDe(st.asiento);
       await fb.set(fb.ref(fb.db, `juegos/${id}/salas/${st.cod}`),
-                   {n, creada: Date.now(), seats: st.sala.seats, game: nuevoJuego(n), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
+                   {n, creada: Date.now(), seats: st.sala.seats, game: nuevoJuego(n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
       await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, por: (yo && yo.name) || 'Alguien', t: Date.now()});
     } catch (e) { aviso('No se pudo cambiar: ' + e.message); $('cambiar').hidden = true; }
   }
@@ -524,8 +544,9 @@ export function montar({ reglas, juego }) {
   $('bCambiarNo').onclick = () => { sonar('tap'); $('cambiar').hidden = true; };
   $('cambiarLista').addEventListener('click', ev => {
     const b = ev.target.closest('[data-id]');
-    if (b && !b.disabled) { sonar('tap'); mudar(b.dataset.id); }
+    if (b && !b.disabled) { sonar('tap'); elegirJuego(b.dataset.id).catch(e => aviso('No se pudo abrir: ' + e.message)); }
   });
+  $('bCambiarSi').onclick = () => { if (cambiarA) { sonar('tap'); mudar(cambiarA.id, cambiarA.juego.opciones?.()); } };
 
   $('bAyuda').onclick = () => { sonar('tap'); $('ayuda').hidden = false; };
   $('bAyudaOk').onclick = () => { sonar('tap'); $('ayuda').hidden = true; guardar('reglas-vistas-' + info.id, '1'); };
