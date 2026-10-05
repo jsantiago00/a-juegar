@@ -16,7 +16,7 @@ export const info = {
   ],
 };
 
-const POR_DEFECTO = {mazo: 'dibujitos', nombre: 'Dibujitos', cantidad: 24};
+const POR_DEFECTO = {mazo: 'famosos-ar', nombre: 'Famosos argentinos', cantidad: 28};
 const azar = k => Math.floor(Math.random() * k);
 
 // fase: 'pregunta' (turno pregunta) -> 'respuesta' (turno pasa al otro, que responde)

@@ -1,12 +1,10 @@
 // Pantalla de ¿Quién soy?: panel según la fase, grilla de cartas e historial de preguntas.
 import { conectar, lista, esc } from '../shared/salas.js';
-import { dibujitos } from './dibujitos.js';
 import { MAZOS_INCLUIDOS } from './famosos.js';
 
 const cache = {};
 async function cargarMazo(id) {
   if (cache[id]) return cache[id];
-  if (id === 'dibujitos') return (cache[id] = dibujitos());
   if (MAZOS_INCLUIDOS[id]) return (cache[id] = MAZOS_INCLUIDOS[id].crear());
   const fb = await conectar();
   const v = (await fb.get(fb.ref(fb.db, 'mazos/cartas/' + id))).val();
@@ -14,7 +12,7 @@ async function cargarMazo(id) {
   // De Firebase solo se aceptan nombre + imagen (nada de SVG)
   return (cache[id] = {nombre: v.nombre, cartas: lista(v.cartas).map(c => ({nombre: String(c.nombre || '?'), img: String(c.img || '')}))});
 }
-const imagen = c => (c.svg ? c.svg : `<img src="${esc(c.img)}" alt="">`);
+const imagen = c => `<img src="${esc(c.img)}" alt="">`;
 
 // Chat de sala para charlar (y chicanear) mientras juegan online
 export const chat = true;
@@ -31,8 +29,7 @@ export function sonido(a, e, ctx) {
 // ---------- Menú: elegir mazo ----------
 export function menu(el) {
   el.innerHTML = `<div class="row"><label for="mazo">Mazo</label>
-    <select id="mazo"><option value="dibujitos" data-n="24" data-nombre="Dibujitos">Dibujitos (24)</option>
-      ${Object.entries(MAZOS_INCLUIDOS).map(([id, m]) =>
+    <select id="mazo">${Object.entries(MAZOS_INCLUIDOS).map(([id, m]) =>
         `<option value="${id}" data-n="${m.cantidad}" data-nombre="${esc(m.nombre)}">${esc(m.nombre)} (${m.cantidad})</option>`).join('')}</select>
     <a href="${new URL('mazos.html', import.meta.url).href}">Crear o editar mazos</a>
     <a href="${new URL('creditos.html', import.meta.url).href}">📸 Créditos de las fotos</a></div>`;
@@ -47,7 +44,7 @@ export function menu(el) {
         sel.append(o);
       }
     })
-    .catch(() => {});  // sin Firebase: solo dibujitos
+    .catch(() => {});  // sin Firebase: solo los mazos incluidos
 }
 export function opciones() {
   const o = document.getElementById('mazo').selectedOptions[0];
@@ -100,7 +97,7 @@ function armarGrilla() {
 
 export function dibujar(ctx) {
   const e = ctx.estado, yo = ctx.miAsiento, otro = 1 - yo, puedo = ctx.puedoJugar();
-  const id = (e.opciones && e.opciones.mazo) || 'dibujitos';
+  const id = (e.opciones && e.opciones.mazo) || 'famosos-ar';
   if (mazoId !== id) {
     mazoId = id; mazo = null; grilla.innerHTML = ''; clave = '';
     cargarMazo(id).then(m => { if (mazoId !== id) return; mazo = m; armarGrilla(); clave = ''; ctx.refrescar(); })

@@ -20,15 +20,15 @@
 <main>
   <div class="barra"><a class="volver" href="./">← Volver al juego</a></div>
   <h1>📸 Créditos de las fotos</h1>
-  <p class="sub">Las fotos de los mazos <b>Famosos argentinos</b> y <b>Futbolistas</b> son de
+  <p class="sub">Las fotos de los mazos que vienen con el juego son de
     <a href="https://commons.wikimedia.org/">Wikimedia Commons</a>, con licencias libres. Están recortadas y achicadas,
     y cada una mantiene la licencia de la original. Tocá la licencia o "ver original" para más detalles.</p>
   <div id="lista"></div>
 </main>
 <script type="module">
 import { FOTOS } from './fotos/creditos.js';
+import { TITULOS } from './famosos.js';
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-const TITULOS = {'famosos-ar': 'Famosos argentinos', futbolistas: 'Futbolistas'};
 document.getElementById('lista').innerHTML = Object.entries(FOTOS).map(([mazo, cartas]) =>
   `<section><h2>${TITULOS[mazo] || mazo}</h2><div class="creditos">${Object.entries(cartas).map(([nombre, c]) =>
     `<div class="cred"><img src="${esc(c.img)}" alt="${esc(nombre)}" loading="lazy"><div><b>${esc(nombre)}</b>
