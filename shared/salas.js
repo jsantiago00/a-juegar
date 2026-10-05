@@ -12,6 +12,7 @@
 //             estado.opciones para que la revancha lo reuse.
 //             sonido(antes, despues, ctx) [opcional]: nombre del sonido de esa jugada
 //             (ver shared/efectos.js); null = silencio. Si no está, suena 'colocar'.
+//             chat = true [opcional]: chat de sala cuando se juega online (ver shared/chat.js)
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
 //
 //  Convenciones del estado: { n, turno, ganador, ultima, ...lo que quieras }
@@ -21,6 +22,7 @@ import { FIREBASE_CONFIG } from './firebase.js';
 import { JUEGOS } from './juegos.js';
 import { ICONOS } from './iconos.js';
 import { sonar, confeti, botonesSonido, animar } from './efectos.js';
+import { crearChat } from './chat.js';
 
 const FB_VER = '10.12.2';
 export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480'];
@@ -41,7 +43,7 @@ async function initFb() {
   const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
   const [appM, dbM] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-database.js')]);
   const app = appM.initializeApp(FIREBASE_CONFIG);
-  fb = {db: dbM.getDatabase(app), ref: dbM.ref, get: dbM.get, set: dbM.set,
+  fb = {db: dbM.getDatabase(app), ref: dbM.ref, get: dbM.get, set: dbM.set, push: dbM.push, update: dbM.update,
         onValue: dbM.onValue, runTransaction: dbM.runTransaction};
   return fb;
 }
@@ -204,6 +206,28 @@ export function montar({ reglas, juego }) {
     return !!e && e.ganador === EN_JUEGO && listos() && (!st.online || st.asiento === e.turno);
   };
 
+  // ---------- Chat de sala (si el juego lo pide) ----------
+  const MAX_CHAT = 80;
+  const chat = juego.chat ? crearChat($('play'), {
+    async enviar(t) {
+      if (!st.online) return;
+      const s = asientoDe(st.asiento);
+      await fb.push(fb.ref(fb.db, ruta() + '/chat'), {id: miId, n: (s && s.name) || nombreGuardado() || 'Jugador', t: t.slice(0, 200), ts: Date.now()});
+      // Para que la sala no crezca sin fin, se borran los mensajes más viejos
+      const claves = Object.keys((st.sala && st.sala.chat) || {}).sort();
+      if (claves.length > MAX_CHAT) {
+        const viejos = {};
+        claves.slice(0, claves.length - MAX_CHAT + 20).forEach(k => { viejos[k] = null; });
+        fb.update(fb.ref(fb.db, ruta() + '/chat'), viejos).catch(() => {});
+      }
+    },
+    colorDe(id) {
+      if (st.sala && st.sala.seats) for (let i = 0; i < st.sala.n; i++) if (st.sala.seats[i] && st.sala.seats[i].id === id) return COLORES[i];
+      return '#9a8fb8';
+    },
+    aviso,
+  }) : null;
+
   async function jugar(jugada) {
     if (!puedoJugar()) return false;
     if (!st.online) {
@@ -265,6 +289,7 @@ export function montar({ reglas, juego }) {
     $('menu').hidden = st.pantalla !== 'menu';
     $('play').hidden = st.pantalla !== 'play';
     $('fbNote').hidden = !!FIREBASE_CONFIG;
+    chat?.mostrar(st.pantalla === 'play' && st.online);
     if (st.pantalla !== 'play') return;
     $('salaCod').textContent = st.cod;
 
@@ -323,6 +348,7 @@ export function montar({ reglas, juego }) {
   function entrarSala(cod, asiento) {
     Object.assign(st, {online: true, cod, asiento, pantalla: 'play', estado: null, sala: null, finVisto: false});
     juego.reiniciar?.();
+    chat?.reiniciar();
     sonar('entrar');
     $('secInvitado').hidden = true;
     // Si te sumaste a la sala de otro y nunca viste este juego, te mostramos las reglas rapidito
@@ -334,6 +360,7 @@ export function montar({ reglas, juego }) {
       st.sala = v;
       st.estado = reglas.normalizar(v.game);
       efectos(antes, st.estado, salaAntes);
+      chat?.actualizar(v.chat, miId);
       render();
     });
     try { history.replaceState(null, '', '?sala=' + cod); } catch {}
@@ -407,6 +434,7 @@ export function montar({ reglas, juego }) {
     if (st.cortar) { st.cortar(); st.cortar = null; }
     Object.assign(st, {pantalla: 'menu', online: false, estado: null, sala: null, cod: '', asiento: -1});
     juego.reiniciar?.();
+    chat?.reiniciar();
     try { history.replaceState(null, '', location.pathname); } catch {}
     render();
   };

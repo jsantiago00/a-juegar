@@ -12,6 +12,7 @@ shared/
   salas.js            motor: menú, salas, turnos, invitar, revancha, sonidos y festejo
   efectos.js          sonidos sintetizados (Web Audio), confeti y animaciones
   iconos.js           ícono SVG de cada juego
+  chat.js             chat de sala (lo activa un juego con `export const chat = true` en su juego.js)
   estilo.css          estilos comunes
   juegos.js           lista de juegos de la portada
 al-centro/            un juego = index.html + reglas.js + juego.js
@@ -34,6 +35,7 @@ ta-te-ti/             juego mínimo, sirve de plantilla
 
 El estado siempre lleva `n`, `turno`, `ganador` (-1 en juego, -2 empate) y `ultima`.
 Lo online sale solo: cada juego guarda sus salas en `juegos/<id>/salas/<código>`.
+Si el juego tiene chat, los mensajes van en `juegos/<id>/salas/<código>/chat` (se guardan los últimos ~80).
 Los códigos son únicos entre todos los juegos: desde la portada (o desde cualquier juego) ponés el código
 y te lleva solo al juego correcto. El link de invitación (`<juego>/?sala=ABCD`) te mete directo a la sala.
 

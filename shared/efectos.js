@@ -75,6 +75,8 @@ const SONIDOS = {
   no:       a => { tono(a, {f: 392, d: .12, vol: .22}); tono(a, {f: 261.63, t: .12, d: .28, vol: .22}); },
   cambiar:  a => ruido(a, {d: .32, f: 300, f2: 3200, vol: .3, q: 2}),
   pasar:    a => tono(a, {f: 520, f2: 340, d: .2, tipo: 'sine', vol: .2}),
+  chat:     a => { tono(a, {f: 880, f2: 1180, d: .07, tipo: 'sine', vol: .18}); tono(a, {f: 1320, t: .07, d: .14, tipo: 'sine', vol: .14}); },
+  enviar:   a => tono(a, {f: 500, f2: 950, d: .09, tipo: 'sine', vol: .13}),
 };
 
 export function sonar(nombre, jugador = 0) {
