@@ -20,8 +20,7 @@ export const chat = true;
 // Sonido de cada paso. Las cartas que baja el rival no suenan (solo las tuyas).
 export function sonido(a, e, ctx) {
   if (a.fase === 'pregunta' && e.fase === 'respuesta') return 'pregunta';
-  if (a.fase === 'respuesta' && e.fase === 'descartar') return e.respuesta === 'Sí' ? 'si' : 'no';
-  if (a.fase === 'descartar' && e.fase === 'pregunta') return 'pasar';
+  if (a.fase === 'respuesta' && e.fase === 'pregunta') return e.respuesta === 'Sí' ? 'si' : 'no';
   if (e.ganador !== -1) return null;
   const yo = ctx.miAsiento;
   return JSON.stringify(a.bajadas[yo]) !== JSON.stringify(e.bajadas[yo]) ? 'carta' : null;
@@ -52,7 +51,7 @@ export function opciones() {
 
 // ---------- Partida ----------
 let ctx, panel, grilla, hist;
-let mazoId = null, mazo = null, clave = '', arriesgo = false, elegida = -1;
+let mazoId = null, mazo = null, clave = '', arriesgo = false, elegida = -1, histVisto = null;
 
 export function reiniciar() { arriesgo = false; elegida = -1; clave = ''; }
 
@@ -67,11 +66,10 @@ export function iniciar(c) {
   panel.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.id === 'qsTexto') accion('preguntar'); });
 }
 
+// Bajar o levantar cartas es libre: se puede en cualquier momento, sea o no tu turno
 function tocarCarta(i) {
-  const e = ctx.estado;
-  if (!ctx.puedoJugar()) return;
-  if (arriesgo) { elegida = i; ctx.sonar('tick'); ctx.refrescar(); return; }
-  if (e.fase === 'pregunta' || e.fase === 'descartar') ctx.jugar({tipo: 'bajar', i});
+  if (arriesgo) { if (!ctx.puedoJugar()) return; elegida = i; ctx.sonar('tick'); ctx.refrescar(); return; }
+  ctx.jugarLibre({tipo: 'bajar', i});
 }
 
 async function accion(a) {
@@ -81,7 +79,6 @@ async function accion(a) {
     await ctx.jugar({tipo: 'preguntar', texto: t});
   }
   if (a === 'si' || a === 'no') await ctx.jugar({tipo: 'responder', si: a === 'si'});
-  if (a === 'listo') await ctx.jugar({tipo: 'listo'});
   if (a === 'arriesgar') { arriesgo = true; elegida = -1; ctx.sonar('tap'); ctx.refrescar(); }
   if (a === 'cancelar') { arriesgo = false; elegida = -1; ctx.refrescar(); }
   if (a === 'confirmar' && elegida >= 0) {
@@ -120,21 +117,36 @@ export function dibujar(ctx) {
     el.classList.toggle('bajada', !!mias[i]);
     el.classList.toggle('elegida', arriesgo && i === elegida);
     el.classList.toggle('secreto', termino && i === e.secretos[otro]);
-    el.disabled = !(puedo && (arriesgo || e.fase !== 'respuesta'));
+    el.disabled = arriesgo ? !puedo : !(ctx.listos && !termino);
   });
 
-  hist.innerHTML = e.historial.length
-    ? '<h3>Preguntas</h3>' + e.historial.slice(-8).reverse().map(h =>
-        `<p><b>${esc(ctx.nombre(h.p))}:</b> “${esc(h.q)}” <span class="r ${h.r === 'Sí' ? 'si' : 'no'}">${h.r}</span></p>`).join('')
+  // Preguntas en dos columnas (una por jugador); la fila r tiene la r-ésima pregunta de cada uno
+  const cols = [0, 1].map(p => e.historial.filter(x => x.p === p).map(x =>
+    `<p class="q">“${esc(x.q)}”</p><span class="r ${x.r === 'Sí' ? 'si' : 'no'}">${x.r}</span>`));
+  if (e.fase === 'respuesta' && e.pregunta && !termino)
+    cols[1 - e.turno].push(`<p class="q">“${esc(e.pregunta)}”</p><span class="r espera">⏳</span>`);
+  const filas = Math.max(cols[0].length, cols[1].length);
+  const htmlHist = filas
+    ? `<h3>Preguntas</h3><div class="qs-cols">
+         ${[0, 1].map(p => `<div class="cab" style="--c:${ctx.color(p)}">${esc(ctx.nombre(p))}${p === yo ? ' (vos)' : ''}</div>`).join('')}
+         ${Array.from({length: filas}, (_, r) => [0, 1].map(p =>
+           `<div class="celda${cols[p][r] ? '' : ' vacia'}">${cols[p][r] || ''}</div>`).join('')).join('')}
+       </div>`
     : '';
+  if (htmlHist !== histVisto) { histVisto = htmlHist; hist.innerHTML = htmlHist; }   // así no se repite la animación
 
   // El panel solo se rearma cuando cambia la situación (así no se borra lo que estás escribiendo)
-  const k = [e.fase, e.turno, e.ganador, ctx.listos, arriesgo, elegida, e.pregunta, e.respuesta, yo].join('|');
+  const k = [e.fase, e.turno, e.ganador, ctx.listos, arriesgo, elegida, e.pregunta, e.respuesta, e.historial.length, yo].join('|');
   if (k === clave) return '';
   clave = k;
 
   let h;
   const tuyo = `<div class="fila">${mini(mio, 'Tu personaje')}</div>`;
+  // La última respuesta que recibiste (si la última pregunta fue tuya): para que bajes cartas
+  const ult = e.historial[e.historial.length - 1];
+  const tuRespuesta = ult && ult.p === yo
+    ? `<p class="preg">“${esc(ult.q)}” <span class="r ${ult.r === 'Sí' ? 'si' : 'no'}">${ult.r}</span></p>
+       <p class="note">Tocá las cartas que no cumplen para bajarlas (podés hacerlo cuando quieras).</p>` : '';
   if (!ctx.listos) h = `${tuyo}<p class="note">Cuando entre el otro jugador, arranca la partida.</p>`;
   else if (termino) h = `<div class="fila">${mini(mio, 'Tu personaje era')}</div><div class="fila">${mini(e.secretos[otro], 'El de ' + rival + ' era')}</div>`;
   else if (e.fase === 'pregunta') {
@@ -145,19 +157,14 @@ export function dibujar(ctx) {
     } else if (puedo) {
       h = `${tuyo}<div class="row"><input id="qsTexto" placeholder="¿Tiene anteojos?" maxlength="120" autocomplete="off">
            <button class="main" data-a="preguntar">Preguntar</button></div>
-           <div class="row"><button data-a="arriesgar">Arriesgar</button><span class="note">Podés tocar cartas para bajarlas o levantarlas.</span></div>`;
-    } else h = `${tuyo}<p>${rival} está pensando una pregunta…</p>`;
-  } else if (e.fase === 'respuesta') {
+           <div class="row"><button data-a="arriesgar">Arriesgar</button><span class="note">Tocá cartas para bajarlas o levantarlas cuando quieras.</span></div>`;
+    } else h = tuRespuesta ? `${tuRespuesta}<p>Mientras tanto, ${rival} piensa su pregunta…</p>`
+                           : `${tuyo}<p>${rival} está pensando una pregunta…</p>`;
+  } else {   // fase 'respuesta'
     h = puedo
       ? `<p class="preg">“${esc(e.pregunta)}”</p><div class="fila">${mini(mio, 'Tu personaje')}</div>
          <div class="row"><button class="main" data-a="si">Sí</button><button class="main" data-a="no">No</button></div>`
       : `${tuyo}<p>Preguntaste <b>“${esc(e.pregunta)}”</b>. Esperando la respuesta de ${rival}…</p>`;
-  } else {
-    h = puedo
-      ? `<p class="preg">“${esc(e.pregunta)}” <span class="r ${e.respuesta === 'Sí' ? 'si' : 'no'}">${e.respuesta}</span></p>
-         <p class="note">Tocá las cartas que no cumplen para bajarlas.</p>
-         <div class="row"><button class="main" data-a="listo">Listo, pasar turno</button></div>`
-      : `${tuyo}<p>Respondiste <b>${e.respuesta}</b>. ${rival} está bajando cartas…</p>`;
   }
   panel.innerHTML = h;
   return '';

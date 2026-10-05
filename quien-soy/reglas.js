@@ -9,8 +9,8 @@ export const info = {
   soloOnline: true,          // cada uno necesita su pantalla, porque el personaje es secreto
   reglas: [
     'A cada jugador le toca un personaje secreto del mazo.',
-    'En tu turno escribís una pregunta de sí o no; el otro la responde.',
-    'Con la respuesta, bajás las cartas que no cumplen.',
+    'En tu turno escribís una pregunta de sí o no; el otro la responde y le toca preguntar a él.',
+    'Bajás o levantás tus cartas cuando quieras, sea o no tu turno.',
     'En vez de preguntar podés arriesgar quién es. Si acertás ganás; si le errás, perdés.',
     'Los mazos de fotos se arman desde "Crear o editar mazos".',
   ],
@@ -20,7 +20,7 @@ const POR_DEFECTO = {mazo: 'dibujitos', nombre: 'Dibujitos', cantidad: 24};
 const azar = k => Math.floor(Math.random() * k);
 
 // fase: 'pregunta' (turno pregunta) -> 'respuesta' (turno pasa al otro, que responde)
-//       -> 'descartar' (vuelve al que preguntó, que baja cartas) -> 'pregunta' del otro
+//       -> 'pregunta' del que respondió. Las cartas se bajan aparte, con libre(), en cualquier momento.
 export function nuevoJuego(n, op) {
   op = op && op.mazo ? op : POR_DEFECTO;
   const k = op.cantidad;
@@ -35,6 +35,8 @@ export function normalizar(e) {
   e.pregunta = e.pregunta || '';
   e.respuesta = e.respuesta || '';
   e.ultima = e.ultima || '';
+  // Salas de la versión anterior que quedaron en "descartar": sigue preguntando el que respondió
+  if (e.fase === 'descartar') { e.fase = 'pregunta'; e.turno = 1 - e.turno; }
   return e;
 }
 export const enPie = (e, i) => e.bajadas[i].filter(x => !x).length;
@@ -54,18 +56,7 @@ export function aplicar(e, j, nombre) {
       e.respuesta = j.si ? 'Sí' : 'No';
       e.historial.push({p: otro, q: e.pregunta, r: e.respuesta});
       if (e.historial.length > 30) e.historial.shift();
-      Object.assign(e, {fase: 'descartar', turno: otro, ultima: `${nombre(p)} respondió ${e.respuesta}`});
-      return e;
-    }
-    case 'bajar': {
-      const i = j.i;
-      if ((e.fase !== 'pregunta' && e.fase !== 'descartar') || !(i >= 0 && i < e.bajadas[p].length)) return null;
-      e.bajadas[p][i] = e.bajadas[p][i] ? 0 : 1;
-      return e;
-    }
-    case 'listo': {
-      if (e.fase !== 'descartar') return null;
-      Object.assign(e, {fase: 'pregunta', pregunta: '', respuesta: '', turno: otro, ultima: `${nombre(p)} bajó cartas`});
+      Object.assign(e, {fase: 'pregunta', ultima: `${nombre(p)} respondió ${e.respuesta}`});   // ahora pregunta quien respondió
       return e;
     }
     case 'arriesgar': {
@@ -77,4 +68,12 @@ export function aplicar(e, j, nombre) {
     }
   }
   return null;
+}
+
+// Jugadas libres: no dependen del turno y solo tocan lo tuyo. yo = tu asiento.
+// {tipo:'bajar', i}: baja o levanta tu carta i.
+export function libre(e, j, yo) {
+  if (j.tipo !== 'bajar' || e.ganador !== -1 || !e.bajadas[yo] || !(j.i >= 0 && j.i < e.bajadas[yo].length)) return null;
+  e.bajadas[yo][j.i] = e.bajadas[yo][j.i] ? 0 : 1;
+  return e;
 }

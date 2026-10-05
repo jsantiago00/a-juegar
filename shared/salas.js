@@ -13,6 +13,8 @@
 //             sonido(antes, despues, ctx) [opcional]: nombre del sonido de esa jugada
 //             (ver shared/efectos.js); null = silencio. Si no está, suena 'colocar'.
 //             chat = true [opcional]: chat de sala cuando se juega online (ver shared/chat.js)
+//   reglas.libre(estado, jugada, yo) [opcional]: jugadas que no dependen del turno y solo tocan
+//             lo tuyo (ej. bajar cartas); el juego las manda con ctx.jugarLibre(jugada).
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
 //
 //  Convenciones del estado: { n, turno, ganador, ultima, ...lo que quieras }
@@ -248,13 +250,33 @@ export function montar({ reglas, juego }) {
     } catch (e) { aviso('Error de conexión: ' + e.message); return false; }
   }
 
+  // Jugadas libres: cualquiera, en cualquier momento de la partida, sobre lo suyo
+  async function jugarLibre(jugada) {
+    const e = st.estado;
+    if (!reglas.libre || !e || e.ganador !== EN_JUEGO || !listos()) return false;
+    if (!st.online) {
+      const nx = reglas.libre(clone(e), jugada, e.turno);
+      if (!nx) return false;
+      st.estado = nx; efectos(e, nx); render(); return true;
+    }
+    try {
+      const res = await fb.runTransaction(fb.ref(fb.db, ruta() + '/game'), cur => {
+        if (cur === null) return cur;
+        reglas.normalizar(cur);
+        if (cur.ganador !== EN_JUEGO) return;
+        return reglas.libre(cur, jugada, st.asiento) || undefined;
+      });
+      return res.committed;
+    } catch (err) { aviso('Error de conexión: ' + err.message); return false; }
+  }
+
   // Lo que recibe el juego para dibujar y jugar
   const ctx = {
     get estado() { return st.estado; },
     get online() { return st.online; },
     get miAsiento() { return st.asiento; },
     get listos() { return listos(); },
-    puedoJugar, jugar, nombre, aviso, sonar, animar,
+    puedoJugar, jugar, jugarLibre, nombre, aviso, sonar, animar,
     color: i => COLORES[i],
     tablero: $('tablero'),
     controles: $('controles'),
