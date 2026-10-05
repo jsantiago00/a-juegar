@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "juegos": { "$juego": { "salas": { "$sala": { ".read": true, ".write": true } } } },
+    "mazos": { ".read": true, ".write": true }
+  }
+}
