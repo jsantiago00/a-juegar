@@ -106,6 +106,15 @@ export function selectorJugadores(info, nombre) {
     `<label><input type="radio" name="${nombre}" value="${n}"${n === info.min ? ' checked' : ''}><span>${n}</span></label>`).join('')}
     <span class="note">jugadores</span></div>`;
 }
+// Los dos caminos para jugar, siempre juntos: online (sala con código) u offline (esta pantalla)
+export function botonesJugar(info) {
+  return `<div class="jugar-botones">
+    <button class="main grande" id="bCrear">🌎 Crear sala online</button>
+    ${info.soloOnline ? '<p class="note">Este juego es solo online: cada uno necesita su pantalla.</p>'
+      : `<button class="grande offline" id="bLocal">📱 Jugar offline</button>
+         <p class="note">Offline: se van pasando esta pantalla por turnos.</p>`}
+  </div>`;
+}
 export function jugadoresElegidos(info, nombre) {
   const r = document.querySelector(`input[name="${nombre}"]:checked`);
   return r ? +r.value : info.min;
@@ -133,27 +142,19 @@ export function montar({ reglas, juego }) {
       <h2>⚡ Así se juega</h2>
       ${rapidito(info.id, info.reglas)}
     </section>
-    <div class="modos">
-      <section class="tarjeta" id="secLocal"${info.soloOnline ? ' hidden' : ''}>
-        <h2>🏠 En este dispositivo</h2>
-        <p class="note">Se van pasando la pantalla por turnos.</p>
-        ${selectorJugadores(info, 'locN')}
-        <button class="main grande" id="bLocal">Empezar</button>
-      </section>
-      <section class="tarjeta" id="secOnline">
-        <h2>🌎 Online con amigos</h2>
-        <div class="row"><input id="nombre" placeholder="Tu nombre" maxlength="14" autocomplete="off"></div>
-        <div id="menuExtra"></div>
-        ${selectorJugadores(info, 'onN')}
-        <button class="main grande" id="bCrear">Crear sala</button>
-        <div class="separador"><span>o si tenés un código</span></div>
-        <form class="row" id="fUnirme">
-          <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false">
-          <button id="bUnirme">Unirme</button>
-        </form>
-        <p class="note" id="fbNote" hidden>Para jugar online falta pegar la config en <code>shared/firebase.js</code>.</p>
-      </section>
-    </div>
+    <section class="tarjeta armar">
+      <h2>🎮 Armá la partida</h2>
+      ${selectorJugadores(info, 'cantN')}
+      <div id="menuExtra"></div>
+      <div class="row"><input id="nombre" placeholder="Tu nombre" maxlength="14" autocomplete="off" aria-label="Tu nombre"></div>
+      ${botonesJugar(info)}
+      <p class="note" id="fbNote" hidden>Para jugar online falta pegar la config en <code>shared/firebase.js</code>.</p>
+      <div class="separador"><span>o si tenés un código</span></div>
+      <form class="row" id="fUnirme">
+        <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="bUnirme">Unirme</button>
+      </form>
+    </section>
     <details class="tarjeta reglas"><summary>📖 Reglas completas</summary><ul>${info.reglas.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>
   </div>
   <div id="play" hidden>
@@ -374,15 +375,17 @@ export function montar({ reglas, juego }) {
   // ---------- Botones del menú ----------
   $('menu').addEventListener('click', ev => { if (ev.target.closest('button')) sonar('tap'); });
   $('menu').addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
-  $('bLocal').onclick = () => {
-    Object.assign(st, {online: false, estado: reglas.nuevoJuego(jugadoresElegidos(info, 'locN'), juego.opciones?.()), pantalla: 'play', finVisto: false});
+  function jugarOffline(n) {
+    if (info.soloOnline) return;
+    Object.assign(st, {online: false, estado: reglas.nuevoJuego(n, juego.opciones?.()), pantalla: 'play', finVisto: false});
     juego.reiniciar?.(); render();
-  };
+  }
+  if ($('bLocal')) $('bLocal').onclick = () => jugarOffline(jugadoresElegidos(info, 'cantN'));
   $('bCrear').onclick = async () => {
     const name = miNombre();
     $('bCrear').disabled = true;
     try {
-      const cod = await crearSala({reglas, n: jugadoresElegidos(info, 'onN'), opciones: juego.opciones?.(), nombre: name});
+      const cod = await crearSala({reglas, n: jugadoresElegidos(info, 'cantN'), opciones: juego.opciones?.(), nombre: name});
       entrarSala(cod, 0);
     } catch (e) { aviso(e.message); }
     $('bCrear').disabled = false;
@@ -437,6 +440,13 @@ export function montar({ reglas, juego }) {
   juego.menu?.($('menuExtra'));
   juego.iniciar(ctx);
   render();
+
+  // ?local=N (viene de "Jugar offline" en la portada): arranca directo en esta pantalla
+  const local = +new URLSearchParams(location.search).get('local');
+  if (local) {
+    try { history.replaceState(null, '', location.pathname); } catch {}
+    jugarOffline(Math.min(info.max, Math.max(info.min, local)));
+  }
 
   // Link de invitación (?sala=ABCD): si ya sabemos tu nombre entrás directo; si no, te lo pedimos.
   const sala = (new URLSearchParams(location.search).get('sala') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);

@@ -96,8 +96,8 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
   <section class="acciones">
     <div class="accion crear">
       <h2>🎲 Crear partida</h2>
-      <p>Elegí un juego y armá una sala para tus amigos.</p>
-      <button class="main grande" id="bCrear">¡Crear!</button>
+      <p>Elegí un juego y jugá online con amigos u offline en esta pantalla.</p>
+      <button class="main grande" id="bAbrir">¡Elegir juego!</button>
     </div>
     <form class="accion unirse" id="fUnirme">
       <h2>🚪 Unirme</h2>
@@ -122,10 +122,10 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
     <div id="paso2" hidden>
       <div class="elegido" id="elegido"></div>
       <div class="como" id="comoP"></div>
-      <div class="row"><input id="nombreC" maxlength="14" placeholder="Tu nombre" autocomplete="off" aria-label="Tu nombre"></div>
       <div id="cantP"></div>
       <div id="extraP"></div>
-      <button class="main grande" id="bConfirmar" style="width:100%">Crear sala</button>
+      <div class="row"><input id="nombreC" maxlength="14" placeholder="Tu nombre (para jugar online)" autocomplete="off" aria-label="Tu nombre"></div>
+      <div id="botonesP"></div>
     </div>
   </div>
 </dialog>
@@ -133,7 +133,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
-         selectorJugadores, jugadoresElegidos, rapidito } from './shared/salas.js';
+         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 
 const $ = id => document.getElementById(id);
@@ -187,9 +187,9 @@ function abrirHoja() {
 }
 function mostrarPaso(n) {
   $('paso1').hidden = n !== 1; $('paso2').hidden = n !== 2;
-  $('dTitulo').textContent = n === 1 ? '¿A qué jugamos?' : 'Armá la sala';
+  $('dTitulo').textContent = n === 1 ? '¿A qué jugamos?' : 'Armá la partida';
 }
-$('bCrear').onclick = abrirHoja;
+$('bAbrir').onclick = abrirHoja;
 $('bCerrar').onclick = () => $('dCrear').close();
 $('dCrear').addEventListener('click', ev => { if (ev.target === $('dCrear')) $('dCrear').close(); });  // tocar afuera cierra
 
@@ -210,24 +210,26 @@ $('paso1').addEventListener('click', async ev => {
   $('extraP').innerHTML = '';
   elegido.juego.menu?.($('extraP'));
   $('nombreC').value = $('nombre').value.trim() || nombreGuardado();
+  $('botonesP').innerHTML = botonesJugar(info);
+  $('bCrear').onclick = crearOnline;
+  if ($('bLocal')) $('bLocal').onclick = () => { location.href = `./${j.id}/?local=${jugadoresElegidos(info, 'cantP')}`; };
   mostrarPaso(2);
-  if (!$('nombreC').value) $('nombreC').focus();
 });
 
-$('bConfirmar').onclick = async () => {
+async function crearOnline() {
   const nombre = $('nombreC').value.trim();
   if (!nombre) { aviso('Poné tu nombre'); sonar('error'); animar($('nombreC'), 'sacudir'); $('nombreC').focus(); return; }
   guardarNombre(nombre); $('nombre').value = nombre;
   const {j, reglas, juego} = elegido;
-  $('bConfirmar').disabled = true; $('bConfirmar').textContent = 'Creando…';
+  $('bCrear').disabled = true; $('bCrear').textContent = 'Creando…';
   try {
     const cod = await crearSala({reglas, n: jugadoresElegidos(reglas.info, 'cantP'), opciones: juego.opciones?.(), nombre});
     location.href = `./${j.id}/?sala=${cod}`;
   } catch (e) {
     aviso(e.message);
-    $('bConfirmar').disabled = false; $('bConfirmar').textContent = 'Crear sala';
+    $('bCrear').disabled = false; $('bCrear').textContent = '🌎 Crear sala online';
   }
-};
+}
 </script>
 </body>
 </html>

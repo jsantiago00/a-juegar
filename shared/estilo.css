@@ -74,8 +74,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,su
 .tarjeta.destacada input::placeholder{color:#9a8fb8}
 .tarjeta.destacada button.main{background:var(--oscuro);color:var(--ink);box-shadow:0 5px 0 #120b2b}
 .tarjeta.destacada button:not(.main){background:#fff;color:var(--oscuro);box-shadow:0 5px 0 rgba(0,0,0,.2)}
-.modos{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}
-.modos .tarjeta{margin:0}
+.jugar-botones{display:grid;gap:12px;margin-top:6px}
+.jugar-botones .grande{width:100%;margin:0}
+.jugar-botones .note{text-align:center;margin:0}
+button.offline{background:#fff;color:var(--oscuro);box-shadow:0 5px 0 #b9b0d8}
+button.offline:active:not(:disabled){box-shadow:0 1px 0 #b9b0d8}
 .separador{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:14px;margin:16px 0 12px}
 .separador::before,.separador::after{content:'';flex:1;height:2px;background:var(--line);border-radius:2px}
 .cod-chico{background:var(--oscuro);color:var(--amarillo);padding:2px 12px;border-radius:10px;letter-spacing:4px}
