@@ -34,7 +34,8 @@ export function menu(el) {
     <select id="mazo"><option value="dibujitos" data-n="24" data-nombre="Dibujitos">Dibujitos (24)</option>
       ${Object.entries(MAZOS_INCLUIDOS).map(([id, m]) =>
         `<option value="${id}" data-n="${m.cantidad}" data-nombre="${esc(m.nombre)}">${esc(m.nombre)} (${m.cantidad})</option>`).join('')}</select>
-    <a href="${new URL('mazos.html', import.meta.url).href}">Crear o editar mazos</a></div>`;
+    <a href="${new URL('mazos.html', import.meta.url).href}">Crear o editar mazos</a>
+    <a href="${new URL('creditos.html', import.meta.url).href}">📸 Créditos de las fotos</a></div>`;
   conectar()
     .then(fb => fb.get(fb.ref(fb.db, 'mazos/indice')))
     .then(snap => {

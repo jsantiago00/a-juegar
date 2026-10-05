@@ -21,7 +21,7 @@ tateti-cuadrado/      Ta-te-ti² (2)
 lameloide/            Hex (2)
 acorazado/            Hundiste mi acorazado: batalla naval (2, solo online)
 ahorcado/             Ahorcado de a dos: cada uno elige la palabra del otro (2, solo online)
-quien-soy/            ¿Quién soy? + editor de mazos (mazos.html) (mazos incluidos: dibujitos, famosos argentinos y futbolistas)
+quien-soy/            ¿Quién soy? + editor de mazos (mazos.html) (mazos incluidos: dibujitos, famosos argentinos y futbolistas, con fotos de Wikimedia Commons en quien-soy/fotos/ y sus créditos en quien-soy/creditos.html)
 ta-te-ti/             juego mínimo, sirve de plantilla
 ```
 

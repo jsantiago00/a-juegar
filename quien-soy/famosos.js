@@ -1,7 +1,9 @@
-// Mazos incluidos de gente conocida, dibujados con el mismo estilo que los Dibujitos.
-// No usan fotos (tienen derechos de autor): cada carta tiene rasgos que ayudan a reconocerla
-// (pelo, barba, anteojos, camiseta...). Para mazos con fotos está el editor de mazos.
+// Mazos incluidos de gente conocida. Hay dos versiones de cada uno:
+//  - con fotos de Wikimedia Commons (licencias libres; autor y licencia en creditos.html)
+//  - dibujados con el mismo estilo que los Dibujitos, con rasgos que ayudan a reconocerlos
+//    (pelo, barba, anteojos, camiseta...). También son el respaldo si a alguien le falta foto.
 import { cara } from './dibujitos.js';
+import { FOTOS } from './fotos/creditos.js';
 
 const PIEL = {clara: '#f6d5b8', media: '#ecbc94', trigena: '#d39a6a', morena: '#a8704a', oscura: '#7a4a2e'};
 const PELO = {negro: '#2b1d14', castano: '#5a3420', castClaro: '#8a5a32', rubio: '#e0b04a', colorado: '#c4511f',
@@ -85,8 +87,19 @@ function futbolistas() {
   ]};
 }
 
+// Versión con fotos: cada carta usa su foto de Wikimedia Commons si hay (ver fotos/creditos.js
+// y creditos.html); si no, queda el dibujito.
+function conFotos(id, crear, nombre) {
+  return () => {
+    const m = crear(), fotos = FOTOS[id] || {};
+    return {nombre, cartas: m.cartas.map(c => (fotos[c.nombre] ? {nombre: c.nombre, img: new URL(fotos[c.nombre].img, import.meta.url).href} : c))};
+  };
+}
+
 // Mazos que vienen con el juego (no están en Firebase). La clave es el id del mazo.
 export const MAZOS_INCLUIDOS = {
-  'famosos-ar': {nombre: 'Famosos argentinos', cantidad: 28, crear: famososAr},
-  futbolistas: {nombre: 'Futbolistas', cantidad: 28, crear: futbolistas},
+  'famosos-ar': {nombre: 'Famosos argentinos', cantidad: 28, crear: conFotos('famosos-ar', famososAr, 'Famosos argentinos')},
+  futbolistas: {nombre: 'Futbolistas', cantidad: 28, crear: conFotos('futbolistas', futbolistas, 'Futbolistas')},
+  'famosos-ar-dib': {nombre: 'Famosos argentinos (dibujados)', cantidad: 28, crear: famososAr},
+  'futbolistas-dib': {nombre: 'Futbolistas (dibujados)', cantidad: 28, crear: futbolistas},
 };
