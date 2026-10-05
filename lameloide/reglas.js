@@ -11,7 +11,7 @@ export const info = {
     'Rojo tiene que unir el borde de arriba con el de abajo; Azul, el de la izquierda con el de la derecha.',
     'Por turnos, cada uno pinta un hexágono libre.',
     'Cada hexágono toca a 6 vecinos: el camino puede doblar para cualquier lado.',
-    'Como empezar tiene ventaja, en su primer turno Azul puede cambiar: se queda con la ficha de Rojo (reflejada) en vez de jugar.',
+    'Quién empieza se sortea. Como empezar tiene ventaja, en su primer turno el otro puede cambiar: se queda con la primera ficha (reflejada) en vez de jugar.',
     'No hay empates: siempre alguien termina conectando.',
   ],
 };
@@ -31,7 +31,9 @@ export function normalizar(e) {
   return e;
 }
 export const detalle = (e, i) => (i === 0 ? 'arriba ↕ abajo' : 'izquierda ↔ derecha');
-export const puedeCambiar = e => e.jugadas === 1 && e.turno === 1 && e.ganador === -1;
+// El que empezó (sorteado por el motor; las salas viejas no lo tienen y empezaba Rojo)
+export const primero = e => +e.empieza || 0;
+export const puedeCambiar = e => e.jugadas === 1 && e.turno === 1 - primero(e) && e.ganador === -1;
 
 function conecta(e, p) {
   const q = [], vistos = new Set();
@@ -56,12 +58,13 @@ export function aplicar(e, j, nombre) {
   const p = e.turno;
   if (j.tipo === 'cambiar') {
     if (!puedeCambiar(e)) return null;
-    const i = e.celdas.indexOf(0), r = Math.floor(i / N), c = i % N;
+    const a = primero(e), b = 1 - a;
+    const i = e.celdas.indexOf(a), r = Math.floor(i / N), c = i % N;
     e.celdas[i] = -1;
-    e.celdas[c * N + r] = 1;                       // reflejada sobre la diagonal
+    e.celdas[c * N + r] = b;                       // reflejada sobre la diagonal
     e.ult = c * N + r; e.jugadas++;
-    e.ultima = `${nombre(1)} cambió y se quedó con la ficha`;
-    e.turno = 0;
+    e.ultima = `${nombre(b)} cambió y se quedó con la ficha`;
+    e.turno = a;
     return e;
   }
   const i = j.i;

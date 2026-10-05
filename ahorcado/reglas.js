@@ -8,6 +8,7 @@ export const info = {
   desc: 'Cada uno le pone una palabra al otro: gana quien la adivina con menos errores.',
   min: 2, max: 2,
   soloOnline: true,            // la palabra es secreta: cada uno en su pantalla
+  sinTurnos: true,             // los dos juegan a la vez: no se sortea quién empieza
   reglas: [
     `Cada uno escribe una palabra secreta (de ${MIN_LARGO} a ${MAX_LARGO} letras) para que la adivine el otro.`,
     'Cuando los dos la eligieron, cada uno adivina la suya a su ritmo: no hay turnos.',

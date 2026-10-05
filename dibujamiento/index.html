@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dibujamiento</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,600px)}
+.pills label.ancho span{width:auto;padding:0 16px;font-size:17px}
+.db-top{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;margin-bottom:6px}
+.db-ronda{color:var(--mute);font-size:15px}
+.db-reloj{font-weight:700;font-size:20px;background:rgba(10,5,40,.35);padding:4px 14px;border-radius:999px;font-variant-numeric:tabular-nums}
+.db-reloj:empty{display:none}
+.db-reloj.apurado{background:var(--bad);animation:latido .8s ease-in-out infinite}
+.db-consigna{font-size:18px;font-weight:600;margin-bottom:10px;text-align:center}
+.db-burbuja{display:block;margin:8px auto 0;background:#fff;color:var(--oscuro);border-radius:18px 18px 18px 6px;padding:10px 16px;
+  font-size:20px;width:fit-content;max-width:100%;box-shadow:0 4px 0 rgba(10,5,40,.35);overflow-wrap:anywhere}
+.db-burbuja i{color:#8a7aa8;font-size:16px}
+#dbVer{margin-bottom:12px}
+.db-escribir .row{flex-wrap:nowrap}
+.db-escribir input{min-width:0;font-size:18px}
+#dbListo{width:100%;margin-top:12px}
+.db-espera{text-align:center}
+/* Película */
+.db-peli-titulo{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;font-size:20px}
+.db-peli-titulo small{color:var(--mute);font-weight:500;font-size:14px}
+.db-pasos{display:grid;gap:14px;margin-bottom:16px}
+.db-paso{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:20px;padding:10px 12px 14px}
+.db-quien{display:flex;align-items:center;gap:6px;color:var(--mute);font-size:15px;margin-bottom:6px}
+.db-quien b{color:var(--ink)}
+.db-paso.escribir .db-burbuja{margin:0}
+#dbSig{width:100%;position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

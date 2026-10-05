@@ -19,6 +19,19 @@
 //   reglas.libre(estado, jugada, yo, nombre) [opcional]: jugadas que no dependen del turno y solo tocan
 //             lo tuyo (ej. bajar cartas); el juego las manda con ctx.jugarLibre(jugada).
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
+//   info.sinTurnos: true si todos juegan a la vez (no se sortea ni se anuncia quién empieza)
+//   info.cantidades: [2, 4, 6] si no vale cualquier cantidad entre min y max
+//   info.sinGanador: true si al final no gana nadie (ej. Dibujamiento): el juego termina con ganador = EMPATE
+//             y el cartel de fin usa juego.textoFin(ctx) ({emoji, txt}).
+//   reglas.ganadores(estado) [opcional]: todos los asientos que ganaron (juegos por equipos)
+//   info.equipos: 2 si se juega en equipos según el asiento (equipo = asiento % 2). Con más de 2 jugadores,
+//             mientras nadie jugó se muestra el panel de equipos: cambiarse de equipo o armarlos al azar
+//             (mueve los asientos y vuelve a repartir con partidaNueva).
+//   Quién empieza se sortea: nuevoJuego(n, opciones, quien) recibe el sorteado y después el motor
+//             pone turno = empieza = quien (el juego puede leer estado.empieza).
+//   Datos extra de la sala (ej. los trazos de Pinturillo, que no conviene meter en el estado):
+//             ctx.extra (lo que hay en juegos/<id>/salas/<código>/extra), ctx.guardarExtra(ruta, valor),
+//             ctx.sumarExtra(ruta, valor) (push) y ctx.cambiarExtra({ruta: valor, ...}). ctx.ahora() = hora del servidor.
 //
 //  Convenciones del estado: { n, turno, ganador, ultima, ...lo que quieras }
 //   ganador: -1 en juego, 0..n-1 ganó ese jugador, -2 empate
@@ -33,8 +46,8 @@ import { crearChat } from './chat.js';
 if ('serviceWorker' in navigator) navigator.serviceWorker.register(new URL('../sw.js', import.meta.url)).catch(() => {});
 
 const FB_VER = '10.12.2';
-export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480'];
-export const NOMBRES = ['Rojo', 'Azul', 'Amarillo', 'Verde'];
+export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480', '#b07cff', '#ff8c42'];
+export const NOMBRES = ['Rojo', 'Azul', 'Amarillo', 'Verde', 'Violeta', 'Naranja'];
 export const EN_JUEGO = -1, EMPATE = -2;
 
 // Firebase borra arrays vacíos y a veces devuelve objetos: usá esto en normalizar()
@@ -43,7 +56,9 @@ export const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': 
 const clone = o => JSON.parse(JSON.stringify(o));
 
 // ---------- Firebase (se carga solo si jugás online) ----------
-let fb = null;
+let fb = null, desfase = 0;
+// Hora del servidor (para relojes compartidos: cada celu puede tener la hora un poco corrida)
+export const ahora = () => Date.now() + desfase;
 export async function conectar() { return initFb(); }
 async function initFb() {
   if (fb) return fb;
@@ -53,6 +68,7 @@ async function initFb() {
   const app = appM.initializeApp(FIREBASE_CONFIG);
   fb = {db: dbM.getDatabase(app), ref: dbM.ref, get: dbM.get, set: dbM.set, push: dbM.push, update: dbM.update,
         onValue: dbM.onValue, runTransaction: dbM.runTransaction};
+  try { fb.onValue(fb.ref(fb.db, '.info/serverTimeOffset'), s => { desfase = +s.val() || 0; }); } catch {}
   return fb;
 }
 
@@ -99,6 +115,14 @@ export function rapidito(id, reglasLargas = []) {
   return `<ol class="rapidito">${pasos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>`;
 }
 
+// Partida nueva con quién empieza sorteado (salvo en los juegos sin turnos)
+export function partidaNueva(reglas, n, opciones) {
+  const quien = Math.floor(Math.random() * n);
+  const e = reglas.nuevoJuego(n, opciones, quien);
+  if (!reglas.info.sinTurnos) { e.turno = quien; e.empieza = quien; }
+  return e;
+}
+
 // ---------- Salas sin pantalla (las usa también la portada) ----------
 // Busca el código en todos los juegos; si hay más de uno, gana la sala más nueva.
 export async function buscarSala(cod) {
@@ -118,14 +142,16 @@ export async function crearSala({reglas, n, opciones, nombre}) {
     if (!(await buscarSala(cod))) break;
   }
   await fb.set(fb.ref(fb.db, `juegos/${reglas.info.id}/salas/${cod}`),
-               {n, creada: Date.now(), seats: {0: {id: miId, name: nombre}}, game: reglas.nuevoJuego(n, opciones)});
+               {n, creada: Date.now(), seats: {0: {id: miId, name: nombre}}, game: partidaNueva(reglas, n, opciones)});
   return cod;
 }
 
+// Cantidades de jugadores permitidas
+export const cantidades = info => info.cantidades || Array.from({length: info.max - info.min + 1}, (_, k) => info.min + k);
 // Botones para elegir cuántos juegan
 export function selectorJugadores(info, nombre) {
   if (info.min === info.max) return `<p class="note">${info.min} jugadores</p>`;
-  const ns = Array.from({length: info.max - info.min + 1}, (_, k) => info.min + k);
+  const ns = cantidades(info);
   return `<div class="pills" role="radiogroup" aria-label="Cantidad de jugadores">${ns.map(n =>
     `<label><input type="radio" name="${nombre}" value="${n}"${n === info.min ? ' checked' : ''}><span>${n}</span></label>`).join('')}
     <span class="note">jugadores</span></div>`;
@@ -190,6 +216,7 @@ export function montar({ reglas, juego }) {
       <p class="note" id="espTxt"></p>
       <div class="espera-reglas"><b>Mientras tanto, así se juega:</b>${rapidito(info.id, info.reglas)}</div>
     </section>
+    <section class="tarjeta equipos-caja" id="equipos" hidden></section>
     <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🎮 Otro juego</button></div>
     <div id="players"></div>
     <div id="hint"></div>
@@ -313,27 +340,49 @@ export function montar({ reglas, juego }) {
     get online() { return st.online; },
     get miAsiento() { return st.asiento; },
     get listos() { return listos(); },
-    puedoJugar, jugar, jugarLibre, nombre, aviso, sonar, animar,
+    puedoJugar, jugar, jugarLibre, nombre, aviso, sonar, animar, ahora,
     color: i => COLORES[i],
+    get extra() { return (st.sala && st.sala.extra) || {}; },
+    guardarExtra: (r, v) => (st.online ? fb.set(fb.ref(fb.db, `${ruta()}/extra/${r}`), v) : Promise.resolve()),
+    sumarExtra: (r, v) => (st.online ? fb.push(fb.ref(fb.db, `${ruta()}/extra/${r}`), v) : Promise.resolve()),
+    cambiarExtra: obj => (st.online ? fb.update(fb.ref(fb.db, `${ruta()}/extra`), obj) : Promise.resolve()),
     tablero: $('tablero'),
     controles: $('controles'),
     refrescar: () => render(),
   };
 
+  // Quién ganó (en los juegos por equipos pueden ser varios)
+  const ganadores = e => (reglas.ganadores ? reglas.ganadores(e) : e.ganador >= 0 ? [e.ganador] : []);
+  const nombresGan = e => ganadores(e).map(i => esc(nombre(i))).join(' y ');
+
+  // Quién empieza (sorteado): se avisa al arrancar, mientras nadie jugó todavía
+  const sinJugar = e => !!e && e.ganador === EN_JUEGO && !e.ultima;
+  function quienEmpieza(e) {
+    if (info.sinTurnos || !e || e.empieza == null) return '';
+    return st.online && e.empieza === st.asiento ? '🎲 ¡Te tocó empezar!' : `🎲 Empieza ${nombre(e.empieza)}`;
+  }
+
   // Sonidos y festejo cuando cambia el estado (jugada propia, del rival o revancha)
   function efectos(antes, e, salaAntes) {
     if (st.online && salaAntes && contar(st.sala) > contar(salaAntes)) {
       sonar('entrar');
-      aviso(listos() ? '¡Están todos! A jugar' : 'Se sumó alguien');
-    }
+      aviso(!listos() ? 'Se sumó alguien' : sinJugar(e) && quienEmpieza(e) ? `¡Están todos! ${quienEmpieza(e)}` : '¡Están todos! A jugar');
+    } else if (st.online && !antes && e && listos() && sinJugar(e) && quienEmpieza(e)) aviso(quienEmpieza(e));   // recién entrás
     if (!antes || !e || JSON.stringify(antes) === JSON.stringify(e)) return;
-    if (antes.ganador !== EN_JUEGO && e.ganador === EN_JUEGO) { sonar('entrar'); registrarPartida(info.id); return; }   // revancha
+    // Se volvió a repartir antes de jugar (ej. cambiaron los equipos): quién empieza puede ser otro
+    if (antes.ganador === EN_JUEGO && sinJugar(e) && antes.empieza !== e.empieza && listos() && quienEmpieza(e)) aviso(quienEmpieza(e));
+    if (antes.ganador !== EN_JUEGO && e.ganador === EN_JUEGO) {    // revancha
+      sonar('entrar'); registrarPartida(info.id);
+      if (listos() && quienEmpieza(e)) aviso(quienEmpieza(e));
+      return;
+    }
     const s = juego.sonido ? juego.sonido(antes, e, ctx) : 'colocar';
     if (s) sonar(s, antes.turno);
     if (antes.ganador === EN_JUEGO && e.ganador !== EN_JUEGO) {
       setTimeout(() => {
-        if (e.ganador === EMPATE) sonar('empate');
-        else if (!st.online || e.ganador === st.asiento) { sonar('ganar'); confeti(COLORES); }
+        if (info.sinGanador) { sonar('ganar'); confeti(COLORES); }
+        else if (e.ganador === EMPATE) sonar('empate');
+        else if (!st.online || ganadores(e).includes(st.asiento)) { sonar('ganar'); confeti(COLORES); }
         else sonar('perder');
       }, 260);
       return;
@@ -356,6 +405,7 @@ export function montar({ reglas, juego }) {
     const esperando = st.online && !!st.sala && !listos() && (!e || e.ganador === EN_JUEGO);
     $('espera').hidden = !esperando;
     $('roomBar').hidden = !st.online || esperando;
+    pintarEquipos(e);
     if (esperando) {
       if ($('espCod').dataset.cod !== st.cod) {
         $('espCod').dataset.cod = st.cod;
@@ -369,7 +419,8 @@ export function montar({ reglas, juego }) {
     const propio = e.ganador === EN_JUEGO && listos() && juego.estado ? juego.estado(ctx) : '';
     const miTurno = !propio && st.online && e.ganador === EN_JUEGO && listos() && st.asiento === e.turno;
     let status;
-    if (e.ganador >= 0) status = `${dot(e.ganador)}¡Ganó ${esc(nombre(e.ganador))}!`;
+    if (info.sinGanador && e.ganador !== EN_JUEGO) status = '¡Terminó!';
+    else if (e.ganador >= 0) status = `${dot(e.ganador)}¡${ganadores(e).length > 1 ? 'Ganaron' : 'Ganó'} ${nombresGan(e)}!`;
     else if (e.ganador === EMPATE) status = 'Empate';
     else if (!listos()) status = 'Esperando…';
     else if (propio) status = esc(propio);
@@ -387,7 +438,7 @@ export function montar({ reglas, juego }) {
     }).join('');
 
     const pista = juego.dibujar(ctx);
-    $('hint').textContent = esperando ? '' : (pista || e.ultima || '');
+    $('hint').textContent = esperando ? '' : (pista || e.ultima || (listos() && sinJugar(e) ? quienEmpieza(e) : ''));
     $('bRevancha').hidden = e.ganador === EN_JUEGO;
     $('bOtroJuego2').hidden = !st.online;
 
@@ -396,12 +447,14 @@ export function montar({ reglas, juego }) {
     const mostrarFin = termino && !st.finVisto;
     if (mostrarFin && $('fin').hidden) {
       let emoji, txt;
-      if (e.ganador === EMPATE) { emoji = '🤝'; txt = '¡Empate!'; }
-      else if (!st.online) { emoji = '🏆'; txt = `¡Ganó ${esc(nombre(e.ganador))}!`; }
-      else if (e.ganador === st.asiento) { emoji = '🏆'; txt = '¡Ganaste!'; }
-      else { emoji = '😵'; txt = `Ganó ${esc(nombre(e.ganador))}`; }
+      const varios = ganadores(e).length > 1;
+      if (info.sinGanador) ({emoji, txt} = juego.textoFin?.(ctx) || {emoji: '🎉', txt: '¡Terminó!'});
+      else if (e.ganador === EMPATE) { emoji = '🤝'; txt = '¡Empate!'; }
+      else if (!st.online) { emoji = '🏆'; txt = `¡${varios ? 'Ganaron' : 'Ganó'} ${nombresGan(e)}!`; }
+      else if (ganadores(e).includes(st.asiento)) { emoji = '🏆'; txt = varios ? `¡Ganaron! (${nombresGan(e)})` : '¡Ganaste!'; }
+      else { emoji = '😵'; txt = `${varios ? 'Ganaron' : 'Ganó'} ${nombresGan(e)}`; }
       $('finEmoji').textContent = emoji;
-      $('finTxt').innerHTML = (e.ganador >= 0 ? dot(e.ganador) : '') + txt;
+      $('finTxt').innerHTML = (e.ganador >= 0 && !info.sinGanador ? dot(e.ganador) : '') + txt;   // los nombres ya vienen escapados (textoFin también devuelve HTML seguro)
       $('finSub').textContent = juego.resumenFin?.(ctx) || e.ultima || '';
     }
     $('fin').hidden = !mostrarFin;
@@ -423,6 +476,7 @@ export function montar({ reglas, juego }) {
       if (!v) { aviso('La sala ya no existe'); return; }
       const antes = st.estado, salaAntes = st.sala;
       st.sala = v;
+      for (let i = 0; i < v.n; i++) if (v.seats && v.seats[i] && v.seats[i].id === miId) st.asiento = i;
       st.estado = reglas.normalizar(v.game);
       efectos(antes, st.estado, salaAntes);
       chat?.actualizar(v.chat, miId);
@@ -477,9 +531,10 @@ export function montar({ reglas, juego }) {
   $('menu').addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
   function jugarOffline(n) {
     if (info.soloOnline) return;
-    Object.assign(st, {online: false, estado: reglas.nuevoJuego(n, juego.opciones?.()), pantalla: 'play', finVisto: false});
+    Object.assign(st, {online: false, estado: partidaNueva(reglas, n, juego.opciones?.()), pantalla: 'play', finVisto: false});
     registrarPartida(info.id);
     juego.reiniciar?.(); render();
+    if (quienEmpieza(st.estado)) aviso(quienEmpieza(st.estado));
   }
   if ($('bLocal')) $('bLocal').onclick = () => jugarOffline(jugadoresElegidos(info, 'cantN'));
   $('bCrear').onclick = async () => {
@@ -515,11 +570,71 @@ export function montar({ reglas, juego }) {
   async function revancha() {
     sonar('tap');
     juego.reiniciar?.();
-    if (!st.online) { const antes = st.estado; st.estado = reglas.nuevoJuego(st.estado.n, st.estado.opciones); efectos(antes, st.estado); render(); return; }
-    try { await fb.set(fb.ref(fb.db, ruta() + '/game'), reglas.nuevoJuego(st.sala.n, st.estado.opciones)); } catch (e) { aviso(e.message); }
+    if (!st.online) { const antes = st.estado; st.estado = partidaNueva(reglas, st.estado.n, st.estado.opciones); efectos(antes, st.estado); render(); return; }
+    try { await fb.set(fb.ref(fb.db, ruta() + '/game'), partidaNueva(reglas, st.sala.n, st.estado.opciones)); } catch (e) { aviso(e.message); }
   }
   $('bRevancha').onclick = $('bRevancha2').onclick = revancha;
   $('bVerTablero').onclick = () => { sonar('tap'); st.finVisto = true; render(); };
+  // ---------- Equipos: cambiarse o armarlos al azar (solo antes de que alguien juegue) ----------
+  const equipoDe = i => i % info.equipos;
+  const conEquipos = e => !!info.equipos && st.online && !!st.sala && st.sala.n > 2 && !!e && e.ganador === EN_JUEGO && !e.ultima;
+  function pintarEquipos(e) {
+    const caja = $('equipos');
+    caja.hidden = !conEquipos(e);
+    if (caja.hidden) return;
+    const n = st.sala.n, yo = st.asiento;
+    const html = `<h2>👥 Equipos</h2><div class="equipos">${Array.from({length: info.equipos}, (_, q) => `<div class="equipo${equipoDe(yo) === q ? ' mio' : ''}">
+      <b>Equipo ${q + 1}</b>${Array.from({length: n}, (_, i) => i).filter(i => equipoDe(i) === q).map(i => {
+        const s = asientoDe(i);
+        if (i === yo) return `<div class="lugar"><span class="dot" style="background:${COLORES[i]}"></span>${esc(s.name)} (vos)</div>`;
+        if (!s) return `<button class="lugar libre" data-sentar="${i}">${equipoDe(yo) === q ? 'libre' : '＋ Pasarme acá'}</button>`;
+        return `<div class="lugar"><span class="dot" style="background:${COLORES[i]}"></span>${esc(s.name)}${
+          equipoDe(yo) !== q ? `<button class="chico" data-cambiar="${i}" title="Cambiar de lugar con ${esc(s.name)}">⇄</button>` : ''}</div>`;
+      }).join('')}</div>`).join('')}</div>
+      <div class="row centro"><button id="bEqAzar">🎲 Equipos al azar</button></div>
+      <p class="note">Se puede cambiar hasta que alguien juegue. Cada cambio vuelve a repartir.</p>`;
+    if (caja.dataset.k !== html) { caja.dataset.k = html; caja.innerHTML = html; }
+  }
+  // Mueve los asientos (si todavía no se jugó nada) y arranca la partida de nuevo
+  async function moverAsientos(cambio) {
+    try {
+      const res = await fb.runTransaction(fb.ref(fb.db, ruta()), sala => {
+        if (!sala) return sala;
+        const g = reglas.normalizar(sala.game);
+        if (g.ganador !== EN_JUEGO || g.ultima) return;          // ya empezaron: no se toca
+        const seats = Array.from({length: sala.n}, (_, i) => (sala.seats || {})[i] || null);
+        const nuevos = cambio(seats);
+        if (!nuevos) return;
+        sala.seats = Object.fromEntries(nuevos.map((s, i) => [i, s]).filter(([, s]) => s));
+        sala.game = partidaNueva(reglas, sala.n, g.opciones);
+        return sala;
+      });
+      if (!res.committed) aviso('Ya no se puede cambiar: la partida empezó');
+      else sonar('cambiar');
+    } catch (err) { aviso('Error de conexión: ' + err.message); }
+  }
+  const miLugar = seats => seats.findIndex(s => s && s.id === miId);
+  $('equipos').addEventListener('click', ev => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    if (b.dataset.sentar) moverAsientos(seats => {
+      const de = miLugar(seats), a = +b.dataset.sentar;
+      if (de < 0 || seats[a]) return null;
+      seats[a] = seats[de]; seats[de] = null;
+      return seats;
+    });
+    if (b.dataset.cambiar) moverAsientos(seats => {
+      const de = miLugar(seats), a = +b.dataset.cambiar;
+      if (de < 0 || !seats[a]) return null;
+      [seats[a], seats[de]] = [seats[de], seats[a]];
+      return seats;
+    });
+    if (b.id === 'bEqAzar') moverAsientos(seats => {
+      for (let i = seats.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [seats[i], seats[j]] = [seats[j], seats[i]]; }
+      return seats;
+    });
+  });
+
   // ---------- Cambiar de juego sin perder la sala ----------
   // Se crea la sala del otro juego con el mismo código, los mismos asientos y el chat, y se deja
   // "siguiente" en esta sala: todos los que la están mirando se mudan solos (ver entrarSala).
@@ -534,7 +649,7 @@ export function montar({ reglas, juego }) {
     const n = st.sala.n, otros = ordenarJuegos(JUEGOS.filter(j => j.id !== info.id));
     const infos = await Promise.all(otros.map(j => reglasDe(j.id).then(m => m.info).catch(() => null)));
     $('cambiarLista').innerHTML = otros.map((j, k) => {
-      const inf = infos[k], va = !!inf && inf.min <= n && n <= inf.max;
+      const inf = infos[k], va = !!inf && cantidades(inf).includes(n);
       return `<button data-id="${j.id}" style="--c:${j.color}"${va ? '' : ' disabled'}><span class="ico">${iconoJuego(j.id)}</span>` +
              `${esc(j.nombre)}${va ? '' : `<small>es de ${esc(j.jugadores)}</small>`}</button>`;
     }).join('');
@@ -554,10 +669,10 @@ export function montar({ reglas, juego }) {
     $('cambiarLista').querySelectorAll('button').forEach(b => { b.disabled = true; });
     $('bCambiarSi').disabled = true;
     try {
-      const {nuevoJuego} = await reglasDe(id);
+      const otras = await reglasDe(id);
       const n = st.sala.n, yo = asientoDe(st.asiento);
       await fb.set(fb.ref(fb.db, `juegos/${id}/salas/${st.cod}`),
-                   {n, creada: Date.now(), seats: st.sala.seats, game: nuevoJuego(n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
+                   {n, creada: Date.now(), seats: st.sala.seats, game: partidaNueva(otras, n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
       await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, por: (yo && yo.name) || 'Alguien', t: Date.now()});
     } catch (e) { aviso('No se pudo cambiar: ' + e.message); $('cambiar').hidden = true; }
   }
@@ -586,6 +701,7 @@ export function montar({ reglas, juego }) {
   };
 
   // ---------- Arranque ----------
+  if (info.sinGanador) $('bRevancha').textContent = $('bRevancha2').textContent = 'Jugar otra';
   botonesSonido();
   $('nombre').value = nombreGuardado();
   juego.menu?.($('menuExtra'));

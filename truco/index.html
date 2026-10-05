@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Truco</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,520px)}
+/* Marcador con fosforitos */
+.tr-marcador{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.tr-equipo{background:rgba(10,5,40,.35);border-radius:16px;padding:6px 10px;border-top:4px solid var(--c);display:grid;
+  grid-template-columns:1fr auto;align-items:center;gap:2px 8px}
+.tr-equipo b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-pts{font-size:26px;font-weight:700;line-height:1}
+.tr-porotos{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.tr-porotos>span{display:flex;gap:2px}
+.tr-porotos .tr-buenas{padding-left:6px;border-left:2px solid var(--line)}
+.tr-porotos svg{width:18px;height:18px;stroke:var(--amarillo);stroke-width:3;stroke-linecap:round;fill:none}
+.tr-porotos svg.vacio .guia{stroke:var(--line);stroke-width:2;stroke-dasharray:2 3}
+.tr-meta{grid-column:1/-1;text-align:center;color:var(--mute);font-size:14px}
+/* Cartas */
+.tr-carta{position:relative;display:block;width:clamp(62px,19vw,84px);aspect-ratio:2/3;border-radius:10px;background:#fffdf6;color:var(--oscuro);
+  padding:0;min-height:0;box-shadow:0 4px 0 rgba(10,5,40,.4);border:2px solid #e9dcc0;flex:none}
+.tr-carta svg{position:absolute;inset:22% 14%;width:72%;height:56%}
+.tr-n{position:absolute;left:6px;top:3px;font-weight:700;font-size:clamp(15px,4.5vw,19px);line-height:1}
+.tr-n.abajo{left:auto;top:auto;right:6px;bottom:3px;transform:rotate(180deg)}
+.palo-o .tr-n{color:#b8800f}.palo-c .tr-n{color:#c23847}.palo-e .tr-n{color:#2a5f8f}.palo-b .tr-n{color:#2f7a48}
+.tr-carta.dorso{background:repeating-linear-gradient(45deg,#e8505b 0 6px,#c23847 6px 12px);border:3px solid #fff}
+.tr-carta.gano{box-shadow:0 0 0 3px var(--amarillo),0 4px 0 rgba(10,5,40,.4)}
+button.tr-carta:disabled{opacity:1}
+button.tr-carta.tirable{cursor:pointer;animation:latido 1.6s ease-in-out infinite}
+button.tr-carta.tirable:hover{transform:translateY(-8px)}
+/* Mesa */
+.tr-rival{display:flex;justify-content:center;gap:4px;min-height:36px;margin-bottom:8px}
+.tr-rival .tr-carta{width:clamp(28px,8vw,40px);border-width:2px}
+.tr-mesa{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#2f7a48;border-radius:22px;padding:10px 8px;
+  box-shadow:inset 0 0 0 4px #e09a55,0 8px 0 rgba(10,5,40,.45)}
+.tr-baza{display:flex;flex-direction:column;align-items:center;gap:4px}
+.tr-baza .tr-carta,.tr-hueco{width:clamp(50px,15vw,72px)}
+.tr-baza .tr-carta{animation:entra .3s cubic-bezier(.3,1.5,.5,1)}
+.tr-hueco{aspect-ratio:2/3;border-radius:10px;border:2px dashed rgba(255,255,255,.25)}
+.tr-res{font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--c,#fff);color:#fff}
+.tr-res.parda{background:rgba(255,255,255,.8);color:var(--oscuro)}
+.tr-canto{margin:14px auto 0;text-align:center;font-size:22px;background:var(--amarillo);color:var(--oscuro);border-radius:20px;
+  padding:10px 16px;box-shadow:0 5px 0 #c99a00;animation:entra .35s cubic-bezier(.3,1.6,.5,1);display:flex;flex-wrap:wrap;
+  align-items:center;justify-content:center;gap:8px}
+.tr-canto .note{color:var(--oscuro);margin:0;font-size:14px;width:100%}
+.tr-mano{display:flex;justify-content:center;gap:10px;margin:14px 0 4px;min-height:60px}
+.tr-mano .tr-carta{width:clamp(76px,23vw,100px)}
+.tr-botones{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
+.tr-botones .grande{width:100%}
+.tr-botones .tr-sube{background:var(--bad);box-shadow:0 5px 0 #b33a4e}
+.tr-botones .tr-env{background:#3fa7e0;box-shadow:0 5px 0 #2a6f99}
+.tr-botones .tr-mazo{background:none;box-shadow:none;text-decoration:underline;color:var(--mute)}
+.tr-tanto{width:100%;text-align:center;margin:2px 0 0}
+.tr-nombres{grid-column:1/-1;color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* De a 4 o 6: un panel por jugador */
+.tr-mesa.tr-mesa-eq{display:block;padding:8px}
+.tr-jugadores{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tr-jugadores.n6{grid-template-columns:1fr 1fr 1fr}
+.tr-jug{background:rgba(10,5,40,.3);border-radius:14px;padding:6px;border:2px solid transparent;min-width:0}
+.tr-jug.nos{background:rgba(255,255,255,.14)}
+.tr-jug.turno{border-color:var(--amarillo)}
+.tr-jug.mira{opacity:.55}
+.tr-jug-top{display:flex;align-items:center;gap:5px;font-size:13px;margin-bottom:4px;min-width:0}
+.tr-jug-top b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-jug-top .dot{width:10px;height:10px}
+.tr-jug-top small{background:var(--amarillo);color:var(--oscuro);border-radius:999px;padding:0 6px;font-size:10px;font-weight:700}
+.tr-jug-cartas{display:flex;gap:3px;flex-wrap:wrap;min-height:46px;align-items:center}
+.tr-jug-cartas small{color:var(--ink);font-size:12px}
+.tr-carta.chica{width:31px;border-width:1px;border-radius:6px;box-shadow:0 2px 0 rgba(10,5,40,.4)}
+.tr-carta.chica .tr-n{font-size:11px;left:3px;top:1px}
+.tr-carta.chica .tr-n.abajo{display:none}
+.tr-carta.chica svg{inset:30% 12% 10%;width:76%;height:60%}
+.tr-carta.chica.dorso{border-width:2px}
+.tr-bazas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.tr-log{list-style:none;padding:0;margin:16px 0 0;font-size:14px;color:var(--mute)}
+.tr-log li{padding:4px 0;border-top:1px solid var(--line)}
+.tr-log li:first-child{color:var(--ink)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

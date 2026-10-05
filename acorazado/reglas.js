@@ -111,7 +111,7 @@ export function libre(e, j, yo) {
   }
   if (j.tipo === 'listo') {
     e.listos[yo] = 1;
-    if (e.listos[0] && e.listos[1]) { e.fase = 'disparo'; e.turno = 0; e.ultima = '¡Flotas listas! A disparar'; }
+    if (e.listos[0] && e.listos[1]) { e.fase = 'disparo'; e.ultima = '¡Flotas listas! A disparar'; }   // tira primero el sorteado (turno)
     return e;
   }
   return null;

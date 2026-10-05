@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tutti Frutti</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,620px)}
+/* La letra */
+.tt-letra{display:flex;flex-direction:column;align-items:center;margin:0 auto 14px}
+.tt-letra b{display:grid;place-items:center;width:96px;height:96px;border-radius:26px;background:var(--amarillo);color:var(--oscuro);
+  font-size:64px;line-height:1;box-shadow:0 7px 0 #c99a00;transform:rotate(-4deg)}
+.tt-ronda{color:var(--mute);font-size:14px;margin-bottom:8px}
+/* Escribir */
+.tt-form{display:grid;gap:8px}
+.tt-form label{display:grid;grid-template-columns:minmax(90px,38%) 1fr;align-items:center;gap:10px;color:var(--ink);font-weight:600;font-size:16px}
+.tt-form input{min-width:0;text-transform:uppercase}
+.tt-form input.ok{border-color:var(--ok)}
+.tt-form input.mal{border-color:var(--bad)}
+.tt-form input:disabled{opacity:.7}
+.tt-basta{text-align:center;margin-top:14px}
+.tt-basta .grande{width:100%}
+.tt-basta .note{min-height:1.5em}
+/* Votar */
+.tt-grilla{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.tt-cat{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:18px;padding:10px}
+.tt-cat h3{margin:0 0 8px;font-size:16px;color:var(--mute)}
+.tt-resp{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;margin-bottom:6px;padding:6px 10px;border-radius:12px;
+  background:rgba(10,5,40,.35);box-shadow:none;font-weight:500;text-align:left;font-size:15px}
+.tt-resp:disabled{opacity:1;cursor:default}
+.tt-resp .dot{width:12px;height:12px}
+.tt-txt{flex:1;min-width:0;overflow-wrap:anywhere;text-transform:uppercase}
+.tt-resp.no .tt-txt{text-decoration:line-through;color:var(--mute)}
+.tt-resp.voto{box-shadow:inset 0 0 0 2px var(--bad)}
+.tt-votos{font-size:12px}
+.tt-pts{font-size:14px;color:var(--ok)}
+.tt-resp.no .tt-pts{color:var(--mute)}
+.tt-total{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin:14px 0}
+.tt-total>span{display:flex;align-items:center;gap:6px}
+#ttVotar>.grande{width:100%}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

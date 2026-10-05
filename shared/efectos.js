@@ -81,6 +81,14 @@ const SONIDOS = {
   hundido:  a => { SONIDOS.boom(a);
                    [520, 440, 370, 300, 250].forEach((f, k) => tono(a, {f, f2: f * 1.35, t: .35 + k * .09, d: .07, tipo: 'sine', vol: .12}));
                    tono(a, {f: 987.77, t: .85, d: .08, tipo: 'square', vol: .08}); tono(a, {f: 1318.5, t: .93, d: .3, tipo: 'square', vol: .08}); },
+  golpe:    a => { tono(a, {f: 1500, f2: 700, d: .05, tipo: 'square', vol: .06}); ruido(a, {d: .05, f: 2800, vol: .3, q: 2}); },
+  rebote:   a => tono(a, {f: 520, f2: 330, d: .06, vol: .12}),
+  embocar:  a => { tono(a, {f: 220, f2: 90, d: .14, tipo: 'sine', vol: .4});
+                   [784, 988, 1175, 1568].forEach((f, i) => tono(a, {f, t: .15 + i * .07, d: .14, vol: .14})); },
+  basta:    a => { tono(a, {f: 880, d: .12, tipo: 'square', vol: .1}); tono(a, {f: 660, t: .13, d: .12, tipo: 'square', vol: .1});
+                   tono(a, {f: 440, t: .26, d: .3, tipo: 'square', vol: .1}); },
+  canto:    a => { tono(a, {f: 330, f2: 660, d: .18, tipo: 'sawtooth', vol: .06}); tono(a, {f: 660, t: .16, d: .3, vol: .2}); },
+  reloj:    a => tono(a, {f: 1600, d: .03, tipo: 'square', vol: .05}),
   chat:     a => { tono(a, {f: 880, f2: 1180, d: .07, tipo: 'sine', vol: .18}); tono(a, {f: 1320, t: .07, d: .14, tipo: 'sine', vol: .14}); },
   enviar:   a => tono(a, {f: 500, f2: 950, d: .09, tipo: 'sine', vol: .13}),
 };

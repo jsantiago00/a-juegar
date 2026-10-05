@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pinturillo</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,640px)}
+.pt-top{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;margin-bottom:8px}
+.pt-palabra{display:flex;flex-wrap:wrap;align-items:flex-end;gap:5px;font-weight:700;font-size:22px}
+.pt-palabra span{display:inline-grid;place-items:end center;width:20px;height:28px;border-bottom:3px solid var(--ink)}
+.pt-palabra i{width:10px}
+.pt-palabra small{font-size:13px;color:var(--mute);margin-left:6px;align-self:center}
+.pt-palabra .pt-ve,.pt-palabra .pt-turno{width:auto;height:auto;border:0;letter-spacing:2px}
+.pt-palabra .pt-ve{background:var(--amarillo);color:var(--oscuro);padding:2px 12px;border-radius:10px}
+.pt-palabra .pt-turno{font-size:16px;color:var(--mute);letter-spacing:0;font-weight:500}
+.pt-reloj{font-weight:700;font-size:20px;background:rgba(10,5,40,.35);padding:4px 14px;border-radius:999px;font-variant-numeric:tabular-nums}
+.pt-reloj:empty{display:none}
+.pt-reloj.apurado{background:var(--bad);animation:latido .8s ease-in-out infinite}
+.pt-elegir{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.pt-elegir button{text-transform:capitalize}
+.pt-adivinar{margin-top:14px;flex-wrap:nowrap}
+.pt-adivinar input{min-width:0}
+.pt-intentos{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:4px;font-size:15px}
+.pt-intentos li{display:flex;align-items:center;gap:8px;padding:4px 10px;border-radius:10px;background:rgba(10,5,40,.3);overflow-wrap:anywhere}
+.pt-intentos li .dot{width:12px;height:12px}
+.pt-intentos li.ok{background:var(--ok);color:var(--oscuro)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

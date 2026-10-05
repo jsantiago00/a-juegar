@@ -1,5 +1,5 @@
 // Pantalla de Lameloide: rombo de hexágonos. Un toque elige, otro toque confirma.
-import { N, COLS, VECINOS, puedeCambiar } from './reglas.js';
+import { N, COLS, VECINOS, puedeCambiar, primero } from './reglas.js';
 import { animaciones } from '../shared/efectos.js';
 
 const R = 22, W = Math.sqrt(3) * R, PX = W / 2 + 22, PY = R + 22;
@@ -70,5 +70,5 @@ export function dibujar(ctx) {
   document.getElementById('bCambiar').hidden = !(puedo && puedeCambiar(e));
   if (!puedo) return '';
   if (sel >= 0) return 'Tocá el mismo hexágono de nuevo para confirmar';
-  return puedeCambiar(e) ? 'Elegí un hexágono o tocá Cambiar para quedarte con el de Rojo' : 'Tocá un hexágono libre';
+  return puedeCambiar(e) ? `Elegí un hexágono o tocá Cambiar para quedarte con el de ${ctx.nombre(primero(e))}` : 'Tocá un hexágono libre';
 }

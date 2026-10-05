@@ -57,4 +57,35 @@ export const ICONOS = {
     `<rect x="11" y="8" width="24" height="32" rx="4" fill="#ffd23f" stroke="${O}" stroke-width="2"/>` +
     `<circle cx="23" cy="20" r="5.5" fill="${O}" opacity=".85"/><path d="M14.5 36q8.5-11 17 0z" fill="${O}" opacity=".85"/>` +
     `<circle cx="36" cy="13" r="7" fill="${ROJO}"/><text x="36" y="17.2" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Fredoka,system-ui,sans-serif">?</text>`),
+
+  minigolf: svg(
+    `<path d="M8 40q16-8 32 0" fill="#5cc480"/><ellipse cx="30" cy="36" rx="5" ry="1.8" fill="${O}"/>` +
+    `<path d="M30 36V9" stroke="${O}" stroke-width="2" stroke-linecap="round"/><path d="M30 9l10 3.5-10 3.5z" fill="${ROJO}"/>` +
+    `<circle cx="14" cy="33" r="4" fill="#fff" stroke="${O}" stroke-width="1.6"/>` +
+    `<path d="M6 22q4 6 8 9" stroke="${O}" stroke-width="1.4" stroke-dasharray="1.5 2.5" fill="none"/>`),
+
+  'tutti-frutti': svg(
+    `<rect x="9" y="7" width="22" height="28" rx="4" fill="#ffd23f" stroke="${O}" stroke-width="2" transform="rotate(-8 20 21)"/>` +
+    `<text x="19" y="29" text-anchor="middle" font-size="19" font-weight="700" fill="${O}" font-family="Fredoka,system-ui,sans-serif" transform="rotate(-8 20 21)">M</text>` +
+    `<circle cx="34" cy="33" r="7" fill="${ROJO}"/><path d="M34 26q1-4 4-5" stroke="#2f7a48" stroke-width="2" fill="none" stroke-linecap="round"/>` +
+    `<ellipse cx="38.5" cy="22" rx="3" ry="1.6" fill="${VERDE}" transform="rotate(-25 38.5 22)"/>`),
+
+  truco: svg(
+    `<g transform="rotate(-14 18 26)"><rect x="8" y="10" width="17" height="25" rx="3" fill="#fffdf6" stroke="${O}" stroke-width="1.8"/>` +
+    `<path d="M16.5 14l2 3.5v10h-4v-10z" fill="#cfe0f2" stroke="#3f6fa0" stroke-width="1.2"/><rect x="12" y="27" width="9" height="2.4" rx="1.2" fill="${AZUL}"/></g>` +
+    `<g transform="rotate(12 30 26)"><rect x="21" y="10" width="17" height="25" rx="3" fill="#fffdf6" stroke="${O}" stroke-width="1.8"/>` +
+    `<path d="M27.5 31l-1.2-11q-.4-5 3.2-5t3 5l-1.2 11z" fill="#5cc480" stroke="#2f7a48" stroke-width="1.2"/></g>`),
+
+  dibujamiento: svg(
+    `<rect x="5" y="6" width="17" height="13" rx="3" fill="#fff" stroke="${O}" stroke-width="1.8"/><path d="M9 15q2-5 4-1t5-4" stroke="${ROJO}" stroke-width="2" fill="none" stroke-linecap="round"/>` +
+    `<path d="M24 12h6m-2.5-3 3 3-3 3" stroke="${O}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="M26 22h15a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-9l-4 4v-4h-2a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3z" fill="#ffd23f" stroke="${O}" stroke-width="1.8" stroke-linejoin="round"/>` +
+    `<path d="M29 27h10M29 31h6" stroke="${O}" stroke-width="1.8" stroke-linecap="round"/>` +
+    `<rect x="5" y="26" width="17" height="13" rx="3" fill="#fff" stroke="${O}" stroke-width="1.8"/><circle cx="13.5" cy="32.5" r="3.5" fill="none" stroke="${AZUL}" stroke-width="2"/>`),
+
+  pinturillo: svg(
+    `<rect x="7" y="9" width="30" height="24" rx="3" fill="#fff" stroke="${O}" stroke-width="2"/>` +
+    `<path d="M12 27q4-12 9-6t9-8" stroke="${ROJO}" stroke-width="2.6" fill="none" stroke-linecap="round"/>` +
+    `<circle cx="17" cy="16" r="2.5" fill="#ffd23f"/>` +
+    `<path d="M31 41l9-15 3 2-9 15-4 1z" fill="#ffd23f" stroke="${O}" stroke-width="1.6" stroke-linejoin="round"/><path d="M40 26l3 2" stroke="${ROJO}" stroke-width="2.6"/>`),
 };

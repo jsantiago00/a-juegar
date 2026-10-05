@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minigolf</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,480px)}
+.mg-cancha{position:relative;width:min(100%,calc(66vh * 2 / 3));margin:0 auto}
+.mg-cancha canvas{display:block;width:100%;aspect-ratio:2/3;border-radius:22px;touch-action:none;cursor:crosshair;
+  box-shadow:0 8px 0 rgba(10,5,40,.45)}
+.mg-cartel{position:absolute;left:50%;top:40%;transform:translateX(-50%);background:var(--amarillo);color:var(--oscuro);
+  padding:10px 18px;border-radius:999px;font-weight:700;font-size:18px;white-space:nowrap;box-shadow:0 5px 0 #c99a00;pointer-events:none}
+.mg-tarjeta{overflow-x:auto;margin-top:16px}
+.mg-tarjeta table{border-collapse:separate;border-spacing:3px;margin:0 auto;font-size:14px}
+.mg-tarjeta th,.mg-tarjeta td{min-width:26px;padding:4px 5px;text-align:center;border-radius:8px;background:rgba(10,5,40,.35)}
+.mg-tarjeta td:first-child{text-align:left;white-space:nowrap;display:flex;align-items:center;gap:6px;max-width:110px;overflow:hidden}
+.mg-tarjeta td:first-child .dot{width:12px;height:12px}
+.mg-tarjeta tr.par td{color:var(--mute);background:none}
+.mg-tarjeta .act{background:var(--amarillo);color:var(--oscuro)}
+.mg-tarjeta .bajo{background:var(--ok);color:var(--oscuro)}
+.mg-tarjeta .sobre{color:#ffb0bc}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

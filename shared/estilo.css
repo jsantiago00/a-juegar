@@ -95,6 +95,36 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
 .opcion-check .note{margin:0;font-size:14px}
 .cambiar-opc .opcion-check,.hoja .opcion-check{color:inherit}
 
+/* Lienzo de dibujo (shared/lienzo.js) */
+.lz{position:relative}
+.lz canvas{display:block;width:100%;aspect-ratio:4/3;background:#fff;border-radius:18px;touch-action:none;box-shadow:0 8px 0 rgba(10,5,40,.45)}
+.lz canvas.pincel{cursor:crosshair}
+.lz-capa{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:6px;padding:16px;border-radius:18px;
+  background:rgba(29,20,73,.82);backdrop-filter:blur(2px);animation:aparece .25s}
+.lz-capa h2{font-size:clamp(28px,8vw,44px);margin:0;color:var(--amarillo);letter-spacing:2px}
+.lz-capa h3{margin:0 0 8px}
+.lz-capa p{margin:0;color:var(--mute)}
+.lz-herr{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.lz-colores,.lz-grosores{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.lz-colores button{width:34px;min-height:34px;height:34px;padding:0;border-radius:50%;background:var(--c);box-shadow:0 3px 0 rgba(10,5,40,.4);
+  border:3px solid rgba(255,255,255,.2);font-size:16px}
+.lz-grosores button{width:42px;min-height:40px;padding:0;border-radius:12px;display:grid;place-items:center;font-size:18px}
+.lz-grosores span{display:block;width:var(--w);height:var(--w);border-radius:50%;background:var(--ink)}
+.lz-herr button.on{border-color:var(--amarillo);transform:scale(1.15)}
+.lz-grosores button.on{background:var(--amarillo)}
+.lz-grosores button.on span{background:var(--oscuro)}
+
+/* Elegir varias cosas de una lista (ej. categorías del Tutti Frutti) */
+.fichas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.fichas label{position:relative;cursor:pointer}
+.fichas input{position:absolute;opacity:0;inset:0;margin:0;min-height:0;min-width:0;width:100%;height:100%;cursor:pointer}
+.fichas span{display:block;padding:6px 12px;border-radius:999px;background:rgba(10,5,40,.35);border:2px solid var(--line);
+  color:var(--ink);font-size:14px;font-weight:500}
+.fichas input:checked + span{background:var(--ok);color:var(--oscuro);border-color:transparent}
+.fichas input:focus-visible + span{outline:3px solid var(--amarillo);outline-offset:2px}
+.cambiar-opc .fichas span,.cambiar-opc .pills label span{background:#fff;color:var(--oscuro);border-color:#d8cfee}
+.cambiar-opc .fichas input:checked + span,.cambiar-opc .pills input:checked + span{background:var(--ok);border-color:transparent}
+
 /* Elegir cantidad de jugadores */
 .pills{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px}
 .pills label{position:relative;cursor:pointer}
@@ -125,6 +155,19 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
 #roomBar b{color:var(--ink);letter-spacing:3px;font-size:18px}
 #tablero{width:100%;max-width:min(100%,68vh);margin:0 auto}
 .controles,#controles{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+
+/* Panel de equipos (juegos con info.equipos) */
+.equipos-caja h2{margin-bottom:10px}
+.equipos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.equipo{background:rgba(10,5,40,.3);border-radius:18px;padding:10px;display:grid;gap:6px;align-content:start}
+.equipo.mio{box-shadow:inset 0 0 0 2px var(--amarillo)}
+.equipo>b{text-align:center}
+.equipo .lugar{display:flex;align-items:center;gap:6px;min-height:40px;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,.08);
+  font-size:15px;overflow-wrap:anywhere}
+.equipo .lugar .dot{width:12px;height:12px}
+.equipo .lugar button{margin-left:auto;min-height:32px;padding:2px 10px}
+.equipo button.lugar{justify-content:center;box-shadow:none;border:2px dashed var(--line);background:none;color:var(--mute);font-weight:500}
+.equipo button.lugar[data-sentar]:hover{color:var(--ink);border-color:var(--ok)}
 
 /* Sala de espera */
 .espera{text-align:center}
