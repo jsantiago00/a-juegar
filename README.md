@@ -20,6 +20,7 @@ juegardium/           puntos y cajas (2 a 4)
 tateti-cuadrado/      Ta-te-ti² (2)
 lameloide/            Hex (2)
 acorazado/            Hundiste mi acorazado: batalla naval (2, solo online)
+ahorcado/             Ahorcado de a dos: cada uno elige la palabra del otro (2, solo online)
 quien-soy/            ¿Quién soy? + editor de mazos (mazos.html) (mazos incluidos: dibujitos, famosos argentinos y futbolistas)
 ta-te-ti/             juego mínimo, sirve de plantilla
 ```

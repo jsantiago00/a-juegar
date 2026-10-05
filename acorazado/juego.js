@@ -73,12 +73,19 @@ function tocarMia(i) {
   if (ubicar(flota, sel, Math.floor(i / N), i % N, flota[sel].o)) enviar(flota);
   else { ctx.sonar('error'); ctx.aviso('Ahí se pisa con otro barco'); }
 }
+// Gira el barco sobre la primera casilla (pivote) en la que entra: esa casilla queda fija
+// y el resto rota alrededor. Se prueba la 1ra casilla, después la 2da, y así.
 function girar() {
   if (!armando()) return;
   if (sel < 0) { ctx.aviso('Tocá un barco para elegirlo'); return; }
-  const flota = miFlota(), b = flota[sel];
-  if (ubicar(flota, sel, b.f, b.c, b.o === 'h' ? 'v' : 'h')) enviar(flota);
-  else { ctx.sonar('error'); ctx.aviso('No hay lugar para girarlo'); }
+  const b = ctx.estado.flotas[ctx.miAsiento][sel], o = b.o === 'h' ? 'v' : 'h';
+  for (let k = 0; k < b.l; k++) {
+    const pf = b.o === 'v' ? b.f + k : b.f, pc = b.o === 'h' ? b.c + k : b.c;   // casilla pivote
+    const flota = miFlota();
+    flota[sel] = {...b, o, f: o === 'v' ? pf - k : pf, c: o === 'h' ? pc - k : pc};
+    if (flotaValida(flota)) { enviar(flota); return; }
+  }
+  ctx.sonar('error'); ctx.aviso('No hay lugar para girarlo');
 }
 function tirar(i) {
   const e = ctx.estado;

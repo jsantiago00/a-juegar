@@ -15,7 +15,7 @@
 //             chat = true [opcional]: chat de sala cuando se juega online (ver shared/chat.js)
 //             estado(ctx) [opcional]: texto propio para el cartel de arriba (ej. "Armá tu flota");
 //             si devuelve vacío, se muestra el de siempre ("¡Tu turno!", "Turno de…").
-//   reglas.libre(estado, jugada, yo) [opcional]: jugadas que no dependen del turno y solo tocan
+//   reglas.libre(estado, jugada, yo, nombre) [opcional]: jugadas que no dependen del turno y solo tocan
 //             lo tuyo (ej. bajar cartas); el juego las manda con ctx.jugarLibre(jugada).
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
 //
@@ -257,7 +257,7 @@ export function montar({ reglas, juego }) {
     const e = st.estado;
     if (!reglas.libre || !e || e.ganador !== EN_JUEGO) return false;
     if (!st.online) {
-      const nx = reglas.libre(clone(e), jugada, e.turno);
+      const nx = reglas.libre(clone(e), jugada, e.turno, nombre);
       if (!nx) return false;
       st.estado = nx; efectos(e, nx); render(); return true;
     }
@@ -266,7 +266,7 @@ export function montar({ reglas, juego }) {
         if (cur === null) return cur;
         reglas.normalizar(cur);
         if (cur.ganador !== EN_JUEGO) return;
-        return reglas.libre(cur, jugada, st.asiento) || undefined;
+        return reglas.libre(cur, jugada, st.asiento, nombre) || undefined;
       });
       return res.committed;
     } catch (err) { aviso('Error de conexión: ' + err.message); return false; }

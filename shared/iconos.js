@@ -45,6 +45,14 @@ export const ICONOS = {
     `<circle cx="34" cy="14" r="5.5" fill="#ff7b39"/><path d="M31.5 11.5l5 5M36.5 11.5l-5 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>` +
     `<circle cx="13" cy="13" r="2" fill="#fff"/><circle cx="37" cy="37" r="2" fill="#fff"/>`),
 
+  ahorcado: svg(
+    `<path d="M9 40h18M14 40V9h18M14 16l7-7" stroke="#e09a55" stroke-width="3" stroke-linecap="round" fill="none"/>` +
+    `<path d="M32 9v4" stroke="${O}" stroke-width="2" stroke-linecap="round"/>` +
+    `<path d="M32 22v8M32 24l-4 4M32 24l4 4M32 30l-3 6M32 30l3 6" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>` +
+    `<circle cx="32" cy="17.5" r="4.5" fill="#ffd23f" stroke="${O}" stroke-width="1.6"/>` +
+    `<rect x="29" y="36" width="6.5" height="8" rx="1.5" fill="#fff" stroke="${O}" stroke-width="1.2"/><text x="32.25" y="42.4" text-anchor="middle" font-size="6.5" font-weight="700" fill="${ROJO}" font-family="Fredoka,system-ui,sans-serif">A</text>` +
+    `<rect x="37" y="36" width="6.5" height="8" rx="1.5" fill="#fff" stroke="${O}" stroke-width="1.2"/>`),
+
   'quien-soy': svg(
     `<rect x="11" y="8" width="24" height="32" rx="4" fill="#ffd23f" stroke="${O}" stroke-width="2"/>` +
     `<circle cx="23" cy="20" r="5.5" fill="${O}" opacity=".85"/><path d="M14.5 36q8.5-11 17 0z" fill="${O}" opacity=".85"/>` +
