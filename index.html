@@ -3,31 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Minijuegos</title>
+<title>A Juegar</title>
+<meta name="description" content="Juegos de mesa por turnos para jugar en la misma pantalla u online con amigos.">
 <link rel="stylesheet" href="shared/estilo.css">
+<link rel="icon" href="icono.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icono-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d1449">
 <style>
-.juegos{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
-.juego{display:block;text-decoration:none;color:var(--ink);background:var(--wood);color:#2a2113;
-  border-radius:18px;padding:18px 18px 16px;border-bottom:5px solid var(--groove)}
-.juego:active{transform:translateY(2px);border-bottom-width:3px}
-.juego h2{margin:0 0 6px;font-size:22px}
-.juego p{margin:0 0 10px;line-height:1.4}
-.juego span{font-size:14px;color:#6b5530}
-.bolitas{display:flex;gap:6px;margin-bottom:22px}
-.bolitas i{width:16px;height:16px;border-radius:50%;box-shadow:inset -3px -3px 5px rgba(0,0,0,.25)}
+.cabecera{display:flex;align-items:center;gap:16px;margin:8px 0 22px}
+.cabecera .logo{width:clamp(60px,16vw,104px);height:auto;flex:none;filter:drop-shadow(0 8px 0 rgba(10,5,40,.4));
+  animation:flota 4s ease-in-out infinite}
+.cabecera .textos{flex:1;min-width:0}
+.cabecera .b-sonido{align-self:flex-start}
+.marca{font-size:clamp(32px,8.6vw,72px);line-height:.95;margin:0;white-space:nowrap}
+.marca span{display:inline-block;animation:letra .7s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(var(--i)*55ms)}
+.marca span:nth-child(4n+1){color:#ff7a85;transform:rotate(-4deg)}
+.marca span:nth-child(4n+2){color:#5cc3f5;transform:rotate(3deg)}
+.marca span:nth-child(4n+3){color:#ffd23f;transform:rotate(-2deg)}
+.marca span:nth-child(4n+4){color:#6fdc9b;transform:rotate(4deg)}
+.marca .esp{width:.25em}
+@keyframes letra{from{opacity:0;transform:translateY(-40px) scale(.5)}}
+
+.acciones{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:14px}
+.accion{border-radius:26px;padding:20px;box-shadow:var(--sombra);position:relative;overflow:hidden;
+  animation:entra .45s cubic-bezier(.3,1.5,.5,1) backwards}
+.accion h2{font-size:26px;margin:0 0 4px}
+.accion p{margin:0 0 14px;opacity:.9}
+.accion::after{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;
+  background:rgba(255,255,255,.14);pointer-events:none}
+.accion.crear{background:linear-gradient(135deg,#ff8a5c,#ff4f8b)}
+.accion.unirse{background:linear-gradient(135deg,#4fb6ff,#5b5cf0);animation-delay:.08s}
+.accion .grande{width:100%}
+.accion .row{margin:0;flex-wrap:nowrap}
+.accion input.code{flex:1;width:auto;background:#fff;color:var(--oscuro);border-color:transparent}
+.accion input.code::placeholder{color:#b9b2d6}
+.accion button:not(.main){background:var(--oscuro)}
+
+.yo{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:2px solid var(--line);
+  border-radius:20px;padding:8px 8px 8px 16px;margin-bottom:26px}
+.yo label{white-space:nowrap;font-weight:600;color:var(--ink)}
+.yo input{background:transparent;border-color:transparent;min-width:0}
+.yo input:focus{background:rgba(10,5,40,.35)}
+
+.titulo-seccion{font-size:24px;margin:0 0 12px}
+.juegos{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.juego{display:flex;gap:14px;align-items:center;text-decoration:none;color:var(--oscuro);background:var(--c);
+  border-radius:24px;padding:14px;box-shadow:var(--sombra);transition:transform .15s cubic-bezier(.3,1.6,.5,1),box-shadow .1s;
+  animation:entra .45s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.15s + var(--i)*60ms)}
+.juego:hover{transform:translateY(-4px) rotate(-1.5deg)}
+.juego:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(10,5,40,.45)}
+.juego .ico{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.35);box-shadow:none;animation:none;transform:none}
+.juego:hover .ico{animation:menea .5s ease-in-out}
+.juego b{font-size:21px;display:block;line-height:1.1}
+.juego .d{font-size:15px;line-height:1.3;display:block;margin-top:3px;opacity:.85}
+.juego small{display:inline-block;margin-top:7px;background:rgba(255,255,255,.55);padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
+@keyframes menea{25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+
+/* Hoja para crear partida */
+dialog{border:0;padding:0;background:transparent;color:var(--ink);width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+dialog::backdrop{background:rgba(15,8,40,.65);backdrop-filter:blur(3px)}
+dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
+.hoja{background:var(--felt2);border:2px solid var(--line);border-radius:28px;padding:18px 18px 22px;max-height:calc(100dvh - 24px);overflow:auto}
+.hoja-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.hoja-top h2{margin:0;font-size:24px}
+.elegir{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.elegir button{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--c);color:var(--oscuro);
+  padding:14px 10px 12px;border-radius:20px;font-size:17px;animation:entra .35s backwards;animation-delay:calc(var(--i)*40ms)}
+.elegir .ico{width:64px;height:64px;border-radius:18px;background:rgba(255,255,255,.35);box-shadow:none;animation:none;transform:none}
+.elegido{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.elegido .ico{width:64px;height:64px;border-radius:18px;animation:none}
+.elegido b{font-size:22px;display:block}
+.elegido button{margin-left:auto}
+#extraP .row{margin-bottom:6px}
 </style>
 </head>
 <body>
 <main>
-  <h1>Minijuegos</h1>
-  <p class="sub">Juegos de mesa por turnos, en la misma pantalla u online con amigos.</p>
-  <div class="bolitas"><i style="background:#e8505b"></i><i style="background:#3fa7e0"></i><i style="background:#f4c430"></i><i style="background:#5cc480"></i></div>
+  <header class="cabecera">
+    <img class="logo" src="icono.svg" alt="" width="104" height="104">
+    <div class="textos">
+      <h1 class="marca" aria-label="¡A Juegar!"></h1>
+      <p class="sub">Juegos de mesa para jugar en la misma pantalla u online con amigos.</p>
+    </div>
+    <button class="icono b-sonido"></button>
+  </header>
+
+  <section class="acciones">
+    <div class="accion crear">
+      <h2>🎲 Crear partida</h2>
+      <p>Elegí un juego y armá una sala para tus amigos.</p>
+      <button class="main grande" id="bCrear">¡Crear!</button>
+    </div>
+    <form class="accion unirse" id="fUnirme">
+      <h2>🚪 Unirme</h2>
+      <p>¿Te pasaron un código? Ponelo acá.</p>
+      <div class="row">
+        <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código de sala">
+        <button id="bUnirme">Entrar</button>
+      </div>
+    </form>
+  </section>
+
+  <div class="yo"><label for="nombre">😎 Tu nombre</label><input id="nombre" maxlength="14" placeholder="¿Cómo te llamás?" autocomplete="off"></div>
+
+  <h2 class="titulo-seccion">Juegos</h2>
   <div class="juegos" id="juegos"></div>
 </main>
+
+<dialog id="dCrear" aria-labelledby="dTitulo">
+  <div class="hoja">
+    <div class="hoja-top"><h2 id="dTitulo">¿A qué jugamos?</h2><button class="icono" id="bCerrar" aria-label="Cerrar">✕</button></div>
+    <div id="paso1" class="elegir"></div>
+    <div id="paso2" hidden>
+      <div class="elegido" id="elegido"></div>
+      <div class="row"><input id="nombreC" maxlength="14" placeholder="Tu nombre" autocomplete="off" aria-label="Tu nombre"></div>
+      <div id="cantP"></div>
+      <div id="extraP"></div>
+      <button class="main grande" id="bConfirmar" style="width:100%">Crear sala</button>
+    </div>
+  </div>
+</dialog>
+
 <script type="module">
-  import { JUEGOS } from './shared/juegos.js';
-  document.getElementById('juegos').innerHTML = JUEGOS.map(j =>
-    `<a class="juego" href="./${j.id}/"><h2>${j.nombre}</h2><p>${j.desc}</p><span>${j.jugadores} jugadores</span></a>`).join('');
+import { JUEGOS } from './shared/juegos.js';
+import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
+         selectorJugadores, jugadoresElegidos } from './shared/salas.js';
+import { sonar, botonesSonido, animar } from './shared/efectos.js';
+
+const $ = id => document.getElementById(id);
+const ico = (id, color) => `<span class="ico" style="--c:${color}">${iconoJuego(id)}</span>`;
+
+// Marca con letras de colores
+document.querySelector('.marca').innerHTML = [...'¡A Juegar!'].map((ch, i) =>
+  ch === ' ' ? '<span class="esp"> </span>' : `<span style="--i:${i}" aria-hidden="true">${ch}</span>`).join('');
+
+$('juegos').innerHTML = JUEGOS.map((j, i) =>
+  `<a class="juego" href="./${j.id}/" style="--c:${j.color};--i:${i}">${ico(j.id, j.color)}
+     <span><b>${esc(j.nombre)}</b><span class="d">${esc(j.desc)}</span><small>${esc(j.jugadores)} jugadores</small></span></a>`).join('');
+
+botonesSonido();
+document.addEventListener('click', ev => { if (ev.target.closest('button:not(.b-sonido), .juego')) sonar('tap'); });
+document.addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
+
+// ---------- Nombre (se comparte con todos los juegos) ----------
+$('nombre').value = nombreGuardado();
+$('nombre').addEventListener('input', () => guardarNombre($('nombre').value.trim()));
+
+// ---------- Unirme: el código te lleva solo al juego que corresponde ----------
+$('codigo').addEventListener('input', () => {
+  $('codigo').value = $('codigo').value.toUpperCase().replace(/[^A-Z]/g, '');
+});
+$('fUnirme').onsubmit = async ev => {
+  ev.preventDefault();
+  const cod = $('codigo').value;
+  if (cod.length !== 4) { aviso('El código tiene 4 letras'); sonar('error'); animar($('codigo'), 'sacudir'); return; }
+  $('bUnirme').disabled = true; $('bUnirme').textContent = 'Buscando…';
+  try {
+    const sala = await buscarSala(cod);
+    if (sala) { location.href = `./${sala.id}/?sala=${cod}`; return; }
+    aviso('No encontré la sala ' + cod); sonar('error'); animar($('codigo'), 'sacudir');
+  } catch (e) { aviso(e.message); }
+  $('bUnirme').disabled = false; $('bUnirme').textContent = 'Entrar';
+};
+
+// ---------- Crear partida: elegir juego, jugadores y listo ----------
+let elegido = null;   // {j, reglas, juego}
+$('paso1').innerHTML = JUEGOS.map((j, i) =>
+  `<button data-id="${j.id}" style="--c:${j.color};--i:${i}">${ico(j.id, j.color)}${esc(j.nombre)}</button>`).join('');
+
+function abrirHoja() {
+  mostrarPaso(1);
+  $('dCrear').showModal();
+}
+function mostrarPaso(n) {
+  $('paso1').hidden = n !== 1; $('paso2').hidden = n !== 2;
+  $('dTitulo').textContent = n === 1 ? '¿A qué jugamos?' : 'Armá la sala';
+}
+$('bCrear').onclick = abrirHoja;
+$('bCerrar').onclick = () => $('dCrear').close();
+$('dCrear').addEventListener('click', ev => { if (ev.target === $('dCrear')) $('dCrear').close(); });  // tocar afuera cierra
+
+$('paso1').addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-id]');
+  if (!b) return;
+  const j = JUEGOS.find(x => x.id === b.dataset.id);
+  try {
+    const [reglas, juego] = await Promise.all([import(`./${j.id}/reglas.js`), import(`./${j.id}/juego.js`)]);
+    elegido = {j, reglas, juego};
+  } catch (e) { aviso('No pude cargar ' + j.nombre); return; }
+  const {info} = elegido.reglas;
+  $('elegido').innerHTML = `${ico(j.id, j.color)}<div><b>${esc(info.nombre)}</b><span class="note">${esc(j.jugadores)} jugadores</span></div>
+    <button class="chico" id="bOtro">Cambiar</button>`;
+  $('bOtro').onclick = () => mostrarPaso(1);
+  $('cantP').innerHTML = selectorJugadores(info, 'cantP');
+  $('extraP').innerHTML = '';
+  elegido.juego.menu?.($('extraP'));
+  $('nombreC').value = $('nombre').value.trim() || nombreGuardado();
+  mostrarPaso(2);
+  if (!$('nombreC').value) $('nombreC').focus();
+});
+
+$('bConfirmar').onclick = async () => {
+  const nombre = $('nombreC').value.trim();
+  if (!nombre) { aviso('Poné tu nombre'); sonar('error'); animar($('nombreC'), 'sacudir'); $('nombreC').focus(); return; }
+  guardarNombre(nombre); $('nombre').value = nombre;
+  const {j, reglas, juego} = elegido;
+  $('bConfirmar').disabled = true; $('bConfirmar').textContent = 'Creando…';
+  try {
+    const cod = await crearSala({reglas, n: jugadoresElegidos(reglas.info, 'cantP'), opciones: juego.opciones?.(), nombre});
+    location.href = `./${j.id}/?sala=${cod}`;
+  } catch (e) {
+    aviso(e.message);
+    $('bConfirmar').disabled = false; $('bConfirmar').textContent = 'Crear sala';
+  }
+};
 </script>
 </body>
 </html>

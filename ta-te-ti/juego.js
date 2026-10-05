@@ -4,8 +4,10 @@
 //  dibujar(ctx): se llama cada vez que cambia algo; devolvé un texto de ayuda (opcional).
 //  reiniciar():  (opcional) limpiá tu estado de pantalla al empezar/salir.
 //
+//  sonido(antes, despues, ctx): (opcional) qué sonido hace una jugada; si no está, suena 'colocar'.
+//
 //  ctx trae: estado, online, miAsiento, puedoJugar(), jugar(jugada) -> Promise<bool>,
-//            nombre(i), color(i), aviso(texto), refrescar(), tablero, controles
+//            nombre(i), color(i), aviso(texto), sonar(nombre), animar(el), refrescar(), tablero, controles
 // =====================================================================
 let grilla;
 
@@ -25,6 +27,7 @@ export function dibujar(ctx) {
   const e = ctx.estado, puedo = ctx.puedoJugar();
   grilla.querySelectorAll('button').forEach(b => {
     const v = e.celdas[+b.dataset.i];
+    if (b.dataset.v !== String(v)) { b.dataset.v = v; if (v !== -1) ctx.animar(b); }
     b.textContent = v === -1 ? '' : (v === 0 ? 'X' : 'O');
     b.style.color = v === -1 ? '' : ctx.color(v);
     b.disabled = !puedo || v !== -1;

@@ -1,5 +1,6 @@
 // Pantalla de Al Centro: dibuja el tablero y traduce toques en jugadas.
 import { N, META, COLS, movidas, problemaMuro } from './reglas.js';
+import { animaciones } from '../shared/efectos.js';
 
 const CS = 40, GP = 10, PD = 26, STEP = CS + GP;
 const LADO = N * CS + (N - 1) * GP, SZ = PD + LADO + 12;
@@ -7,6 +8,14 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 let ctx, svg;
 let ui = {muro: false, orient: 'h', toque: null, preview: null};
+let vistas = {pos: [], muros: -1};   // lo último dibujado, para animar solo lo nuevo
+const anim = animaciones();
+
+export function sonido(a, e) {
+  if (e.muros.length > a.muros.length) return 'muro';
+  if (e.pos.some(([c, r], i) => c !== a.pos[i][0] || r !== a.pos[i][1])) return 'mover';
+  return 'pasar';
+}
 
 function ancla(c, r, o) {
   return o === 'h' ? {o, c: clamp(c - 1, 0, 8), r: clamp(r, 0, 9)}
@@ -19,7 +28,7 @@ async function hacer(jugada) {
 }
 function tocar(c, r) {
   if (!ctx.puedoJugar()) return;
-  if (ui.muro) { ui.toque = [c, r]; ui.preview = ancla(c, r, ui.orient); ctx.refrescar(); return; }
+  if (ui.muro) { ui.toque = [c, r]; ui.preview = ancla(c, r, ui.orient); ctx.sonar('tick'); ctx.refrescar(); return; }
   hacer({tipo: 'mover', a: [c, r]});
 }
 
@@ -38,9 +47,10 @@ export function iniciar(c) {
     <button class="main" id="bPoner" hidden>Poner muro</button>
     <button id="bPasar" hidden>Pasar turno</button>`;
   const $ = id => document.getElementById(id);
-  $('bMover').onclick = () => { ui.muro = false; ui.preview = null; ctx.refrescar(); };
-  $('bMuro').onclick = () => { ui.muro = true; ctx.refrescar(); };
+  $('bMover').onclick = () => { ctx.sonar('tap'); ui.muro = false; ui.preview = null; ctx.refrescar(); };
+  $('bMuro').onclick = () => { ctx.sonar('tap'); ui.muro = true; ctx.refrescar(); };
   $('bGirar').onclick = () => {
+    ctx.sonar('tick');
     ui.orient = ui.orient === 'h' ? 'v' : 'h';
     if (ui.toque) ui.preview = ancla(ui.toque[0], ui.toque[1], ui.orient);
     ctx.refrescar();
@@ -72,7 +82,11 @@ export function dibujar(ctx) {
     s += `<rect class="cell${meta ? ' goal' : ''}${esMv(c, r) ? ' mv' : ''}" x="${x}" y="${y}" width="${CS}" height="${CS}" rx="7" data-c="${c}" data-r="${r}"/>`;
     if (meta) s += `<circle class="goalmark" cx="${x + CS / 2}" cy="${y + CS / 2}" r="12"/>`;
   }
-  for (const w of e.muros) s += muroRect(w, ctx.color(w.p), 'wall');
+  e.muros.forEach((w, k) => {
+    const clave = `m${w.o}${w.c},${w.r}`;
+    if (vistas.muros >= 0 && k >= vistas.muros) anim.marcar(clave);
+    s += anim.envolver(clave, muroRect(w, ctx.color(w.p), 'wall'));
+  });
   if (muroActivo && ui.preview) {
     const ok = e.quedan[p] > 0 && !problemaMuro(e, ui.preview, ctx.nombre);
     s += muroRect(ui.preview, ok ? 'var(--ok)' : 'var(--bad)', 'prev');
@@ -80,10 +94,13 @@ export function dibujar(ctx) {
   e.pos.forEach(([c, r], i) => {
     const x = PD + c * STEP + CS / 2, y = PD + r * STEP + CS / 2;
     if (i === p && e.ganador === -1) s += `<circle class="ring" cx="${x}" cy="${y}" r="17.5" stroke="${ctx.color(i)}"/>`;
-    s += `<circle class="ball" cx="${x}" cy="${y}" r="13" fill="${ctx.color(i)}" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>`;
-    s += `<circle class="shine" cx="${x - 4}" cy="${y - 4}" r="4" fill="rgba(255,255,255,.55)"/>`;
+    const clave = `b${i}:${c},${r}`;
+    if (vistas.pos[i] && vistas.pos[i] !== c + ',' + r) anim.marcar(clave);
+    s += anim.envolver(clave, `<circle class="ball" cx="${x}" cy="${y}" r="13" fill="${ctx.color(i)}" stroke="rgba(0,0,0,.3)" stroke-width="1.5"/>` +
+                              `<circle class="shine" cx="${x - 4}" cy="${y - 4}" r="4" fill="rgba(255,255,255,.55)"/>`);
   });
   svg.innerHTML = s;
+  vistas = {pos: e.pos.map(([c, r]) => c + ',' + r), muros: e.muros.length};
 
   const $ = id => document.getElementById(id);
   $('bMover').classList.toggle('on', !ui.muro);

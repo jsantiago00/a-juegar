@@ -1,5 +1,6 @@
 // Pantalla de Lameloide: rombo de hexágonos. Un toque elige, otro toque confirma.
 import { N, COLS, VECINOS, puedeCambiar } from './reglas.js';
+import { animaciones } from '../shared/efectos.js';
 
 const R = 22, W = Math.sqrt(3) * R, PX = W / 2 + 22, PY = R + 22;
 const ANCHO = PX * 2 + W * (N - 1) * 1.5, ALTO = PY * 2 + 1.5 * R * (N - 1);
@@ -10,8 +11,13 @@ const vert = (x, y) => Array.from({length: 6}, (_, k) => {
   return [x + R * Math.cos(a), y + R * Math.sin(a)];
 });
 
-let ctx, svg, sel = -1;
+let ctx, svg, sel = -1, ultVista = null;
+const anim = animaciones();
 export function reiniciar() { sel = -1; }
+
+// Cambiar no agrega fichas: suena como un "swoosh"
+const fichas = e => e.celdas.filter(x => x >= 0).length;
+export const sonido = (a, e) => (fichas(e) === fichas(a) ? 'cambiar' : 'colocar');
 
 export function iniciar(c) {
   ctx = c;
@@ -25,7 +31,7 @@ export function iniciar(c) {
     const i = +t.dataset.i;
     if (ctx.estado.celdas[i] !== -1) return;
     if (sel === i) ctx.jugar({i}).then(() => { sel = -1; ctx.refrescar(); });
-    else { sel = i; ctx.refrescar(); }
+    else { sel = i; ctx.sonar('tick'); ctx.refrescar(); }
   });
   ctx.controles.innerHTML = '<button id="bCambiar" hidden>Cambiar</button>';
   document.getElementById('bCambiar').onclick = () =>
@@ -35,11 +41,15 @@ export function iniciar(c) {
 export function dibujar(ctx) {
   const e = ctx.estado, puedo = ctx.puedoJugar();
   if (!puedo) sel = -1;
+  const claveUlt = e.ult >= 0 ? `${e.ult}:${e.celdas[e.ult]}:${e.jugadas}` : null;
+  if (ultVista !== null && claveUlt && claveUlt !== ultVista) anim.marcar(claveUlt);
+  ultVista = claveUlt || '';
   let hexes = '', bordes = '', marcas = '';
   for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
     const i = r * N + c, [x, y] = centro(r, c), v = vert(x, y), d = e.celdas[i];
     const fill = d >= 0 ? ctx.color(d) : (i === sel ? 'var(--ok)' : ((r + c) % 2 ? 'var(--wood)' : 'var(--wood2)'));
-    hexes += `<polygon class="hex${d < 0 && puedo ? ' libre' : ''}" data-i="${i}" points="${v.map(p => p.join(',')).join(' ')}" fill="${fill}"/>`;
+    const poly = `<polygon class="hex${d < 0 && puedo ? ' libre' : ''}" data-i="${i}" points="${v.map(p => p.join(',')).join(' ')}" fill="${fill}"/>`;
+    hexes += i === e.ult && claveUlt ? anim.envolver(claveUlt, poly) : poly;
     if (i === e.ult) marcas += `<circle class="ultm" cx="${x}" cy="${y}" r="6"/>`;
     // Lados que dan afuera del tablero: arriba/abajo de Rojo, costados de Azul
     VECINOS.forEach(([dr, dc], k) => {

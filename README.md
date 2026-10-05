@@ -4,10 +4,13 @@ Juegos de mesa por turnos, local u online (Firebase Realtime Database + GitHub P
 
 ## Estructura
 ```
-index.html            portada (lee shared/juegos.js)
+index.html            portada: crear partida (elegís juego) y unirte con código
+icono.svg             ícono (+ icono-180/512.png y manifest.webmanifest)
 shared/
   firebase.js         config de Firebase (una sola para todos)
-  salas.js            motor: menú, salas, turnos, invitar, revancha
+  salas.js            motor: menú, salas, turnos, invitar, revancha, sonidos y festejo
+  efectos.js          sonidos sintetizados (Web Audio), confeti y animaciones
+  iconos.js           ícono SVG de cada juego
   estilo.css          estilos comunes
   juegos.js           lista de juegos de la portada
 al-centro/            un juego = index.html + reglas.js + juego.js
@@ -23,10 +26,14 @@ ta-te-ti/             juego mínimo, sirve de plantilla
 2. En `reglas.js`: cambiá `info.id` (igual a la carpeta), nombre, jugadores y reglas;
    escribí `nuevoJuego`, `normalizar` y `aplicar`.
 3. En `juego.js`: armá el tablero en `iniciar` y actualizalo en `dibujar`.
-4. Sumá una línea en `shared/juegos.js`.
+4. Sumá una línea en `shared/juegos.js` (con su `color`) y, si querés, su ícono en `shared/iconos.js`.
+5. (Opcional) En `juego.js` exportá `sonido(antes, despues, ctx)` para elegir qué suena en cada jugada
+   (`'colocar'`, `'mover'`, `'linea'`, `'punto'`, `'muro'`, `'carta'`…; ver `shared/efectos.js`).
 
 El estado siempre lleva `n`, `turno`, `ganador` (-1 en juego, -2 empate) y `ultima`.
 Lo online sale solo: cada juego guarda sus salas en `juegos/<id>/salas/<código>`.
+Los códigos son únicos entre todos los juegos: desde la portada (o desde cualquier juego) ponés el código
+y te lleva solo al juego correcto. El link de invitación (`<juego>/?sala=ABCD`) te mete directo a la sala.
 
 ## Reglas sugeridas de Firebase
 ```json

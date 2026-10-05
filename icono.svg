@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d4ee6"/>
+      <stop offset="1" stop-color="#2f1f73"/>
+    </linearGradient>
+    <linearGradient id="dado" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe680"/>
+      <stop offset="1" stop-color="#ffc21a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#fondo)"/>
+  <g fill="#fff8ea">
+    <path d="M92 70l11 27 27 11-27 11-11 27-11-27-27-11 27-11z"/>
+    <path d="M432 372l7 17 17 7-17 7-7 17-7-17-17-7 17-7z" opacity=".85"/>
+    <circle cx="438" cy="96" r="9" opacity=".7"/>
+    <circle cx="70" cy="420" r="7" opacity=".6"/>
+  </g>
+  <g transform="rotate(-9 256 276)">
+    <rect x="104" y="140" width="304" height="304" rx="80" fill="#140c36" opacity=".45"/>
+    <rect x="104" y="118" width="304" height="304" rx="80" fill="url(#dado)" stroke="#2a1d4f" stroke-width="14"/>
+    <path d="M150 168q20-26 58-30" stroke="#fff" stroke-width="14" stroke-linecap="round" fill="none" opacity=".6"/>
+    <circle cx="164" cy="372" r="19" fill="#5cc480" stroke="#2a1d4f" stroke-width="6"/>
+    <circle cx="348" cy="372" r="19" fill="#e8505b" stroke="#2a1d4f" stroke-width="6"/>
+    <circle cx="348" cy="176" r="19" fill="#3fa7e0" stroke="#2a1d4f" stroke-width="6"/>
+    <ellipse cx="214" cy="252" rx="21" ry="29" fill="#2a1d4f"/>
+    <circle cx="221" cy="240" r="8" fill="#fff"/>
+    <path d="M276 258q22-28 44 0" stroke="#2a1d4f" stroke-width="13" stroke-linecap="round" fill="none"/>
+    <ellipse cx="178" cy="306" rx="22" ry="13" fill="#ff7a85" opacity=".75"/>
+    <ellipse cx="338" cy="306" rx="22" ry="13" fill="#ff7a85" opacity=".75"/>
+    <path d="M214 300Q258 364 302 300Z" fill="#2a1d4f" stroke="#2a1d4f" stroke-width="8" stroke-linejoin="round"/>
+    <ellipse cx="258" cy="322" rx="19" ry="9" fill="#ff6b81"/>
+  </g>
+</svg>

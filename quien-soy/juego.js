@@ -14,11 +14,21 @@ async function cargarMazo(id) {
 }
 const imagen = c => (c.svg ? c.svg : `<img src="${esc(c.img)}" alt="">`);
 
+// Sonido de cada paso. Las cartas que baja el rival no suenan (solo las tuyas).
+export function sonido(a, e, ctx) {
+  if (a.fase === 'pregunta' && e.fase === 'respuesta') return 'pregunta';
+  if (a.fase === 'respuesta' && e.fase === 'descartar') return e.respuesta === 'Sí' ? 'si' : 'no';
+  if (a.fase === 'descartar' && e.fase === 'pregunta') return 'pasar';
+  if (e.ganador !== -1) return null;
+  const yo = ctx.miAsiento;
+  return JSON.stringify(a.bajadas[yo]) !== JSON.stringify(e.bajadas[yo]) ? 'carta' : null;
+}
+
 // ---------- Menú: elegir mazo ----------
 export function menu(el) {
   el.innerHTML = `<div class="row"><label for="mazo">Mazo</label>
     <select id="mazo"><option value="dibujitos" data-n="24" data-nombre="Dibujitos">Dibujitos (24)</option></select>
-    <a href="mazos.html">Crear o editar mazos</a></div>`;
+    <a href="${new URL('mazos.html', import.meta.url).href}">Crear o editar mazos</a></div>`;
   conectar()
     .then(fb => fb.get(fb.ref(fb.db, 'mazos/indice')))
     .then(snap => {
@@ -57,7 +67,7 @@ export function iniciar(c) {
 function tocarCarta(i) {
   const e = ctx.estado;
   if (!ctx.puedoJugar()) return;
-  if (arriesgo) { elegida = i; ctx.refrescar(); return; }
+  if (arriesgo) { elegida = i; ctx.sonar('tick'); ctx.refrescar(); return; }
   if (e.fase === 'pregunta' || e.fase === 'descartar') ctx.jugar({tipo: 'bajar', i});
 }
 
@@ -69,7 +79,7 @@ async function accion(a) {
   }
   if (a === 'si' || a === 'no') await ctx.jugar({tipo: 'responder', si: a === 'si'});
   if (a === 'listo') await ctx.jugar({tipo: 'listo'});
-  if (a === 'arriesgar') { arriesgo = true; elegida = -1; ctx.refrescar(); }
+  if (a === 'arriesgar') { arriesgo = true; elegida = -1; ctx.sonar('tap'); ctx.refrescar(); }
   if (a === 'cancelar') { arriesgo = false; elegida = -1; ctx.refrescar(); }
   if (a === 'confirmar' && elegida >= 0) {
     const i = elegida; arriesgo = false; elegida = -1;

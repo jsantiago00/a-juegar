@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ta-te-ti</title>
 <link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
 <style>
-.tateti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:360px;margin:0 auto;
-  background:var(--groove);padding:8px;border-radius:16px}
-.tateti button{aspect-ratio:1;border-radius:10px;background:var(--wood);font-size:56px;font-weight:700;padding:0}
+.tateti{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:380px;margin:0 auto;
+  background:var(--groove);padding:12px 12px 16px;border-radius:24px;box-shadow:0 8px 0 rgba(10,5,40,.45)}
+.tateti button{aspect-ratio:1;border-radius:16px;background:var(--wood);font-size:60px;font-weight:700;padding:0;
+  box-shadow:0 5px 0 #c98a4a}
+.tateti button:not(:disabled):hover{background:#fff}
 .tateti button:disabled{opacity:1;cursor:default}
 </style>
 </head>

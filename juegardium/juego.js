@@ -1,8 +1,14 @@
 // Pantalla de Juegardium. Tocás una línea para elegirla y otra vez para confirmar.
+import { animaciones } from '../shared/efectos.js';
+
 const D = 64, PD = 26;
-let ctx, svg, sel = null;
+let ctx, svg, sel = null, vistas = null;
+const anim = animaciones(), animLinea = animaciones(400);
 
 export function reiniciar() { sel = null; }
+
+const cerradas = e => e.cajas.filter(x => x >= 0).length;
+export const sonido = (a, e) => (cerradas(e) > cerradas(a) ? 'punto' : 'linea');
 
 export function iniciar(c) {
   ctx = c;
@@ -15,7 +21,7 @@ export function iniciar(c) {
     const j = {o: t.dataset.o, i: +t.dataset.i};
     if (sel && sel.o === j.o && sel.i === j.i) {
       ctx.jugar(j).then(() => { sel = null; ctx.refrescar(); });
-    } else { sel = j; ctx.refrescar(); }
+    } else { sel = j; ctx.sonar('tick'); ctx.refrescar(); }
   });
 }
 
@@ -30,16 +36,22 @@ export function dibujar(ctx) {
 
   let s = `<rect class="bg" x="4" y="4" width="${tam - 8}" height="${tam - 8}" rx="16"/>`;
   for (let r = 0; r < S; r++) for (let c = 0; c < S; c++) {
-    const d = e.cajas[r * S + c];
+    const k = r * S + c, d = e.cajas[k];
     if (d >= 0) {
-      s += `<rect x="${X(c) + 4}" y="${Y(r) + 4}" width="${D - 8}" height="${D - 8}" rx="6" fill="${ctx.color(d)}" opacity=".45"/>`;
-      s += `<circle cx="${X(c) + D / 2}" cy="${Y(r) + D / 2}" r="9" fill="${ctx.color(d)}"/>`;
+      if (vistas && vistas.S === S && vistas.cajas[k] === -1) anim.marcar('c' + k);
+      s += anim.envolver('c' + k,
+        `<rect x="${X(c) + 4}" y="${Y(r) + 4}" width="${D - 8}" height="${D - 8}" rx="6" fill="${ctx.color(d)}" opacity=".45"/>` +
+        `<circle cx="${X(c) + D / 2}" cy="${Y(r) + D / 2}" r="9" fill="${ctx.color(d)}"/>`);
     }
   }
   const linea = (o, i, x1, y1, x2, y2) => {
     const d = (o === 'h' ? e.h : e.v)[i];
     let out;
-    if (d >= 0) out = `<line class="lin${esUlt(o, i) ? ' ult' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ctx.color(d)}"/>`;
+    if (d >= 0) {
+      if (vistas && vistas.S === S && vistas[o][i] === -1) animLinea.marcar(o + i);
+      out = animLinea.envolver(o + i,
+        `<line class="lin${esUlt(o, i) ? ' ult' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ctx.color(d)}" pathLength="100"/>`, 'trazo');
+    }
     else if (esSel(o, i)) out = `<line class="lin sel" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
     else out = `<line class="vacia" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
     if (d < 0 && puedo) {
@@ -53,6 +65,7 @@ export function dibujar(ctx) {
   for (let r = 0; r < S; r++) for (let c = 0; c <= S; c++) s += linea('v', r * (S + 1) + c, X(c), Y(r), X(c), Y(r + 1));
   for (let r = 0; r <= S; r++) for (let c = 0; c <= S; c++) s += `<circle class="punto" cx="${X(c)}" cy="${Y(r)}" r="6"/>`;
   svg.innerHTML = s;
+  vistas = {S, h: [...e.h], v: [...e.v], cajas: [...e.cajas]};
 
   if (!puedo) return '';
   return sel ? 'Tocá la misma línea de nuevo para trazarla' : 'Tocá una línea para elegirla';

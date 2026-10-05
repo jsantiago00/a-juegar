@@ -5,13 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mazos de ¿Quién soy?</title>
 <link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
 <style>
 .mazo{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .mazo div{flex:1} .mazo span{display:block;color:var(--mute);font-size:15px}
-.boton{display:inline-flex;align-items:center;font-weight:600;border-radius:999px;padding:10px 20px;min-height:48px;
-  background:var(--wood);color:#2a2113;cursor:pointer}
+.boton{display:inline-flex;align-items:center;font-weight:600;border-radius:16px;padding:10px 20px;min-height:50px;
+  background:var(--amarillo);color:var(--oscuro);cursor:pointer;box-shadow:0 5px 0 #c99a00}
+.boton:active{transform:translateY(4px);box-shadow:0 1px 0 #c99a00}
 .cartas-ed{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin:14px 0}
-.ced{background:var(--felt2);border:1px solid var(--line);border-radius:14px;padding:8px;position:relative}
+.ced{background:rgba(10,5,40,.35);border:1px solid var(--line);border-radius:14px;padding:8px;position:relative}
 .ced img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
 .ced input{width:100%;min-width:0;margin-top:6px;font-size:15px;min-height:40px;padding:6px 10px}
 .ced button{position:absolute;top:4px;right:4px;min-height:34px;width:34px;padding:0;border-radius:50%;background:rgba(0,0,0,.6)}
@@ -19,16 +22,16 @@
 </head>
 <body>
 <main>
-  <a href="./">Volver al juego</a>
-  <h1>Mazos</h1>
-  <p class="sub">Armá mazos con fotos para ¿Quién soy? Se guardan en tu Firebase, no en el repo.</p>
+  <div class="barra"><a class="volver" href="./">← Volver al juego</a></div>
+  <div class="hero"><span class="ico" style="--c:#ffd23f" id="icoMazos"></span><div><h1>Mazos</h1>
+  <p class="sub">Armá mazos con fotos para ¿Quién soy? Se guardan en tu Firebase, no en el repo.</p></div></div>
 
-  <section id="lista">
+  <section id="lista" class="tarjeta">
     <div id="mazos"><p class="note">Cargando…</p></div>
     <div class="row" style="margin-top:14px"><button class="main" id="bNuevo">Nuevo mazo</button></div>
   </section>
 
-  <section id="editor" hidden>
+  <section id="editor" class="tarjeta" hidden>
     <div class="row"><input id="nombreMazo" placeholder="Nombre del mazo (ej. Oficina)" maxlength="30"></div>
     <div class="row">
       <label class="boton" for="fotos">Agregar fotos</label>
@@ -42,7 +45,8 @@
 </main>
 
 <script type="module">
-import { conectar, lista, aviso, esc } from '../shared/salas.js';
+import { conectar, lista, aviso, esc, iconoJuego } from '../shared/salas.js';
+document.getElementById('icoMazos').innerHTML = iconoJuego('quien-soy');
 
 const $ = id => document.getElementById(id);
 let fb, editando = null, cartas = [];
