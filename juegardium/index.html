@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Juegardium</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<style>
+#board{width:100%;height:auto;display:block;touch-action:manipulation;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))}
+#board .bg{fill:var(--wood)}
+#board .punto{fill:#5e4a26;pointer-events:none}
+#board .vacia{stroke:rgba(94,74,38,.18);stroke-width:4;stroke-linecap:round;stroke-dasharray:2 8;pointer-events:none}
+#board .lin{stroke-width:7;stroke-linecap:round;pointer-events:none}
+#board .lin.sel{stroke:#2a8f6a;stroke-dasharray:10 8}
+#board .lin.ult{stroke-width:10}
+#board .hit{fill:transparent;cursor:pointer}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ta-te-ti</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<style>
+.tateti{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:360px;margin:0 auto;
+  background:var(--groove);padding:8px;border-radius:16px}
+.tateti button{aspect-ratio:1;border-radius:10px;background:var(--wood);font-size:56px;font-weight:700;padding:0}
+.tateti button:disabled{opacity:1;cursor:default}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

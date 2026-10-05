@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Al Centro</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<style>
+#board{width:100%;height:auto;display:block;touch-action:manipulation;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))}
+#board .bg{fill:var(--groove)}
+#board .cell{fill:var(--wood);cursor:pointer}
+#board .cell:nth-of-type(odd){fill:var(--wood2)}
+#board .cell.goal{fill:#f7ecd0}
+#board .cell.mv{fill:var(--ok)}
+#board .lbl{fill:var(--mute);font-size:12px;font-weight:600;text-anchor:middle;pointer-events:none}
+#board .goalmark{fill:none;stroke:var(--groove);stroke-width:3;pointer-events:none}
+#board .wall,#board .prev,#board .ball,#board .ring,#board .shine{pointer-events:none}
+#board .wall{stroke:rgba(0,0,0,.35);stroke-width:1.5}
+#board .prev{opacity:.85}
+#board .ring{fill:none;stroke-width:3;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){#board .ring{animation:none}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

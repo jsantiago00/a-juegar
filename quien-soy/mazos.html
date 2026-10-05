@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mazos de ¿Quién soy?</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<style>
+.mazo{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mazo div{flex:1} .mazo span{display:block;color:var(--mute);font-size:15px}
+.boton{display:inline-flex;align-items:center;font-weight:600;border-radius:999px;padding:10px 20px;min-height:48px;
+  background:var(--wood);color:#2a2113;cursor:pointer}
+.cartas-ed{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin:14px 0}
+.ced{background:var(--felt2);border:1px solid var(--line);border-radius:14px;padding:8px;position:relative}
+.ced img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.ced input{width:100%;min-width:0;margin-top:6px;font-size:15px;min-height:40px;padding:6px 10px}
+.ced button{position:absolute;top:4px;right:4px;min-height:34px;width:34px;padding:0;border-radius:50%;background:rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+<main>
+  <a href="./">Volver al juego</a>
+  <h1>Mazos</h1>
+  <p class="sub">Armá mazos con fotos para ¿Quién soy? Se guardan en tu Firebase, no en el repo.</p>
+
+  <section id="lista">
+    <div id="mazos"><p class="note">Cargando…</p></div>
+    <div class="row" style="margin-top:14px"><button class="main" id="bNuevo">Nuevo mazo</button></div>
+  </section>
+
+  <section id="editor" hidden>
+    <div class="row"><input id="nombreMazo" placeholder="Nombre del mazo (ej. Oficina)" maxlength="30"></div>
+    <div class="row">
+      <label class="boton" for="fotos">Agregar fotos</label>
+      <input type="file" id="fotos" accept="image/*" multiple hidden>
+      <span class="note" id="cuenta"></span>
+    </div>
+    <p class="note">Las fotos se recortan cuadradas (priorizando la parte de arriba, donde suele estar la cara). Ideal: entre 16 y 30 cartas.</p>
+    <div class="cartas-ed" id="cartas"></div>
+    <div class="row"><button class="main" id="bGuardar">Guardar mazo</button><button id="bCancelar">Cancelar</button></div>
+  </section>
+</main>
+
+<script type="module">
+import { conectar, lista, aviso, esc } from '../shared/salas.js';
+
+const $ = id => document.getElementById(id);
+let fb, editando = null, cartas = [];
+
+async function iniciar() {
+  try { fb = await conectar(); }
+  catch (e) { $('mazos').innerHTML = `<p class="note">${esc(e.message)}</p>`; $('bNuevo').disabled = true; return; }
+  listar();
+}
+
+async function listar() {
+  $('lista').hidden = false; $('editor').hidden = true;
+  const v = (await fb.get(fb.ref(fb.db, 'mazos/indice'))).val() || {};
+  const ids = Object.keys(v);
+  $('mazos').innerHTML = ids.length
+    ? ids.map(id => `<div class="mazo"><div><b>${esc(v[id].nombre)}</b><span>${v[id].cantidad} cartas</span></div>
+        <button data-ed="${esc(id)}">Editar</button><button data-del="${esc(id)}">Borrar</button></div>`).join('')
+    : '<p class="note">Todavía no hay mazos. Creá el primero.</p>';
+}
+
+$('mazos').addEventListener('click', async ev => {
+  const ed = ev.target.closest('[data-ed]'), del = ev.target.closest('[data-del]');
+  if (ed) abrir(ed.dataset.ed);
+  if (del && confirm('¿Borrar este mazo?')) {
+    await fb.set(fb.ref(fb.db, 'mazos/cartas/' + del.dataset.del), null);
+    await fb.set(fb.ref(fb.db, 'mazos/indice/' + del.dataset.del), null);
+    aviso('Mazo borrado'); listar();
+  }
+});
+
+async function abrir(id) {
+  editando = id; cartas = [];
+  $('nombreMazo').value = '';
+  if (id) {
+    const v = (await fb.get(fb.ref(fb.db, 'mazos/cartas/' + id))).val();
+    if (v) { $('nombreMazo').value = v.nombre || ''; cartas = lista(v.cartas); }
+  }
+  $('lista').hidden = true; $('editor').hidden = false;
+  pintar();
+}
+
+function pintar() {
+  $('cartas').innerHTML = cartas.map((c, i) =>
+    `<div class="ced"><img src="${esc(c.img)}" alt=""><input data-n="${i}" value="${esc(c.nombre)}" maxlength="20" placeholder="Nombre">
+     <button data-q="${i}" aria-label="Quitar">✕</button></div>`).join('');
+  $('cuenta').textContent = cartas.length ? `${cartas.length} cartas` : '';
+}
+$('cartas').addEventListener('input', ev => { const i = ev.target.dataset.n; if (i != null) cartas[+i].nombre = ev.target.value; });
+$('cartas').addEventListener('click', ev => { const q = ev.target.closest('[data-q]'); if (q) { cartas.splice(+q.dataset.q, 1); pintar(); } });
+
+// Recorta cuadrado (sesgado hacia arriba) y achica a 240px en JPEG: ~15 KB por foto
+async function achicar(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    await new Promise((ok, mal) => { img.onload = ok; img.onerror = mal; img.src = url; });
+    const w = img.naturalWidth, h = img.naturalHeight, lado = Math.min(w, h);
+    const cv = document.createElement('canvas'); cv.width = cv.height = 240;
+    cv.getContext('2d').drawImage(img, (w - lado) / 2, (h - lado) * 0.25, lado, lado, 0, 0, 240, 240);
+    return cv.toDataURL('image/jpeg', 0.78);
+  } finally { URL.revokeObjectURL(url); }
+}
+$('fotos').addEventListener('change', async ev => {
+  const files = [...ev.target.files];
+  for (const f of files) {
+    if (cartas.length >= 40) { aviso('Máximo 40 cartas'); break; }
+    try { cartas.push({nombre: f.name.replace(/\.[^.]+$/, '').slice(0, 20), img: await achicar(f)}); }
+    catch { aviso('No pude leer ' + f.name); }
+    pintar();
+  }
+  ev.target.value = '';
+});
+
+$('bGuardar').onclick = async () => {
+  const nombre = $('nombreMazo').value.trim();
+  if (!nombre) { aviso('Ponele nombre al mazo'); return; }
+  if (cartas.length < 6) { aviso('Necesitás al menos 6 cartas'); return; }
+  if (cartas.some(c => !c.nombre.trim())) { aviso('Hay cartas sin nombre'); return; }
+  const id = editando || nombre.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20)
+                        + '-' + Math.random().toString(36).slice(2, 6);
+  $('bGuardar').disabled = true;
+  try {
+    const limpias = cartas.map(c => ({nombre: c.nombre.trim(), img: c.img}));
+    await fb.set(fb.ref(fb.db, 'mazos/cartas/' + id), {nombre, cartas: limpias});
+    await fb.set(fb.ref(fb.db, 'mazos/indice/' + id), {nombre, cantidad: limpias.length});
+    aviso('Mazo guardado'); listar();
+  } catch (e) { aviso('No se pudo guardar: ' + e.message); }
+  $('bGuardar').disabled = false;
+};
+$('bNuevo').onclick = () => abrir(null);
+$('bCancelar').onclick = () => listar();
+
+iniciar();
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minijuegos</title>
+<link rel="stylesheet" href="shared/estilo.css">
+<style>
+.juegos{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.juego{display:block;text-decoration:none;color:var(--ink);background:var(--wood);color:#2a2113;
+  border-radius:18px;padding:18px 18px 16px;border-bottom:5px solid var(--groove)}
+.juego:active{transform:translateY(2px);border-bottom-width:3px}
+.juego h2{margin:0 0 6px;font-size:22px}
+.juego p{margin:0 0 10px;line-height:1.4}
+.juego span{font-size:14px;color:#6b5530}
+.bolitas{display:flex;gap:6px;margin-bottom:22px}
+.bolitas i{width:16px;height:16px;border-radius:50%;box-shadow:inset -3px -3px 5px rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Minijuegos</h1>
+  <p class="sub">Juegos de mesa por turnos, en la misma pantalla u online con amigos.</p>
+  <div class="bolitas"><i style="background:#e8505b"></i><i style="background:#3fa7e0"></i><i style="background:#f4c430"></i><i style="background:#5cc480"></i></div>
+  <div class="juegos" id="juegos"></div>
+</main>
+<script type="module">
+  import { JUEGOS } from './shared/juegos.js';
+  document.getElementById('juegos').innerHTML = JUEGOS.map(j =>
+    `<a class="juego" href="./${j.id}/"><h2>${j.nombre}</h2><p>${j.desc}</p><span>${j.jugadores} jugadores</span></a>`).join('');
+</script>
+</body>
+</html>

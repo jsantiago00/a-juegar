@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ta-te-ti²</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<style>
+.ult{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:520px;margin:0 auto;
+  background:var(--groove);padding:10px;border-radius:18px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))}
+.chico{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:5px;
+  border-radius:12px;background:rgba(0,0,0,.14);transition:background .15s}
+.chico.activo{background:var(--ok)}
+.chico button{aspect-ratio:1;min-height:0;padding:0;border-radius:6px;background:var(--wood);
+  font-size:clamp(14px,4.2vw,26px);font-weight:700;line-height:1}
+.chico button:disabled{opacity:1;cursor:default}
+.chico button.ult{box-shadow:inset 0 0 0 3px #5e4a26}
+.chico.lleno button{opacity:.45}
+.chico .gran{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(64px,20vw,130px);font-weight:700;background:rgba(230,211,168,.85);
+  border-radius:12px;pointer-events:none}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>
