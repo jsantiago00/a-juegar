@@ -141,6 +141,15 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
 .fin-caja .rapidito{text-align:left;margin:14px 0 20px}
 .fin-caja .grande{width:100%}
 
+.fin-caja button.otro-juego{margin-top:12px;background:none;box-shadow:none;color:#6b5a8f;text-decoration:underline}
+/* Cambiar de juego */
+.cambiar-caja{width:min(560px,100%);max-height:calc(100dvh - 32px);overflow:auto}
+.cambiar-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;margin:14px 0 16px}
+.fin-caja .cambiar-lista button{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--c);color:var(--oscuro);
+  padding:10px 6px 12px;border-radius:18px;font-size:15px;line-height:1.15;box-shadow:0 4px 0 rgba(10,5,40,.25)}
+.cambiar-lista .ico{width:56px;height:56px;border-radius:16px;animation:none;transform:none;box-shadow:none;background:rgba(255,255,255,.4)}
+.cambiar-lista small{font-size:11px;font-weight:500}
+
 /* Reglas rapidito: pasos numerados en burbujas */
 .rapidito{list-style:none;counter-reset:paso;padding:0;margin:0;display:grid;gap:10px}
 .rapidito li{counter-increment:paso;display:flex;align-items:flex-start;gap:12px;font-size:17px;line-height:1.35}

@@ -38,6 +38,8 @@ ta-te-ti/             juego mínimo, sirve de plantilla
 El estado siempre lleva `n`, `turno`, `ganador` (-1 en juego, -2 empate) y `ultima`.
 Lo online sale solo: cada juego guarda sus salas en `juegos/<id>/salas/<código>`.
 Si el juego tiene chat, los mensajes van en `juegos/<id>/salas/<código>/chat` (se guardan los últimos ~80).
+Con 🎮 Otro juego, la sala se muda a otro juego con el mismo código, los mismos jugadores y el chat
+(se crea la sala nueva y la vieja queda con `siguiente`, que redirige a todos).
 Los códigos son únicos entre todos los juegos: desde la portada (o desde cualquier juego) ponés el código
 y te lleva solo al juego correcto. El link de invitación (`<juego>/?sala=ABCD`) te mete directo a la sala.
 

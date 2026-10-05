@@ -452,5 +452,231 @@ export const FOTOS = {
    "pagina": "https://commons.wikimedia.org/wiki/File:Harry_Kane_England_v_Ghana_23_June_2026-219_(cropped).jpg",
    "quien": "Harry Kane — futbolista británico"
   }
+ },
+ "famosos-mundo": {
+  "Jackson": {
+   "img": "fotos/famosos-mundo/jackson.jpg",
+   "autor": "Anurekhac7",
+   "licencia": "CC BY-SA 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:32_Michael_Jackson_1991_by_Arun.jpg",
+   "quien": "Michael Jackson — cantante, compositor, productor discográfico y bailarín estadounidense"
+  },
+  "Freddie": {
+   "img": "fotos/famosos-mundo/freddie.jpg",
+   "autor": "Carl Lender",
+   "licencia": "CC BY-SA 3.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Freddie_Mercury_performing_in_New_Haven,_CT,_November_1977.jpg",
+   "quien": "Freddie Mercury — cantante y compositor británico"
+  },
+  "Madonna": {
+   "img": "fotos/famosos-mundo/madonna.jpg",
+   "autor": "Raph_PH",
+   "licencia": "CC BY 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:MadonnaO2171023_(97_of_133)_(53269593787)_(cropped).jpg",
+   "quien": "Madonna — cantante, compositora y actriz estadounidense"
+  },
+  "Shakira": {
+   "img": "fotos/famosos-mundo/shakira.jpg",
+   "autor": "Junta de Andalucía",
+   "licencia": "CC BY-SA 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:2023-11-16_Gala_de_los_Latin_Grammy,_03_(cropped)01.jpg",
+   "quien": "Shakira — cantante, compositora y actriz colombiana"
+  },
+  "Taylor": {
+   "img": "fotos/famosos-mundo/taylor.jpg",
+   "autor": "iHeartRadioCA",
+   "licencia": "CC BY 3.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by/3.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_(3).png",
+   "quien": "Taylor Swift — cantautora estadounidense"
+  },
+  "Bad Bunny": {
+   "img": "fotos/famosos-mundo/bad-bunny.jpg",
+   "autor": "Toglenn",
+   "licencia": "CC BY-SA 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Bad_Bunny_2019_by_Glenn_Francis_(cropped).jpg",
+   "quien": "Bad Bunny — rapero, cantante y productor discográfico puertorriqueño"
+  },
+  "Elvis": {
+   "img": "fotos/famosos-mundo/elvis.jpg",
+   "autor": "RCA Records",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Elvis_Presley_1973_RCA_Records_and_Tapes_publicity_2_-_cropped.png",
+   "quien": "Elvis Presley — cantante y actor estadounidense (1935-1977)"
+  },
+  "Bob Marley": {
+   "img": "fotos/famosos-mundo/bob-marley.jpg",
+   "autor": "Dennis Morris; Distributed by Island Records",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Bob_Marley_(1976).jpg",
+   "quien": "Bob Marley — músico jamaiquino"
+  },
+  "DiCaprio": {
+   "img": "fotos/famosos-mundo/dicaprio.jpg",
+   "autor": "Raph_PH",
+   "licencia": "CC BY 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Leonardo_DiCaprio_-_BFI_Southbank_3_(crop).jpg",
+   "quien": "Leonardo DiCaprio — actor estadounidense"
+  },
+  "Brad Pitt": {
+   "img": "fotos/famosos-mundo/brad-pitt.jpg",
+   "autor": "Toglenn",
+   "licencia": "CC BY-SA 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Brad_Pitt_2019_by_Glenn_Francis.jpg",
+   "quien": "Brad Pitt — actor y productor de cine estadounidense"
+  },
+  "Chaplin": {
+   "img": "fotos/famosos-mundo/chaplin.jpg",
+   "autor": "Elyot Boudart",
+   "licencia": "CC BY-SA 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Anthony_Champeil_in_Charlot_at_the_2026_Cannes_Film_Festival_2026.jpg",
+   "quien": "Charles Chaplin — actor, cómico, compositor, productor, director y escritor británico"
+  },
+  "Will Smith": {
+   "img": "fotos/famosos-mundo/will-smith.jpg",
+   "autor": "Gage Skidmore",
+   "licencia": "CC BY-SA 3.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Will_Smith_by_Gage_Skidmore_2.jpg",
+   "quien": "Will Smith — actor, rapero y productor estadounidense"
+  },
+  "Jackie Chan": {
+   "img": "fotos/famosos-mundo/jackie-chan.jpg",
+   "autor": "Segolene Liger",
+   "licencia": "CC BY-SA 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Jackie_Chan_-_2025_Locarno_Film_Festival.jpg",
+   "quien": "Jackie Chan — artista marcial, actor y comediante chino"
+  },
+  "Tom Hanks": {
+   "img": "fotos/famosos-mundo/tom-hanks.jpg",
+   "autor": "Eva Rinaldi from Abbotsford, Australia",
+   "licencia": "CC BY-SA 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Tom_Hanks_at_the_Elvis_Premiere_2022.jpg",
+   "quien": "Tom Hanks — actor y productor estadounidense"
+  },
+  "Jordan": {
+   "img": "fotos/famosos-mundo/jordan.jpg",
+   "autor": "Joshua Massel. Cropped by en:User:Quadzilla99",
+   "licencia": "CC BY-SA 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Michael_Jordan.jpg",
+   "quien": "Michael Jordan — baloncestista estadounidense"
+  },
+  "Serena": {
+   "img": "fotos/famosos-mundo/serena.jpg",
+   "autor": "Edwin Martinez",
+   "licencia": "CC BY 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Serena_Williams_at_2013_US_Open.jpg",
+   "quien": "Serena Williams — tenista estadounidense"
+  },
+  "Usain Bolt": {
+   "img": "fotos/famosos-mundo/usain-bolt.jpg",
+   "autor": "Fernando Frazão/Agência Brasil",
+   "licencia": "CC BY 3.0 br",
+   "licenciaUrl": "https://creativecommons.org/licenses/by/3.0/br/deed.en",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Usain_Bolt_Rio_100m_final_2016k.jpg",
+   "quien": "Usain Bolt — velocista jamaicano"
+  },
+  "Federer": {
+   "img": "fotos/famosos-mundo/federer.jpg",
+   "autor": "Jimmy Ephraim",
+   "licencia": "CC BY-SA 3.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Maestro_Roger_Federer.png",
+   "quien": "Roger Federer — tenista suizo"
+  },
+  "Nadal": {
+   "img": "fotos/famosos-mundo/nadal.jpg",
+   "autor": "Barcex",
+   "licencia": "CC BY-SA 4.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Rafael_Nadal_en_2024_(cropped).jpg",
+   "quien": "Rafael Nadal — tenista español"
+  },
+  "Ali": {
+   "img": "fotos/famosos-mundo/ali.jpg",
+   "autor": "Ira Rosenberg",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Muhammad_Ali_NYWTS.jpg",
+   "quien": "Muhammad Ali — boxeador estadounidense"
+  },
+  "LeBron": {
+   "img": "fotos/famosos-mundo/lebron.jpg",
+   "autor": "Erik Drost",
+   "licencia": "CC BY 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:LeBron_James_(51959977144)_(cropped2).jpg",
+   "quien": "LeBron James — baloncestista estadounidense"
+  },
+  "Einstein": {
+   "img": "fotos/famosos-mundo/einstein.jpg",
+   "autor": "Ferdinand Schmutzer / Adam Cuerden",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Einstein_1921_by_F_Schmutzer_-_restoration.jpg",
+   "quien": "Albert Einstein — físico alemán"
+  },
+  "Frida": {
+   "img": "fotos/famosos-mundo/frida.jpg",
+   "autor": "Guillermo Kahlo",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Frida_Kahlo,_by_Guillermo_Kahlo_(cropped).jpg",
+   "quien": "Frida Kahlo — pintora y activista mexicana"
+  },
+  "Mandela": {
+   "img": "fotos/famosos-mundo/mandela.jpg",
+   "autor": "Kingkongphoto & www.celebrity-photos.com from Laurel",
+   "licencia": "CC BY-SA 2.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Nelson_Mandela_1994.jpg",
+   "quien": "Nelson Mandela — político y activista sudafricano, presidente de Sudáfrica"
+  },
+  "Obama": {
+   "img": "fotos/famosos-mundo/obama.jpg",
+   "autor": "Official White House Photo by Pete Souza",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:President_Barack_Obama.jpg",
+   "quien": "Barack Obama — 44.º presidente de los Estados Unidos"
+  },
+  "Steve Jobs": {
+   "img": "fotos/famosos-mundo/steve-jobs.jpg",
+   "autor": "MetalGearLiquid, based on File:Steve_Jobs_Headshot_2010-CROP.jpg made by Matt Yohe",
+   "licencia": "CC BY-SA 3.0",
+   "licenciaUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Steve_Jobs_Headshot_2010-CROP2.jpg",
+   "quien": "Steve Jobs — empresario estadounidense"
+  },
+  "Marie Curie": {
+   "img": "fotos/famosos-mundo/marie-curie.jpg",
+   "autor": "Autor desconocido",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Marie_Curie_(1900)_(cropped).jpg",
+   "quien": "Marie Curie — física y química polaca nacionalizada francesa"
+  },
+  "Hawking": {
+   "img": "fotos/famosos-mundo/hawking.jpg",
+   "autor": "NASA",
+   "licencia": "Public domain",
+   "licenciaUrl": "",
+   "pagina": "https://commons.wikimedia.org/wiki/File:Stephen_Hawking.StarChild.jpg",
+   "quien": "Stephen Hawking — físico teórico y cosmólogo británico"
+  }
  }
 };

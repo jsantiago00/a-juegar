@@ -15,6 +15,7 @@
 //             chat = true [opcional]: chat de sala cuando se juega online (ver shared/chat.js)
 //             estado(ctx) [opcional]: texto propio para el cartel de arriba (ej. "Armá tu flota");
 //             si devuelve vacío, se muestra el de siempre ("¡Tu turno!", "Turno de…").
+//             resumenFin(ctx) [opcional]: texto chico del cartel de fin (si no, la última jugada).
 //   reglas.libre(estado, jugada, yo, nombre) [opcional]: jugadas que no dependen del turno y solo tocan
 //             lo tuyo (ej. bajar cartas); el juego las manda con ctx.jugarLibre(jugada).
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
@@ -172,7 +173,7 @@ export function montar({ reglas, juego }) {
       <p class="note" id="espTxt"></p>
       <div class="espera-reglas"><b>Mientras tanto, así se juega:</b>${rapidito(info.id, info.reglas)}</div>
     </section>
-    <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button></div>
+    <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🎮 Otro juego</button></div>
     <div id="players"></div>
     <div id="hint"></div>
     <div id="tablero"></div>
@@ -192,7 +193,19 @@ export function montar({ reglas, juego }) {
         <h2 id="finTxt"></h2>
         <p id="finSub"></p>
         <div class="row centro"><button class="main grande" id="bRevancha2">Revancha</button><button id="bVerTablero">Ver tablero</button></div>
+        <button class="chico otro-juego" id="bOtroJuego2">🎮 Jugar a otra cosa</button>
       </div>
+    </div>
+    <div id="cambiar" class="capa" hidden>
+      <div class="fin-caja cambiar-caja">
+        <h2>🎮 ¿A qué jugamos ahora?</h2>
+        <p>Se mudan todos los de la sala, con el mismo código.</p>
+        <div class="cambiar-lista" id="cambiarLista"></div>
+        <button id="bCambiarNo">Cancelar</button>
+      </div>
+    </div>
+    <div id="mudanza" class="capa" hidden>
+      <div class="fin-caja"><div class="fin-emoji">🎮</div><h2 id="mudanzaTxt"></h2><p>Llevando a todos a la sala nueva…</p></div>
     </div>
   </div>`;
 
@@ -354,6 +367,7 @@ export function montar({ reglas, juego }) {
     const pista = juego.dibujar(ctx);
     $('hint').textContent = esperando ? '' : (pista || e.ultima || '');
     $('bRevancha').hidden = e.ganador === EN_JUEGO;
+    $('bOtroJuego2').hidden = !st.online;
 
     const termino = e.ganador !== EN_JUEGO;
     if (!termino) st.finVisto = false;
@@ -366,7 +380,7 @@ export function montar({ reglas, juego }) {
       else { emoji = '😵'; txt = `Ganó ${esc(nombre(e.ganador))}`; }
       $('finEmoji').textContent = emoji;
       $('finTxt').innerHTML = (e.ganador >= 0 ? dot(e.ganador) : '') + txt;
-      $('finSub').textContent = e.ultima || '';
+      $('finSub').textContent = juego.resumenFin?.(ctx) || e.ultima || '';
     }
     $('fin').hidden = !mostrarFin;
   }
@@ -387,6 +401,14 @@ export function montar({ reglas, juego }) {
       st.estado = reglas.normalizar(v.game);
       efectos(antes, st.estado, salaAntes);
       chat?.actualizar(v.chat, miId);
+      if (v.siguiente && !st.mudando) {        // alguien eligió otro juego: nos mudamos todos
+        st.mudando = true;
+        $('cambiar').hidden = true;
+        $('mudanzaTxt').textContent = `${v.siguiente.por} eligió ${datosJuego(v.siguiente.juego).nombre || 'otro juego'}`;
+        $('mudanza').hidden = false;
+        sonar('entrar');
+        setTimeout(() => { location.href = `../${v.siguiente.juego}/?sala=${st.cod}`; }, 1500);
+      }
       render();
     });
     try { history.replaceState(null, '', '?sala=' + cod); } catch {}
@@ -472,6 +494,39 @@ export function montar({ reglas, juego }) {
   }
   $('bRevancha').onclick = $('bRevancha2').onclick = revancha;
   $('bVerTablero').onclick = () => { sonar('tap'); st.finVisto = true; render(); };
+  // ---------- Cambiar de juego sin perder la sala ----------
+  // Se crea la sala del otro juego con el mismo código, los mismos asientos y el chat, y se deja
+  // "siguiente" en esta sala: todos los que la están mirando se mudan solos (ver entrarSala).
+  const reglasDe = id => import(new URL(`../${id}/reglas.js`, import.meta.url).href);
+  async function abrirCambiar() {
+    sonar('tap');
+    if (!st.online || !st.sala) return;
+    const n = st.sala.n, otros = JUEGOS.filter(j => j.id !== info.id);
+    const infos = await Promise.all(otros.map(j => reglasDe(j.id).then(m => m.info).catch(() => null)));
+    $('cambiarLista').innerHTML = otros.map((j, k) => {
+      const inf = infos[k], va = !!inf && inf.min <= n && n <= inf.max;
+      return `<button data-id="${j.id}" style="--c:${j.color}"${va ? '' : ' disabled'}><span class="ico">${iconoJuego(j.id)}</span>` +
+             `${esc(j.nombre)}${va ? '' : `<small>es de ${esc(j.jugadores)}</small>`}</button>`;
+    }).join('');
+    $('cambiar').hidden = false;
+  }
+  async function mudar(id) {
+    $('cambiarLista').querySelectorAll('button').forEach(b => { b.disabled = true; });
+    try {
+      const {nuevoJuego} = await reglasDe(id);
+      const n = st.sala.n, yo = asientoDe(st.asiento);
+      await fb.set(fb.ref(fb.db, `juegos/${id}/salas/${st.cod}`),
+                   {n, creada: Date.now(), seats: st.sala.seats, game: nuevoJuego(n), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
+      await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, por: (yo && yo.name) || 'Alguien', t: Date.now()});
+    } catch (e) { aviso('No se pudo cambiar: ' + e.message); $('cambiar').hidden = true; }
+  }
+  $('bOtroJuego').onclick = $('bOtroJuego2').onclick = abrirCambiar;
+  $('bCambiarNo').onclick = () => { sonar('tap'); $('cambiar').hidden = true; };
+  $('cambiarLista').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-id]');
+    if (b && !b.disabled) { sonar('tap'); mudar(b.dataset.id); }
+  });
+
   $('bAyuda').onclick = () => { sonar('tap'); $('ayuda').hidden = false; };
   $('bAyudaOk').onclick = () => { sonar('tap'); $('ayuda').hidden = true; guardar('reglas-vistas-' + info.id, '1'); };
   const linkSala = () => location.origin + location.pathname + '?sala=' + st.cod;

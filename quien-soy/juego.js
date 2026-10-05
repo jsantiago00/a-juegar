@@ -26,6 +26,14 @@ export function sonido(a, e, ctx) {
   return JSON.stringify(a.bajadas[yo]) !== JSON.stringify(e.bajadas[yo]) ? 'carta' : null;
 }
 
+// Texto del cartel de fin: si alguien arriesgó, por quién
+export function resumenFin(ctx) {
+  const e = ctx.estado, u = e.historial[e.historial.length - 1];
+  if (!u || u.arriesgo == null || !mazo) return '';
+  const quien = (mazo.cartas[+u.arriesgo] || {nombre: '?'}).nombre;
+  return `${ctx.nombre(u.p)} arriesgó por ${quien} y ${u.r === 'Sí' ? 'acertó' : 'le erró'}`;
+}
+
 // ---------- Menú: elegir mazo ----------
 export function menu(el) {
   el.innerHTML = `<div class="row"><label for="mazo">Mazo</label>
@@ -123,8 +131,9 @@ export function dibujar(ctx) {
   });
 
   // Preguntas en dos columnas (una por jugador); la fila r tiene la r-ésima pregunta de cada uno
-  const cols = [0, 1].map(p => e.historial.filter(x => x.p === p).map(x =>
-    `<p class="q">“${esc(x.q)}”</p><span class="r ${x.r === 'Sí' ? 'si' : 'no'}">${x.r}</span>`));
+  const cols = [0, 1].map(p => e.historial.filter(x => x.p === p).map(x => (x.arriesgo != null
+    ? `<p class="q">🎯 Arriesgó: ¿es <b>${nom(+x.arriesgo)}</b>?</p><span class="r ${x.r === 'Sí' ? 'si' : 'no'}">${x.r === 'Sí' ? '¡Sí!' : 'No'}</span>`
+    : `<p class="q">“${esc(x.q)}”</p><span class="r ${x.r === 'Sí' ? 'si' : 'no'}">${x.r}</span>`)));
   if (e.fase === 'respuesta' && e.pregunta && !termino)
     cols[1 - e.turno].push(`<p class="q">“${esc(e.pregunta)}”</p><span class="r espera">⏳</span>`);
   const filas = Math.max(cols[0].length, cols[1].length);
@@ -150,7 +159,13 @@ export function dibujar(ctx) {
     ? `<p class="preg">“${esc(ult.q)}” <span class="r ${ult.r === 'Sí' ? 'si' : 'no'}">${ult.r}</span></p>
        <p class="note">Tocá las cartas que no cumplen para bajarlas (podés hacerlo cuando quieras).</p>` : '';
   if (!ctx.listos) h = `${tuyo}<p class="note">Cuando entre el otro jugador, arranca la partida.</p>`;
-  else if (termino) h = `<div class="fila">${mini(mio, 'Tu personaje era')}</div><div class="fila">${mini(e.secretos[otro], 'El de ' + rival + ' era')}</div>`;
+  else if (termino) {
+    // Si terminó porque alguien arriesgó, se muestra por quién arriesgó
+    const intento = ult && ult.arriesgo != null
+      ? `<div class="fila">${mini(+ult.arriesgo, (ult.p === yo ? 'Arriesgaste' : esc(ctx.nombre(ult.p)) + ' arriesgó') +
+          (ult.r === 'Sí' ? ' y acertó ✅' : ' y le erró ❌') + ':')}</div>` : '';
+    h = `${intento}<div class="fila">${mini(mio, 'Tu personaje era')}</div><div class="fila">${mini(e.secretos[otro], 'El de ' + rival + ' era')}</div>`;
+  }
   else if (e.fase === 'pregunta') {
     if (puedo && arriesgo) {
       h = elegida < 0

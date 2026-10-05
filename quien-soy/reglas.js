@@ -62,6 +62,7 @@ export function aplicar(e, j, nombre) {
     case 'arriesgar': {
       if (e.fase !== 'pregunta' || !(j.i >= 0 && j.i < e.bajadas[p].length)) return null;
       const acierto = j.i === e.secretos[otro];
+      e.historial.push({p, q: '', arriesgo: j.i, r: acierto ? 'Sí' : 'No'});   // para mostrar a quién arriesgó
       e.ganador = acierto ? p : otro;
       e.ultima = acierto ? `${nombre(p)} arriesgó y acertó` : `${nombre(p)} arriesgó y le erró`;
       return e;
