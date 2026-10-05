@@ -151,7 +151,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
-         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar, ordenarJuegos, jugadas } from './shared/salas.js';
+         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar, ordenarJuegos, jugadas, limpiarSalas } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 
 const $ = id => document.getElementById(id);
@@ -207,6 +207,9 @@ $('bInstalarNo').onclick = () => {
   try { localStorage.setItem('minijuegos-no-instalar', '1'); } catch {}
 };
 addEventListener('appinstalled', () => { $('instalar').hidden = true; });
+
+// Salas abandonadas (más de 24 h sin actividad): se borran de paso, sin frenar la portada
+setTimeout(() => limpiarSalas(), 2500);
 
 // ---------- Nombre (se comparte con todos los juegos) ----------
 $('nombre').value = nombreGuardado();

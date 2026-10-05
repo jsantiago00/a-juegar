@@ -136,6 +136,7 @@ export async function buscarSala(cod) {
 // Crea la sala y te sienta en el asiento 0. Devuelve el código.
 export async function crearSala({reglas, n, opciones, nombre}) {
   await initFb();
+  limpiarSalas();                      // de paso, se borran las abandonadas
   let cod;
   for (let i = 0; i < 6; i++) {
     cod = codigo();
@@ -143,7 +144,35 @@ export async function crearSala({reglas, n, opciones, nombre}) {
   }
   await fb.set(fb.ref(fb.db, `juegos/${reglas.info.id}/salas/${cod}`),
                {n, creada: Date.now(), seats: {0: {id: miId, name: nombre}}, game: partidaNueva(reglas, n, opciones)});
+  marcarActividad(reglas.info.id, cod, true);
   return cod;
+}
+
+// ---------- Salas abandonadas ----------
+// Cada sala anota su última actividad en actividad/<juego>/<código> (crear, entrar, jugar, chatear).
+// Las que pasan VIDA_SALA sin movimiento se borran solas: lo hace cualquiera que abra la portada
+// o cree una sala (como mucho una vez por hora en cada dispositivo).
+export const VIDA_SALA = 24 * 60 * 60 * 1000;
+const marcas = new Map();
+export function marcarActividad(juegoId, cod, ya = false) {
+  if (!fb || !cod) return;
+  const k = `${juegoId}/${cod}`, ahora = Date.now();
+  if (!ya && ahora - (marcas.get(k) || 0) < 60000) return;      // a lo sumo una vez por minuto
+  marcas.set(k, ahora);
+  fb.set(fb.ref(fb.db, `actividad/${k}`), ahora).catch(() => {});
+}
+export async function limpiarSalas() {
+  try {
+    if (Date.now() - (+leer('minijuegos-limpieza') || 0) < 60 * 60 * 1000) return 0;
+    guardar('minijuegos-limpieza', String(Date.now()));
+    await initFb();
+    const act = (await fb.get(fb.ref(fb.db, 'actividad'))).val() || {}, limite = Date.now() - VIDA_SALA, borrar = {};
+    for (const [g, salas] of Object.entries(act))
+      for (const [c, t] of Object.entries(salas || {}))
+        if (+t < limite) { borrar[`juegos/${g}/salas/${c}`] = null; borrar[`actividad/${g}/${c}`] = null; }
+    if (Object.keys(borrar).length) await fb.update(fb.ref(fb.db), borrar);
+    return Object.keys(borrar).length / 2;
+  } catch { return 0; }
 }
 
 // Cantidades de jugadores permitidas
@@ -279,6 +308,7 @@ export function montar({ reglas, juego }) {
       if (!st.online) return;
       const s = asientoDe(st.asiento);
       await fb.push(fb.ref(fb.db, ruta() + '/chat'), {id: miId, n: (s && s.name) || nombreGuardado() || 'Jugador', t: t.slice(0, 200), ts: Date.now()});
+      marcarActividad(info.id, st.cod);
       // Para que la sala no crezca sin fin, se borran los mensajes más viejos
       const claves = Object.keys((st.sala && st.sala.chat) || {}).sort();
       if (claves.length > MAX_CHAT) {
@@ -310,6 +340,7 @@ export function montar({ reglas, juego }) {
         return reglas.aplicar(cur, jugada, nombre) || undefined;
       });
       if (!res.committed) { aviso('Esa jugada no vale'); sonar('error'); return false; }
+      marcarActividad(info.id, st.cod);
       return true;
     } catch (e) { aviso('Error de conexión: ' + e.message); return false; }
   }
@@ -330,6 +361,7 @@ export function montar({ reglas, juego }) {
         if (cur.ganador !== EN_JUEGO) return;
         return reglas.libre(cur, jugada, st.asiento, nombre) || undefined;
       });
+      if (res.committed) marcarActividad(info.id, st.cod);
       return res.committed;
     } catch (err) { aviso('Error de conexión: ' + err.message); return false; }
   }
@@ -465,6 +497,7 @@ export function montar({ reglas, juego }) {
     juego.reiniciar?.();
     chat?.reiniciar();
     sonar('entrar');
+    marcarActividad(info.id, cod, true);
     $('secInvitado').hidden = true;
     // Cuenta como partida jugada (una vez por sala: recargar la página no suma)
     const contada = `minijuegos-contada-${info.id}-${cod}`;
@@ -571,7 +604,7 @@ export function montar({ reglas, juego }) {
     sonar('tap');
     juego.reiniciar?.();
     if (!st.online) { const antes = st.estado; st.estado = partidaNueva(reglas, st.estado.n, st.estado.opciones); efectos(antes, st.estado); render(); return; }
-    try { await fb.set(fb.ref(fb.db, ruta() + '/game'), partidaNueva(reglas, st.sala.n, st.estado.opciones)); } catch (e) { aviso(e.message); }
+    try { await fb.set(fb.ref(fb.db, ruta() + '/game'), partidaNueva(reglas, st.sala.n, st.estado.opciones)); marcarActividad(info.id, st.cod, true); } catch (e) { aviso(e.message); }
   }
   $('bRevancha').onclick = $('bRevancha2').onclick = revancha;
   $('bVerTablero').onclick = () => { sonar('tap'); st.finVisto = true; render(); };
@@ -673,6 +706,7 @@ export function montar({ reglas, juego }) {
       const n = st.sala.n, yo = asientoDe(st.asiento);
       await fb.set(fb.ref(fb.db, `juegos/${id}/salas/${st.cod}`),
                    {n, creada: Date.now(), seats: st.sala.seats, game: partidaNueva(otras, n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
+      marcarActividad(id, st.cod, true);
       await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, por: (yo && yo.name) || 'Alguien', t: Date.now()});
     } catch (e) { aviso('No se pudo cambiar: ' + e.message); $('cambiar').hidden = true; }
   }
