@@ -47,18 +47,20 @@
 .yo input:focus{background:rgba(10,5,40,.35)}
 
 .titulo-seccion{font-size:24px;margin:0 0 12px}
-.juegos{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
-.juego{display:flex;gap:14px;align-items:center;text-decoration:none;color:var(--oscuro);background:var(--c);
-  border-radius:24px;padding:14px;box-shadow:var(--sombra);transition:transform .15s cubic-bezier(.3,1.6,.5,1),box-shadow .1s;
+.juegos{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
+.juego{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--oscuro);background:var(--c);
+  border-radius:24px;padding:10px 10px 12px;box-shadow:var(--sombra);transition:transform .15s cubic-bezier(.3,1.6,.5,1),box-shadow .1s;
   animation:entra .45s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.15s + var(--i)*60ms)}
 .juego:hover{transform:translateY(-4px) rotate(-1.5deg)}
 .juego:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(10,5,40,.45)}
-.juego .ico{width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.35);box-shadow:none;animation:none;transform:none}
-.juego:hover .ico{animation:menea .5s ease-in-out}
-.juego b{font-size:21px;display:block;line-height:1.1}
-.juego .d{font-size:15px;line-height:1.3;display:block;margin-top:3px;opacity:.85}
-.juego small{display:inline-block;margin-top:7px;background:rgba(255,255,255,.55);padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
-@keyframes menea{25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.juego b{font-size:20px;display:block;line-height:1.1;padding:0 4px}
+.juego small{align-self:flex-start;margin:0 4px;background:rgba(255,255,255,.55);padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
+/* Imagen de muestra del tablero (capturas/<id>.webp); si falta, se ve el ícono */
+.muestra{display:grid;place-items:center;aspect-ratio:1;border-radius:18px;background:rgba(255,255,255,.3);overflow:hidden}
+.muestra img{width:94%;height:94%;object-fit:contain;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.muestra svg{display:none;width:60%;height:60%}
+.muestra.sin-img svg{display:block}
+.juego:hover .muestra img,.elegir button:hover .muestra img{transform:scale(1.07) rotate(-2deg)}
 
 /* Hoja para crear partida */
 dialog{border:0;padding:0;background:transparent;color:var(--ink);width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
@@ -67,10 +69,12 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 .hoja{background:var(--felt2);border:2px solid var(--line);border-radius:28px;padding:18px 18px 22px;max-height:calc(100dvh - 24px);overflow:auto}
 .hoja-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .hoja-top h2{margin:0;font-size:24px}
-.elegir{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
-.elegir button{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--c);color:var(--oscuro);
-  padding:14px 10px 12px;border-radius:20px;font-size:17px;animation:entra .35s backwards;animation-delay:calc(var(--i)*40ms)}
-.elegir .ico{width:64px;height:64px;border-radius:18px;background:rgba(255,255,255,.35);box-shadow:none;animation:none;transform:none}
+.elegir{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.elegir button{display:flex;flex-direction:column;align-items:stretch;gap:8px;background:var(--c);color:var(--oscuro);
+  padding:8px 8px 10px;border-radius:20px;font-size:17px;animation:entra .35s backwards;animation-delay:calc(var(--i)*40ms)}
+.elegir .muestra{border-radius:14px}
+.hoja .como{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:14px}
+.hoja .como b{display:block;margin-bottom:10px;font-size:17px}
 .elegido{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .elegido .ico{width:64px;height:64px;border-radius:18px;animation:none}
 .elegido b{font-size:22px;display:block}
@@ -117,6 +121,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
     <div id="paso1" class="elegir"></div>
     <div id="paso2" hidden>
       <div class="elegido" id="elegido"></div>
+      <div class="como" id="comoP"></div>
       <div class="row"><input id="nombreC" maxlength="14" placeholder="Tu nombre" autocomplete="off" aria-label="Tu nombre"></div>
       <div id="cantP"></div>
       <div id="extraP"></div>
@@ -128,7 +133,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
-         selectorJugadores, jugadoresElegidos } from './shared/salas.js';
+         selectorJugadores, jugadoresElegidos, rapidito } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 
 const $ = id => document.getElementById(id);
@@ -138,9 +143,13 @@ const ico = (id, color) => `<span class="ico" style="--c:${color}">${iconoJuego(
 document.querySelector('.marca').innerHTML = [...'¡A Juegar!'].map((ch, i) =>
   ch === ' ' ? '<span class="esp"> </span>' : `<span style="--i:${i}" aria-hidden="true">${ch}</span>`).join('');
 
+// Imagen de muestra del juego; si no existe la captura, queda el ícono
+const muestra = j => `<span class="muestra">${iconoJuego(j.id)}<img src="capturas/${j.id}.webp" alt="Tablero de ${esc(j.nombre)}"
+  loading="lazy" onerror="this.parentNode.classList.add('sin-img'); this.remove()"></span>`;
+
 $('juegos').innerHTML = JUEGOS.map((j, i) =>
-  `<a class="juego" href="./${j.id}/" style="--c:${j.color};--i:${i}">${ico(j.id, j.color)}
-     <span><b>${esc(j.nombre)}</b><span class="d">${esc(j.desc)}</span><small>${esc(j.jugadores)} jugadores</small></span></a>`).join('');
+  `<a class="juego" href="./${j.id}/" style="--c:${j.color};--i:${i}" title="${esc(j.desc)}">${muestra(j)}
+     <b>${esc(j.nombre)}</b><small>${esc(j.jugadores)} jugadores</small></a>`).join('');
 
 botonesSonido();
 document.addEventListener('click', ev => { if (ev.target.closest('button:not(.b-sonido), .juego')) sonar('tap'); });
@@ -170,7 +179,7 @@ $('fUnirme').onsubmit = async ev => {
 // ---------- Crear partida: elegir juego, jugadores y listo ----------
 let elegido = null;   // {j, reglas, juego}
 $('paso1').innerHTML = JUEGOS.map((j, i) =>
-  `<button data-id="${j.id}" style="--c:${j.color};--i:${i}">${ico(j.id, j.color)}${esc(j.nombre)}</button>`).join('');
+  `<button data-id="${j.id}" style="--c:${j.color};--i:${i}">${muestra(j)}${esc(j.nombre)}</button>`).join('');
 
 function abrirHoja() {
   mostrarPaso(1);
@@ -196,6 +205,7 @@ $('paso1').addEventListener('click', async ev => {
   $('elegido').innerHTML = `${ico(j.id, j.color)}<div><b>${esc(info.nombre)}</b><span class="note">${esc(j.jugadores)} jugadores</span></div>
     <button class="chico" id="bOtro">Cambiar</button>`;
   $('bOtro').onclick = () => mostrarPaso(1);
+  $('comoP').innerHTML = `<b>⚡ Así se juega</b>${rapidito(j.id, info.reglas)}`;
   $('cantP').innerHTML = selectorJugadores(info, 'cantP');
   $('extraP').innerHTML = '';
   elegido.juego.menu?.($('extraP'));

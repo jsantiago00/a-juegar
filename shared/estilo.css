@@ -126,7 +126,7 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
   animation:salta .6s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(var(--i)*90ms)}
 
 /* Cartel de fin de partida */
-#fin{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;
+#fin,.capa{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;
   background:rgba(15,8,40,.6);backdrop-filter:blur(3px);animation:aparece .25s}
 .fin-caja{background:var(--wood);color:var(--oscuro);border-radius:30px;padding:24px 22px 18px;text-align:center;
   width:min(420px,100%);box-shadow:0 10px 0 rgba(10,5,40,.5);animation:entra .5s cubic-bezier(.3,1.6,.5,1)}
@@ -134,6 +134,19 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
 .fin-caja h2{font-size:32px;margin:10px 0 4px;justify-content:center;display:flex;align-items:center;gap:10px}
 .fin-caja p{margin:0 0 18px;color:#6b5a8f}
 .fin-caja button:not(.main){background:#fff;color:var(--oscuro);box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.fin-caja .ico{width:76px;height:76px;margin:0 auto 4px;border-radius:22px}
+.fin-caja .rapidito{text-align:left;margin:14px 0 20px}
+.fin-caja .grande{width:100%}
+
+/* Reglas rapidito: pasos numerados en burbujas */
+.rapidito{list-style:none;counter-reset:paso;padding:0;margin:0;display:grid;gap:10px}
+.rapidito li{counter-increment:paso;display:flex;align-items:flex-start;gap:12px;font-size:17px;line-height:1.35}
+.rapidito li::before{content:counter(paso);flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
+  background:var(--amarillo);color:var(--oscuro);font-weight:700;font-size:16px;box-shadow:0 3px 0 #c99a00;margin-top:-3px}
+.tarjeta.como h2{margin-bottom:14px}
+.espera-reglas{text-align:left;background:rgba(255,255,255,.55);border-radius:18px;padding:14px 16px;margin-top:6px}
+.espera-reglas b{display:block;margin-bottom:10px}
+.espera-reglas .rapidito li::before,.fin-caja .rapidito li::before{background:var(--oscuro);color:var(--amarillo);box-shadow:none}
 
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px) scale(.9);
   background:var(--amarillo);color:var(--oscuro);padding:12px 22px;border-radius:999px;font-weight:600;z-index:50;

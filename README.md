@@ -6,6 +6,7 @@ Juegos de mesa por turnos, local u online (Firebase Realtime Database + GitHub P
 ```
 index.html            portada: crear partida (elegís juego) y unirte con código
 icono.svg             ícono (+ icono-180/512.png y manifest.webmanifest)
+capturas/             imagen de muestra de cada juego (<id>.webp) para las tarjetas
 shared/
   firebase.js         config de Firebase (una sola para todos)
   salas.js            motor: menú, salas, turnos, invitar, revancha, sonidos y festejo
@@ -26,7 +27,8 @@ ta-te-ti/             juego mínimo, sirve de plantilla
 2. En `reglas.js`: cambiá `info.id` (igual a la carpeta), nombre, jugadores y reglas;
    escribí `nuevoJuego`, `normalizar` y `aplicar`.
 3. En `juego.js`: armá el tablero en `iniciar` y actualizalo en `dibujar`.
-4. Sumá una línea en `shared/juegos.js` (con su `color`) y, si querés, su ícono en `shared/iconos.js`.
+4. Sumá una entrada en `shared/juegos.js` (con su `color` y su `resumen`: las reglas "rapidito" en 2 o 3 pasos),
+   una foto del tablero en `capturas/<id>.webp` y, si querés, su ícono en `shared/iconos.js`.
 5. (Opcional) En `juego.js` exportá `sonido(antes, despues, ctx)` para elegir qué suena en cada jugada
    (`'colocar'`, `'mover'`, `'linea'`, `'punto'`, `'muro'`, `'carta'`…; ver `shared/efectos.js`).
 

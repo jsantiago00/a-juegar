@@ -69,6 +69,11 @@ function codigo() {
 }
 export const datosJuego = id => JUEGOS.find(j => j.id === id) || {id, color: '#5cc3f5'};
 export const iconoJuego = id => ICONOS[id] || '';
+// Reglas "rapidito": los pasos cortos de juegos.js (o las primeras reglas, si no hay resumen)
+export function rapidito(id, reglasLargas = []) {
+  const pasos = datosJuego(id).resumen || reglasLargas.slice(0, 3);
+  return `<ol class="rapidito">${pasos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>`;
+}
 
 // ---------- Salas sin pantalla (las usa también la portada) ----------
 // Busca el código en todos los juegos; si hay más de uno, gana la sala más nueva.
@@ -124,6 +129,10 @@ export function montar({ reglas, juego }) {
       <div class="row"><input id="nombreInv" placeholder="Tu nombre" maxlength="14" autocomplete="off">
         <button class="main" id="bEntrarInv">¡Entrar!</button></div>
     </section>
+    <section class="tarjeta como">
+      <h2>⚡ Así se juega</h2>
+      ${rapidito(info.id, info.reglas)}
+    </section>
     <div class="modos">
       <section class="tarjeta" id="secLocal"${info.soloOnline ? ' hidden' : ''}>
         <h2>🏠 En este dispositivo</h2>
@@ -145,7 +154,7 @@ export function montar({ reglas, juego }) {
         <p class="note" id="fbNote" hidden>Para jugar online falta pegar la config en <code>shared/firebase.js</code>.</p>
       </section>
     </div>
-    <details class="tarjeta reglas"><summary>📖 Cómo se juega</summary><ul>${info.reglas.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>
+    <details class="tarjeta reglas"><summary>📖 Reglas completas</summary><ul>${info.reglas.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>
   </div>
   <div id="play" hidden>
     <div class="top"><button id="bSalir" class="chico">← Salir</button><div id="status"></div><button class="icono b-sonido"></button></div>
@@ -154,13 +163,22 @@ export function montar({ reglas, juego }) {
       <div class="cod-grande" id="espCod"></div>
       <div class="row centro"><button class="main" id="bCompartir">Compartir link</button><button id="bCopiar">Copiar código</button></div>
       <p class="note" id="espTxt"></p>
+      <div class="espera-reglas"><b>Mientras tanto, así se juega:</b>${rapidito(info.id, info.reglas)}</div>
     </section>
     <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button></div>
     <div id="players"></div>
     <div id="hint"></div>
     <div id="tablero"></div>
     <div id="controles"></div>
-    <div class="controles"><button class="main" id="bRevancha" hidden>Revancha</button></div>
+    <div class="controles"><button class="main" id="bRevancha" hidden>Revancha</button><button class="chico" id="bAyuda">📖 Cómo se juega</button></div>
+    <div id="ayuda" class="capa" hidden>
+      <div class="fin-caja">
+        <span class="ico" style="--c:${dj.color}">${iconoJuego(info.id)}</span>
+        <h2>Así se juega</h2>
+        ${rapidito(info.id, info.reglas)}
+        <button class="main grande" id="bAyudaOk">¡Entendido!</button>
+      </div>
+    </div>
     <div id="fin" hidden>
       <div class="fin-caja">
         <div class="fin-emoji" id="finEmoji"></div>
@@ -306,6 +324,8 @@ export function montar({ reglas, juego }) {
     juego.reiniciar?.();
     sonar('entrar');
     $('secInvitado').hidden = true;
+    // Si te sumaste a la sala de otro y nunca viste este juego, te mostramos las reglas rapidito
+    if (asiento > 0 && !leer('reglas-vistas-' + info.id)) $('ayuda').hidden = false;
     st.cortar = fb.onValue(fb.ref(fb.db, ruta()), snap => {
       const v = snap.val();
       if (!v) { aviso('La sala ya no existe'); return; }
@@ -395,6 +415,8 @@ export function montar({ reglas, juego }) {
   }
   $('bRevancha').onclick = $('bRevancha2').onclick = revancha;
   $('bVerTablero').onclick = () => { sonar('tap'); st.finVisto = true; render(); };
+  $('bAyuda').onclick = () => { sonar('tap'); $('ayuda').hidden = false; };
+  $('bAyudaOk').onclick = () => { sonar('tap'); $('ayuda').hidden = true; guardar('reglas-vistas-' + info.id, '1'); };
   const linkSala = () => location.origin + location.pathname + '?sala=' + st.cod;
   async function compartir() {
     sonar('tap');

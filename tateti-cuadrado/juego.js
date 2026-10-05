@@ -9,7 +9,7 @@ export const sonido = (a, e) => (e.chicos.some((v, i) => v >= 0 && v !== a.chico
 
 export function iniciar(ctx) {
   grande = document.createElement('div');
-  grande.className = 'ult';
+  grande.className = 'tt2';
   for (let b = 0; b < 9; b++) {
     const chico = document.createElement('div');
     chico.className = 'chico';
