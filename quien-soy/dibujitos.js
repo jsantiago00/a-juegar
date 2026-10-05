@@ -18,12 +18,16 @@ function prng(seed) {
   };
 }
 
-function cara(t) {
-  const {piel, pelo, estilo, remera, ojos, fondo, anteojos, gorra, barba, aros} = t;
+// Rasgos opcionales además de los de siempre:
+//   rayas: color de rayas verticales sobre la remera (camisetas)   vincha: color de vincha
+//   bigote: color, o [izquierda, derecha] para un bigote de dos colores
+export function cara(t) {
+  const {piel, pelo, estilo, remera, ojos, fondo, anteojos, gorra, barba, aros, rayas, vincha, bigote} = t;
   const ceja = estilo === 'pelado' ? '#5a4636' : pelo;
   let s = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="${fondo}"/>`;
   if (estilo === 'largo') s += `<path d="M25 46 Q23 20 50 19 Q77 20 75 46 L78 84 Q50 90 22 84Z" fill="${pelo}"/>`;
   s += `<path d="M12 100 Q14 79 50 77 Q86 79 88 100Z" fill="${remera}"/>`;
+  if (rayas) s += `<g fill="${rayas}"><path d="M20 100 L21.5 84 L28 81 L28 100Z"/><path d="M36 100 L36 78.5 L44 77.6 L44 100Z"/><path d="M56 100 L56 77.6 L64 78.5 L64 100Z"/><path d="M72 100 L72 81 L78.5 84 L80 100Z"/></g>`;
   s += `<rect x="43" y="64" width="14" height="15" rx="4" fill="${piel}"/>`;
   s += `<circle cx="27" cy="51" r="5" fill="${piel}"/><circle cx="73" cy="51" r="5" fill="${piel}"/>`;
   s += `<ellipse cx="50" cy="48" rx="23" ry="25" fill="${piel}"/>`;
@@ -39,6 +43,7 @@ function cara(t) {
     s += `<path d="M25 41 Q26 17 50 16 Q74 17 75 41Z" fill="${gorra}"/>`;
     s += `<path d="M50 39 Q80 36 88 43 Q75 46 50 43Z" fill="${gorra}" opacity=".85"/>`;
   }
+  if (vincha) s += `<path d="M26 37 Q50 27 74 37 L74 42 Q50 32 26 42Z" fill="${vincha}"/>`;
   s += `<path d="M36 42 Q41 39 46 42" stroke="${ceja}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
   s += `<path d="M54 42 Q59 39 64 42" stroke="${ceja}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
   s += `<circle cx="41" cy="49" r="3.2" fill="${ojos}"/><circle cx="59" cy="49" r="3.2" fill="${ojos}"/>`;
@@ -49,6 +54,10 @@ function cara(t) {
   if (barba) {
     s += `<path d="M27 52 Q29 77 50 77 Q71 77 73 52 Q70 66 60 68 Q50 72 40 68 Q30 66 27 52Z" fill="${barba}"/>`;
     s += `<path d="M42 62 Q50 57 58 62 Q50 63.5 42 62Z" fill="${barba}"/>`;
+  }
+  if (bigote) {
+    const [izq, der] = Array.isArray(bigote) ? bigote : [bigote, bigote];
+    s += `<path d="M50 61 Q44 58.5 38 63 Q42 64.5 50 63.2Z" fill="${izq}"/><path d="M50 61 Q56 58.5 62 63 Q58 64.5 50 63.2Z" fill="${der}"/>`;
   }
   s += `<path d="M43 65 Q50 70 57 65" stroke="#7a3b2e" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
   if (aros) s += `<circle cx="26" cy="58" r="2.6" fill="#f4c430" stroke="#b8861f"/><circle cx="74" cy="58" r="2.6" fill="#f4c430" stroke="#b8861f"/>`;

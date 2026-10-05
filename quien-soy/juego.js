@@ -1,11 +1,13 @@
 // Pantalla de ¿Quién soy?: panel según la fase, grilla de cartas e historial de preguntas.
 import { conectar, lista, esc } from '../shared/salas.js';
 import { dibujitos } from './dibujitos.js';
+import { MAZOS_INCLUIDOS } from './famosos.js';
 
 const cache = {};
 async function cargarMazo(id) {
   if (cache[id]) return cache[id];
   if (id === 'dibujitos') return (cache[id] = dibujitos());
+  if (MAZOS_INCLUIDOS[id]) return (cache[id] = MAZOS_INCLUIDOS[id].crear());
   const fb = await conectar();
   const v = (await fb.get(fb.ref(fb.db, 'mazos/cartas/' + id))).val();
   if (!v) throw new Error('el mazo ya no existe');
@@ -29,7 +31,9 @@ export function sonido(a, e, ctx) {
 // ---------- Menú: elegir mazo ----------
 export function menu(el) {
   el.innerHTML = `<div class="row"><label for="mazo">Mazo</label>
-    <select id="mazo"><option value="dibujitos" data-n="24" data-nombre="Dibujitos">Dibujitos (24)</option></select>
+    <select id="mazo"><option value="dibujitos" data-n="24" data-nombre="Dibujitos">Dibujitos (24)</option>
+      ${Object.entries(MAZOS_INCLUIDOS).map(([id, m]) =>
+        `<option value="${id}" data-n="${m.cantidad}" data-nombre="${esc(m.nombre)}">${esc(m.nombre)} (${m.cantidad})</option>`).join('')}</select>
     <a href="${new URL('mazos.html', import.meta.url).href}">Crear o editar mazos</a></div>`;
   conectar()
     .then(fb => fb.get(fb.ref(fb.db, 'mazos/indice')))

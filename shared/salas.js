@@ -13,6 +13,8 @@
 //             sonido(antes, despues, ctx) [opcional]: nombre del sonido de esa jugada
 //             (ver shared/efectos.js); null = silencio. Si no está, suena 'colocar'.
 //             chat = true [opcional]: chat de sala cuando se juega online (ver shared/chat.js)
+//             estado(ctx) [opcional]: texto propio para el cartel de arriba (ej. "Armá tu flota");
+//             si devuelve vacío, se muestra el de siempre ("¡Tu turno!", "Turno de…").
 //   reglas.libre(estado, jugada, yo) [opcional]: jugadas que no dependen del turno y solo tocan
 //             lo tuyo (ej. bajar cartas); el juego las manda con ctx.jugarLibre(jugada).
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
@@ -253,7 +255,7 @@ export function montar({ reglas, juego }) {
   // Jugadas libres: cualquiera, en cualquier momento de la partida, sobre lo suyo
   async function jugarLibre(jugada) {
     const e = st.estado;
-    if (!reglas.libre || !e || e.ganador !== EN_JUEGO || !listos()) return false;
+    if (!reglas.libre || !e || e.ganador !== EN_JUEGO) return false;
     if (!st.online) {
       const nx = reglas.libre(clone(e), jugada, e.turno);
       if (!nx) return false;
@@ -329,15 +331,17 @@ export function montar({ reglas, juego }) {
     if (!e) { $('status').textContent = 'Conectando…'; $('hint').textContent = ''; $('players').innerHTML = ''; return; }
 
     const dot = i => `<span class="dot" style="background:${COLORES[i]}"></span>`;
-    const miTurno = st.online && e.ganador === EN_JUEGO && listos() && st.asiento === e.turno;
+    const propio = e.ganador === EN_JUEGO && listos() && juego.estado ? juego.estado(ctx) : '';
+    const miTurno = !propio && st.online && e.ganador === EN_JUEGO && listos() && st.asiento === e.turno;
     let status;
     if (e.ganador >= 0) status = `${dot(e.ganador)}¡Ganó ${esc(nombre(e.ganador))}!`;
     else if (e.ganador === EMPATE) status = 'Empate';
     else if (!listos()) status = 'Esperando…';
+    else if (propio) status = esc(propio);
     else status = dot(e.turno) + (miTurno ? '¡Tu turno!' : 'Turno de ' + esc(nombre(e.turno)));
     $('status').innerHTML = status;
     $('status').classList.toggle('mi-turno', miTurno);
-    $('status').style.setProperty('--c', e.ganador === EN_JUEGO && listos() ? COLORES[e.turno] : 'transparent');
+    $('status').style.setProperty('--c', e.ganador === EN_JUEGO && listos() && !propio ? COLORES[e.turno] : 'transparent');
 
     $('players').innerHTML = Array.from({length: e.n}, (_, i) => {
       const extra = reglas.detalle ? reglas.detalle(e, i) : '';

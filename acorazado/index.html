@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hundiste mi acorazado</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<style>
+#tablero{max-width:min(100%,520px);position:relative}
+.ac-mar{margin:0 auto 18px}
+.ac-mar h3{margin:0 0 8px;font-size:18px;text-align:center}
+.ac-mar.ac-mini{max-width:300px}
+.ac-mar.ac-mini h3{font-size:15px;color:var(--mute)}
+.ac-grilla{display:grid;grid-template-columns:16px repeat(10,1fr);gap:3px;padding:8px 10px 10px 6px;border-radius:18px;
+  background:linear-gradient(180deg,#1f6fa8,#174f80);box-shadow:0 8px 0 rgba(10,5,40,.45)}
+.ac-mini .ac-grilla{gap:2px;padding:6px 8px 8px 4px;border-radius:14px}
+.ac-grilla .lbl{color:#cfe9fb;font-size:11px;font-weight:600;display:grid;place-items:center;min-height:14px}
+.ac-mini .ac-grilla .lbl{font-size:9px}
+.cel{aspect-ratio:1;min-height:0;padding:0;border-radius:5px;background:#5bb4e5;box-shadow:none;display:grid;place-items:center;
+  font-size:clamp(11px,3.4vw,18px);font-weight:700;color:#fff;line-height:1;transition:background .15s}
+.cel:disabled{opacity:1;cursor:default}
+.cel:active:not(:disabled){transform:scale(.92);box-shadow:none}
+.cel.libre{cursor:crosshair}
+.cel.libre:hover{background:#9ad6f7}
+/* Barcos: gris con proa y popa redondeadas */
+.cel.barco{background:#8d99ae}
+.cel.barco.h.proa{border-radius:45% 4px 4px 45%}
+.cel.barco.h.popa{border-radius:4px 45% 45% 4px}
+.cel.barco.v.proa{border-radius:45% 45% 4px 4px}
+.cel.barco.v.popa{border-radius:4px 4px 45% 45%}
+.cel.barco.sel{background:var(--amarillo)}
+/* Tiros */
+.cel.agua::after{content:'';width:30%;aspect-ratio:1;border-radius:50%;background:#fff;opacity:.85}
+.cel.tocado{background:#ff7b39}
+.cel.tocado::after{content:'✕'}
+.cel.barco.tocado{background:#ff7b39}
+.cel.hundido,.cel.barco.hundido{background:#8c1d2c}
+.cel.hundido::after{content:'✕';opacity:.7}
+.cel.ult{outline:3px solid var(--amarillo);outline-offset:-1px;z-index:1}
+/* Cartel de "¡Hundiste mi acorazado!" */
+.ac-banner{position:absolute;left:0;right:0;margin:0 auto;top:150px;z-index:5;width:max-content;max-width:94%;text-align:center;
+  background:var(--amarillo);color:var(--oscuro);font-size:clamp(20px,6vw,28px);font-weight:700;padding:14px 22px;border-radius:22px;
+  box-shadow:0 6px 0 #c99a00,0 18px 40px rgba(10,5,40,.5);pointer-events:none}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

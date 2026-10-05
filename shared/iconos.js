@@ -36,6 +36,15 @@ export const ICONOS = {
 
   lameloide: svg(hex(17.2, 15, ROJO) + hex(30.4, 15, CREMA) + hex(23.8, 26.4, ROJO) + hex(37, 26.4, AZUL) + hex(17.2, 37.8, CREMA) + hex(30.4, 37.8, ROJO)),
 
+  acorazado: svg(
+    `<rect x="7" y="7" width="34" height="34" rx="7" fill="#5bb4e5"/>` +
+    `<path d="M7 17h34M7 27h34M17 7v34M27 7v34" stroke="#fff" stroke-opacity=".35" stroke-width="1.2"/>` +
+    `<path d="M10 31h21l-3 5H13z" fill="#8d99ae" stroke="${O}" stroke-width="1.6" stroke-linejoin="round"/>` +
+    `<rect x="16" y="26" width="8" height="5" rx="1" fill="#8d99ae" stroke="${O}" stroke-width="1.6"/>` +
+    `<path d="M20 26v-4" stroke="${O}" stroke-width="1.6" stroke-linecap="round"/>` +
+    `<circle cx="34" cy="14" r="5.5" fill="#ff7b39"/><path d="M31.5 11.5l5 5M36.5 11.5l-5 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>` +
+    `<circle cx="13" cy="13" r="2" fill="#fff"/><circle cx="37" cy="37" r="2" fill="#fff"/>`),
+
   'quien-soy': svg(
     `<rect x="11" y="8" width="24" height="32" rx="4" fill="#ffd23f" stroke="${O}" stroke-width="2"/>` +
     `<circle cx="23" cy="20" r="5.5" fill="${O}" opacity=".85"/><path d="M14.5 36q8.5-11 17 0z" fill="${O}" opacity=".85"/>` +

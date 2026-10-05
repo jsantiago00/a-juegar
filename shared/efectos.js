@@ -75,6 +75,12 @@ const SONIDOS = {
   no:       a => { tono(a, {f: 392, d: .12, vol: .22}); tono(a, {f: 261.63, t: .12, d: .28, vol: .22}); },
   cambiar:  a => ruido(a, {d: .32, f: 300, f2: 3200, vol: .3, q: 2}),
   pasar:    a => tono(a, {f: 520, f2: 340, d: .2, tipo: 'sine', vol: .2}),
+  agua:     a => { ruido(a, {d: .45, f: 1400, f2: 250, filtro: 'lowpass', vol: .45}); tono(a, {f: 320, f2: 110, d: .3, tipo: 'sine', vol: .2});
+                   [0, 1, 2].forEach(k => tono(a, {f: 700 + k * 180, f2: 1100 + k * 150, t: .18 + k * .07, d: .06, tipo: 'sine', vol: .08})); },
+  boom:     a => { ruido(a, {d: .55, f: 1800, f2: 70, filtro: 'lowpass', vol: .7}); tono(a, {f: 130, f2: 38, d: .55, tipo: 'sine', vol: .6}); },
+  hundido:  a => { SONIDOS.boom(a);
+                   [520, 440, 370, 300, 250].forEach((f, k) => tono(a, {f, f2: f * 1.35, t: .35 + k * .09, d: .07, tipo: 'sine', vol: .12}));
+                   tono(a, {f: 987.77, t: .85, d: .08, tipo: 'square', vol: .08}); tono(a, {f: 1318.5, t: .93, d: .3, tipo: 'square', vol: .08}); },
   chat:     a => { tono(a, {f: 880, f2: 1180, d: .07, tipo: 'sine', vol: .18}); tono(a, {f: 1320, t: .07, d: .14, tipo: 'sine', vol: .14}); },
   enviar:   a => tono(a, {f: 500, f2: 950, d: .09, tipo: 'sine', vol: .13}),
 };

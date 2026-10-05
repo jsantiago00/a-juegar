@@ -19,7 +19,8 @@ al-centro/            un juego = index.html + reglas.js + juego.js
 juegardium/           puntos y cajas (2 a 4)
 tateti-cuadrado/      Ta-te-ti² (2)
 lameloide/            Hex (2)
-quien-soy/            ¿Quién soy? + editor de mazos (mazos.html)
+acorazado/            Hundiste mi acorazado: batalla naval (2, solo online)
+quien-soy/            ¿Quién soy? + editor de mazos (mazos.html) (mazos incluidos: dibujitos, famosos argentinos y futbolistas)
 ta-te-ti/             juego mínimo, sirve de plantilla
 ```
 
