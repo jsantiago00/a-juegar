@@ -168,7 +168,12 @@ body:has(.chat-boton:not([hidden])) #toast{bottom:calc(96px + env(safe-area-inse
 .chat{position:fixed;z-index:35;right:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 32px));
   height:min(480px,calc(100dvh - 140px));display:flex;flex-direction:column;background:var(--felt2);border:2px solid var(--line);
   border-radius:24px;box-shadow:0 10px 30px rgba(10,5,40,.6);overflow:hidden;animation:entra .3s cubic-bezier(.3,1.5,.5,1)}
-.chat:not([hidden]){display:flex}
+/* En el celu el panel ocupa el ancho y se apoya arriba del teclado (--teclado y --visible los pone chat.js) */
+@media (max-width:600px){
+  .chat{left:8px;right:8px;width:auto;bottom:max(calc(8px + var(--teclado,0px)),calc(8px + env(safe-area-inset-bottom,0px)));
+    height:min(72dvh,calc(var(--visible,100dvh) - 16px));border-radius:22px}
+  body.chat-abierto .chat-boton{display:none}
+}
 .chat-top{display:flex;align-items:center;justify-content:space-between;padding:8px 8px 8px 16px;border-bottom:2px solid var(--line)}
 .chat-top .icono{width:40px;min-height:40px;font-size:17px}
 .chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}

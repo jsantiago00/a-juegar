@@ -29,12 +29,28 @@ export function crearChat(raiz, {enviar, colorDe, aviso}) {
     $('chatBadge').textContent = noLeidos > 9 ? '9+' : noLeidos;
   }
   const alFondo = () => { const m = $('chatMsgs'); m.scrollTop = m.scrollHeight; };
+  // Solo con mouse enfocamos el campo al abrir: en el celu eso despliega el teclado y tapa todo
+  const conMouse = matchMedia('(hover: hover) and (pointer: fine)').matches;
   function abrir(v) {
     abierto = v;
     $('chat').hidden = !v;
     $('bChat').setAttribute('aria-expanded', String(v));
-    if (v) { noLeidos = 0; badge(); alFondo(); $('chatTxt').focus({preventScroll: true}); }
+    document.body.classList.toggle('chat-abierto', v);
+    if (v) { noLeidos = 0; badge(); ajustar(); alFondo(); if (conMouse) $('chatTxt').focus({preventScroll: true}); }
   }
+
+  // El teclado del celu se dibuja encima de la página sin achicarla: con visualViewport
+  // medimos cuánto tapa y subimos el panel para que quede justo arriba del teclado.
+  const vv = window.visualViewport;
+  function ajustar() {
+    if (!vv) return;
+    const teclado = Math.max(0, innerHeight - vv.height - vv.offsetTop);
+    $('chat').style.setProperty('--teclado', teclado + 'px');
+    $('chat').style.setProperty('--visible', vv.height + 'px');
+    if (abierto) alFondo();
+  }
+  vv?.addEventListener('resize', ajustar);
+  vv?.addEventListener('scroll', ajustar);
   async function mandar(texto) {
     const t = texto.trim();
     if (!t) return;
