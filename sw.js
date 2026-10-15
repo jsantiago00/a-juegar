@@ -2,7 +2,7 @@
 //  - Páginas y código: primero la red (así siempre llega la versión nueva); sin conexión, lo guardado.
 //  - Imágenes, fuentes y el SDK de Firebase: primero lo guardado (no cambian).
 //  - La base de datos de Firebase no pasa por acá (para jugar online hace falta internet).
-const CACHE = 'a-juegar-v1';
+const CACHE = 'a-juegar-v2';
 const BASICOS = ['./', 'index.html', 'shared/estilo.css', 'shared/salas.js', 'shared/efectos.js', 'shared/chat.js',
                  'shared/juegos.js', 'shared/iconos.js', 'shared/firebase.js', 'icono.svg', 'manifest.webmanifest'];
 
