@@ -30,7 +30,7 @@ tutti-frutti/         Tutti Frutti / Basta, con votación de respuestas (2 a 6, 
 pinturillo/           Uno dibuja y los demás adivinan (2 a 6, solo online; los trazos van en la sala, en extra/trazos)
 dibujamiento/         Teléfono descompuesto con dibujos + la película del final (2 a 6, solo online; dibujos en extra/dib)
 espia/                Espía: la mayoría con la misma palabra, impostores con una parecida y espías sin palabra (más cuantos más juegan); pistas y votación (3 a 8, solo online)
-criptico/             Críptico: ahorcado con adivinanzas, cada uno escribe palabra + pista y los demás la descifran (2 a 6, solo online)
+criptico/             Críptico: cada uno escribe palabra + críptico y los demás tienen 3 intentos para adivinarla (2 a 6, solo online)
 ta-te-ti/             juego mínimo, sirve de plantilla
 ```
 

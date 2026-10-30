@@ -26,9 +26,8 @@ export function estado(ctx) {
 }
 
 // El muñeco: cada error suma una parte. cara: 'normal' | 'nervioso' | 'feliz' | 'ahorcado'
-// (lo usa también el Críptico, con sus propias animaciones)
-export function horca(errores, cara, nuevas, an = anim) {
-  const parte = (k, svg) => (errores > k ? (nuevas.includes(k) ? an.envolver('p' + k, svg) : svg) : '');
+function horca(errores, cara, nuevas) {
+  const parte = (k, svg) => (errores > k ? (nuevas.includes(k) ? anim.envolver('p' + k, svg) : svg) : '');
   const ojos = cara === 'ahorcado'
     ? '<path d="M121 58l6 6M127 58l-6 6M133 58l6 6M139 58l-6 6" stroke="#2a1d4f" stroke-width="3" stroke-linecap="round"/>'
     : '<circle cx="124" cy="61" r="3" fill="#2a1d4f"/><circle cx="136" cy="61" r="3" fill="#2a1d4f"/>';
