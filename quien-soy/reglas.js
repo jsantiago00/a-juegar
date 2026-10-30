@@ -7,12 +7,14 @@ export const info = {
   desc: 'Adiviná el personaje del otro con preguntas de sí o no.',
   min: 2, max: 2,
   soloOnline: true,          // cada uno necesita su pantalla, porque el personaje es secreto
+  reloj: 60,                 // tiempo para hacer la pregunta (se puede cambiar o sacar al armar la sala)
   reglas: [
     'A cada jugador le toca un personaje secreto del mazo.',
     'En tu turno escribís una pregunta de sí o no; el otro la responde y le toca preguntar a él.',
     'Bajás o levantás tus cartas cuando quieras, sea o no tu turno.',
     'En vez de preguntar podés arriesgar quién es. Si acertás, ganás.',
     'Si le errás, pasa el turno al otro (y esa carta se te baja sola). Si quien armó la sala marcó "si le erra, pierde", perdés.',
+    'Si la sala tiene reloj, tenés ese tiempo para preguntar (o arriesgar). Si se acaba, pregunta el otro.',
     'Los mazos de fotos se arman desde "Crear o editar mazos".',
   ],
 };
@@ -77,6 +79,15 @@ export function aplicar(e, j, nombre) {
     }
   }
   return null;
+}
+
+// Reloj: corre mientras te toca preguntar. Si se acaba, pasa el turno y pregunta el otro.
+export const conReloj = e => e.fase === 'pregunta';
+export function sinTiempo(e, nombre) {
+  if (e.fase !== 'pregunta') return null;
+  const p = e.turno, otro = 1 - p;
+  Object.assign(e, {turno: otro, pregunta: '', respuesta: '', ultima: `A ${nombre(p)} se le acabó el tiempo: pregunta ${nombre(otro)}`});
+  return e;
 }
 
 // Jugadas libres: no dependen del turno y solo tocan lo tuyo. yo = tu asiento.

@@ -21,6 +21,11 @@
 //   info.soloOnline: true oculta el modo local (juegos con información secreta)
 //   info.sinTurnos: true si todos juegan a la vez (no se sortea ni se anuncia quién empieza)
 //   info.cantidades: [2, 4, 6] si no vale cualquier cantidad entre min y max
+//   info.reloj: 60 si el juego tiene reloj por turno (los segundos que vienen elegidos; se puede poner sin reloj).
+//             El motor guarda los segundos en estado.opciones.reloj y la hora límite en estado.limite; el reloj vuelve
+//             a arrancar con cada jugada y cuando cambia el turno. Si se acaba, el motor llama
+//             reglas.sinTiempo(estado, nombre) (lo que pasa: perder el turno, tirar solo…; null = nada) y
+//             reglas.conReloj(estado) [opcional] dice si en ese momento corre el reloj (ej. solo al preguntar).
 //   info.sinGanador: true si al final no gana nadie (ej. Dibujamiento): el juego termina con ganador = EMPATE
 //             y el cartel de fin usa juego.textoFin(ctx) ({emoji, txt}).
 //   reglas.ganadores(estado) [opcional]: todos los asientos que ganaron (juegos por equipos)
@@ -46,8 +51,8 @@ import { crearChat } from './chat.js';
 if ('serviceWorker' in navigator) navigator.serviceWorker.register(new URL('../sw.js', import.meta.url)).catch(() => {});
 
 const FB_VER = '10.12.2';
-export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480', '#b07cff', '#ff8c42'];
-export const NOMBRES = ['Rojo', 'Azul', 'Amarillo', 'Verde', 'Violeta', 'Naranja'];
+export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480', '#b07cff', '#ff8c42', '#ff6fb5', '#2ec4b6'];
+export const NOMBRES = ['Rojo', 'Azul', 'Amarillo', 'Verde', 'Violeta', 'Naranja', 'Rosa', 'Turquesa'];
 export const EN_JUEGO = -1, EMPATE = -2;
 
 // Firebase borra arrays vacíos y a veces devuelve objetos: usá esto en normalizar()
@@ -115,11 +120,32 @@ export function rapidito(id, reglasLargas = []) {
   return `<ol class="rapidito">${pasos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>`;
 }
 
+// ---------- Reloj por turno (juegos con info.reloj) ----------
+export const RELOJES = [0, 30, 60, 120];
+const textoReloj = s => (!s ? 'Sin' : s < 60 ? s + 's' : s / 60 + 'm');
+export function selectorReloj(info, nombre, elegido = info.reloj) {
+  if (!info.reloj) return '';
+  return `<div class="pills reloj-pills" role="radiogroup" aria-label="Tiempo por turno">${RELOJES.map(s =>
+    `<label><input type="radio" name="${nombre}" value="${s}"${s === elegido ? ' checked' : ''}><span>${textoReloj(s)}</span></label>`).join('')}
+    <span class="note">⏱️ por turno</span></div>`;
+}
+export function relojElegido(info, nombre) {
+  const r = document.querySelector(`input[name="${nombre}"]:checked`);
+  return r ? +r.value : info.reloj || 0;
+}
+// Suma el reloj elegido a las opciones del juego
+export const conReloj = (opciones, info, nombre) => (info.reloj ? {...(opciones || {}), reloj: relojElegido(info, nombre)} : opciones);
+
 // Partida nueva con quién empieza sorteado (salvo en los juegos sin turnos)
 export function partidaNueva(reglas, n, opciones) {
   const quien = Math.floor(Math.random() * n);
   const e = reglas.nuevoJuego(n, opciones, quien);
   if (!reglas.info.sinTurnos) { e.turno = quien; e.empieza = quien; }
+  if (reglas.info.reloj) {
+    const s = opciones && RELOJES.includes(+opciones.reloj) ? +opciones.reloj : reglas.info.reloj;
+    e.opciones = {...(e.opciones || {}), reloj: s};
+    e.limite = 0;                      // arranca cuando están todos
+  }
   return e;
 }
 
@@ -143,7 +169,7 @@ export async function crearSala({reglas, n, opciones, nombre}) {
     if (!(await buscarSala(cod))) break;
   }
   await fb.set(fb.ref(fb.db, `juegos/${reglas.info.id}/salas/${cod}`),
-               {n, creada: Date.now(), seats: {0: {id: miId, name: nombre}}, game: partidaNueva(reglas, n, opciones)});
+               {n, creada: Date.now(), dueno: miId, seats: {0: {id: miId, name: nombre}}, game: partidaNueva(reglas, n, opciones)});
   marcarActividad(reglas.info.id, cod, true);
   return cod;
 }
@@ -224,6 +250,7 @@ export function montar({ reglas, juego }) {
     <section class="tarjeta armar">
       <h2>🎮 Armá la partida</h2>
       ${selectorJugadores(info, 'cantN')}
+      ${selectorReloj(info, 'relojN')}
       <div id="menuExtra"></div>
       <div class="row"><input id="nombre" placeholder="Tu nombre" maxlength="14" autocomplete="off" aria-label="Tu nombre"></div>
       ${botonesJugar(info)}
@@ -243,11 +270,13 @@ export function montar({ reglas, juego }) {
       <div class="cod-grande" id="espCod"></div>
       <div class="row centro"><button class="main" id="bCompartir">Compartir link</button><button id="bCopiar">Copiar código</button></div>
       <p class="note" id="espTxt"></p>
+      <button class="chico" id="bCambiarEspera">🎮 Cambiar el juego o cuántos juegan</button>
       <div class="espera-reglas"><b>Mientras tanto, así se juega:</b>${rapidito(info.id, info.reglas)}</div>
     </section>
     <section class="tarjeta equipos-caja" id="equipos" hidden></section>
-    <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🎮 Otro juego</button></div>
+    <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🎮 Otro juego o cantidad</button></div>
     <div id="players"></div>
+    <div id="reloj" hidden></div>
     <div id="hint"></div>
     <div id="tablero"></div>
     <div id="controles"></div>
@@ -272,14 +301,30 @@ export function montar({ reglas, juego }) {
     <div id="cambiar" class="capa" hidden>
       <div class="fin-caja cambiar-caja">
         <h2>🎮 ¿A qué jugamos ahora?</h2>
-        <p>Se mudan todos los de la sala, con el mismo código.</p>
+        <p>Se mudan todos los de la sala, con el mismo código. También podés cambiar cuántos juegan.</p>
         <div class="cambiar-lista" id="cambiarLista"></div>
         <div class="cambiar-opc" id="cambiarOpc" hidden>
           <div class="cambiar-elegido" id="cambiarElegido"></div>
+          <div id="cambiarCant"></div>
+          <div id="cambiarQuienes"></div>
+          <div id="cambiarReloj"></div>
           <div id="cambiarExtra"></div>
           <button class="main grande" id="bCambiarSi">¡Vamos!</button>
+          <button class="chico" id="bCambiarVolver">← Elegir otro juego</button>
         </div>
         <button id="bCambiarNo">Cancelar</button>
+      </div>
+    </div>
+    <div id="echar" class="capa" hidden>
+      <div class="fin-caja">
+        <div class="fin-emoji">👋</div>
+        <h2 id="echarTxt"></h2>
+        <p id="echarSub"></p>
+        <div class="echar-botones">
+          <button class="main grande" id="bEcharAchicar"></button>
+          <button class="grande" id="bEcharLibre">Sacar y dejar el lugar libre</button>
+          <button class="chico" id="bEcharNo">Cancelar</button>
+        </div>
       </div>
     </div>
     <div id="mudanza" class="capa" hidden>
@@ -296,6 +341,10 @@ export function montar({ reglas, juego }) {
   const contar = sala => { let k = 0; if (sala && sala.seats) for (let i = 0; i < sala.n; i++) if (sala.seats[i]) k++; return k; };
   const sentados = () => contar(st.sala);
   const listos = () => !st.online || (!!st.sala && sentados() === st.sala.n);
+  // Quien creó la sala (en las salas viejas, el del asiento 0)
+  const duenoId = () => (st.sala ? st.sala.dueno || (st.sala.seats && st.sala.seats[0] ? st.sala.seats[0].id : '') : '');
+  const soyDueno = () => st.online && !!st.sala && duenoId() === miId;
+  const asientosDe = sala => Array.from({length: sala.n}, (_, i) => (sala.seats || {})[i] || null);
   const puedoJugar = () => {
     const e = st.estado;
     return !!e && e.ganador === EN_JUEGO && listos() && (!st.online || st.asiento === e.turno);
@@ -324,11 +373,22 @@ export function montar({ reglas, juego }) {
     aviso,
   }) : null;
 
+  // ---------- Reloj por turno ----------
+  const segReloj = e => (info.reloj && e && e.opciones ? +e.opciones.reloj || 0 : 0);
+  const relojCorre = e => !!e && segReloj(e) > 0 && e.ganador === EN_JUEGO && (!reglas.conReloj || !!reglas.conReloj(e));
+  const firmaReloj = e => `${e.turno}|${relojCorre(e)}`;
+  // Después de una jugada el reloj arranca de nuevo; después de una jugada libre, solo si cambió el turno
+  function reponerReloj(nx, firma = null) {
+    if (segReloj(nx) && (firma === null || firmaReloj(nx) !== firma)) nx.limite = ahora() + segReloj(nx) * 1000;
+    return nx;
+  }
+
   async function jugar(jugada) {
     if (!puedoJugar()) return false;
     if (!st.online) {
       const nx = reglas.aplicar(clone(st.estado), jugada, nombre);
       if (!nx) { aviso('Esa jugada no vale'); sonar('error'); return false; }
+      reponerReloj(nx);
       const antes = st.estado;
       st.estado = nx; efectos(antes, nx); render(); return true;
     }
@@ -337,7 +397,8 @@ export function montar({ reglas, juego }) {
         if (cur === null) return cur;                         // Firebase reintenta con el dato real
         reglas.normalizar(cur);
         if (cur.turno !== st.asiento || cur.ganador !== EN_JUEGO) return;  // aborta
-        return reglas.aplicar(cur, jugada, nombre) || undefined;
+        const nx = reglas.aplicar(cur, jugada, nombre);
+        return nx ? reponerReloj(nx) : undefined;
       });
       if (!res.committed) { aviso('Esa jugada no vale'); sonar('error'); return false; }
       marcarActividad(info.id, st.cod);
@@ -352,6 +413,7 @@ export function montar({ reglas, juego }) {
     if (!st.online) {
       const nx = reglas.libre(clone(e), jugada, e.turno, nombre);
       if (!nx) return false;
+      reponerReloj(nx, firmaReloj(e));
       st.estado = nx; efectos(e, nx); render(); return true;
     }
     try {
@@ -359,12 +421,68 @@ export function montar({ reglas, juego }) {
         if (cur === null) return cur;
         reglas.normalizar(cur);
         if (cur.ganador !== EN_JUEGO) return;
-        return reglas.libre(cur, jugada, st.asiento, nombre) || undefined;
+        const firma = firmaReloj(cur), nx = reglas.libre(cur, jugada, st.asiento, nombre);
+        return nx ? reponerReloj(nx, firma) : undefined;
       });
       if (res.committed) marcarActividad(info.id, st.cod);
       return res.committed;
     } catch (err) { aviso('Error de conexión: ' + err.message); return false; }
   }
+
+  // Muestra cuánto queda, avisa los últimos 10 segundos y, si se acaba, aplica reglas.sinTiempo.
+  // Online lo intenta cualquiera (la transacción hace que pase una sola vez); los demás esperan un poquito
+  // para que normalmente lo haga el celu del que tenía el turno.
+  let ticReloj = -1, vencido = 0, arrancando = 0;
+  function tic() {
+    const e = st.estado, el = $('reloj');
+    if (st.pantalla !== 'play' || !relojCorre(e) || !listos() || (st.online && !st.sala)) { el.hidden = true; return; }
+    if (!e.limite) { el.hidden = true; arrancarReloj(); return; }
+    const falta = e.limite - ahora(), queda = Math.max(0, Math.ceil(falta / 1000));
+    const mio = !st.online || st.asiento === e.turno;
+    el.hidden = false;
+    el.innerHTML = `⏱️ ${Math.floor(queda / 60)}:${String(queda % 60).padStart(2, '0')}` +
+      (st.online && !mio && e.turno >= 0 ? ` <small>${esc(nombre(e.turno))}</small>` : '');
+    el.classList.toggle('apurado', queda <= 10);
+    el.classList.toggle('mio', mio);
+    if (mio && queda <= 10 && queda > 0 && queda !== ticReloj) { ticReloj = queda; sonar('reloj'); }
+    if (falta <= (mio ? 0 : -1500) && vencido !== e.limite) { vencido = e.limite; vencer(e.limite); }
+  }
+  async function arrancarReloj() {
+    if (!st.online) { st.estado.limite = ahora() + segReloj(st.estado) * 1000; return; }
+    if (Date.now() < arrancando) return;
+    arrancando = Date.now() + 3000;
+    try {
+      await fb.runTransaction(fb.ref(fb.db, ruta() + '/game'), cur => {
+        if (cur === null) return cur;
+        if (+cur.limite || cur.ganador !== EN_JUEGO) return;
+        cur.limite = ahora() + segReloj(cur) * 1000;
+        return cur;
+      });
+    } catch {}
+  }
+  function sinTiempo(cur, lim) {
+    if (cur.ganador !== EN_JUEGO || +cur.limite !== lim || ahora() < lim || !relojCorre(cur) || !reglas.sinTiempo) return null;
+    const p = cur.turno, k = (cur.vencio ? +cur.vencio.k || 0 : 0) + 1;
+    const nx = reglas.sinTiempo(cur, nombre);
+    if (!nx) return null;
+    nx.limite = ahora() + segReloj(nx) * 1000;
+    nx.vencio = {p, k};
+    return nx;
+  }
+  async function vencer(lim) {
+    if (!st.online) {
+      const antes = st.estado, nx = sinTiempo(clone(antes), lim);
+      if (nx) { st.estado = nx; efectos(antes, nx); render(); }
+      return;
+    }
+    try {
+      await fb.runTransaction(fb.ref(fb.db, ruta() + '/game'), cur => {
+        if (cur === null) return cur;
+        return sinTiempo(reglas.normalizar(cur), lim) || undefined;
+      });
+    } catch {}
+  }
+  setInterval(tic, 250);
 
   // Lo que recibe el juego para dibujar y jugar
   const ctx = {
@@ -400,7 +518,16 @@ export function montar({ reglas, juego }) {
       sonar('entrar');
       aviso(!listos() ? 'Se sumó alguien' : sinJugar(e) && quienEmpieza(e) ? `¡Están todos! ${quienEmpieza(e)}` : '¡Están todos! A jugar');
     } else if (st.online && !antes && e && listos() && sinJugar(e) && quienEmpieza(e)) aviso(quienEmpieza(e));   // recién entrás
+    if (st.online && salaAntes && st.sala) {                // alguien ya no está (lo sacaron o quedó afuera)
+      const ids = Object.values(st.sala.seats || {}).map(x => x && x.id);
+      const fueron = Object.values(salaAntes.seats || {}).filter(x => x && !ids.includes(x.id));
+      if (fueron.length) aviso(`${fueron.map(x => x.name).join(' y ')} ya no ${fueron.length > 1 ? 'están' : 'está'} en la sala`);
+    }
     if (!antes || !e || JSON.stringify(antes) === JSON.stringify(e)) return;
+    if (e.vencio && (!antes.vencio || antes.vencio.k !== e.vencio.k)) {
+      sonar('no');
+      aviso(st.online && e.vencio.p === st.asiento ? '⏱️ ¡Se te acabó el tiempo!' : `⏱️ Se le acabó el tiempo a ${nombre(e.vencio.p)}`);
+    }
     // Se volvió a repartir antes de jugar (ej. cambiaron los equipos): quién empieza puede ser otro
     if (antes.ganador === EN_JUEGO && sinJugar(e) && antes.empieza !== e.empieza && listos() && quienEmpieza(e)) aviso(quienEmpieza(e));
     if (antes.ganador !== EN_JUEGO && e.ganador === EN_JUEGO) {    // revancha
@@ -459,14 +586,17 @@ export function montar({ reglas, juego }) {
     else status = dot(e.turno) + (miTurno ? '¡Tu turno!' : 'Turno de ' + esc(nombre(e.turno)));
     $('status').innerHTML = status;
     $('status').classList.toggle('mi-turno', miTurno);
-    $('status').style.setProperty('--c', e.ganador === EN_JUEGO && listos() && !propio ? COLORES[e.turno] : 'transparent');
+    $('status').style.setProperty('--c', e.ganador === EN_JUEGO && listos() && !propio && e.turno >= 0 ? COLORES[e.turno] : 'transparent');
 
+    // Quien creó la sala (👑) puede sacar a los demás con la ✕
+    const dueno = duenoId(), mando = soyDueno();
     $('players').innerHTML = Array.from({length: e.n}, (_, i) => {
       const extra = reglas.detalle ? reglas.detalle(e, i) : '';
-      const vacio = st.online && !asientoDe(i);
+      const s = st.online ? asientoDe(i) : null, vacio = st.online && !s;
       return `<div class="chip${i === e.turno && e.ganador === EN_JUEGO ? ' turn' : ''}${vacio ? ' vacio' : ''}" style="--c:${COLORES[i]}">${dot(i)}` +
-             `${vacio ? 'Libre' : esc(nombre(i))}${st.online && i === st.asiento ? ' (vos)' : ''}` +
-             `${extra ? `<span class="w">${esc(extra)}</span>` : ''}</div>`;
+             `${vacio ? 'Libre' : esc(nombre(i))}${st.online && i === st.asiento ? ' (vos)' : ''}${s && s.id === dueno ? ' 👑' : ''}` +
+             `${extra ? `<span class="w">${esc(extra)}</span>` : ''}` +
+             `${mando && s && i !== st.asiento ? `<button class="echar" data-echar="${i}" title="Sacar de la sala" aria-label="Sacar a ${esc(s.name)} de la sala">✕</button>` : ''}</div>`;
     }).join('');
 
     const pista = juego.dibujar(ctx);
@@ -508,6 +638,15 @@ export function montar({ reglas, juego }) {
       const v = snap.val();
       if (!v) { aviso('La sala ya no existe'); return; }
       const antes = st.estado, salaAntes = st.sala;
+      // Si te sacaron (o quedaste afuera de la partida nueva), volvés al menú
+      const fuera = v.siguiente && lista(v.siguiente.fuera).includes(miId);
+      const estoy = Object.values(v.seats || {}).some(x => x && x.id === miId);
+      if (fuera || (!estoy && !v.siguiente)) {
+        salir();
+        aviso(fuera ? `${v.siguiente.por} armó una partida de ${v.siguiente.n} y quedaste afuera` : 'Te sacaron de la sala');
+        sonar('pasar');
+        return;
+      }
       st.sala = v;
       for (let i = 0; i < v.n; i++) if (v.seats && v.seats[i] && v.seats[i].id === miId) st.asiento = i;
       st.estado = reglas.normalizar(v.game);
@@ -564,7 +703,7 @@ export function montar({ reglas, juego }) {
   $('menu').addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
   function jugarOffline(n) {
     if (info.soloOnline) return;
-    Object.assign(st, {online: false, estado: partidaNueva(reglas, n, juego.opciones?.()), pantalla: 'play', finVisto: false});
+    Object.assign(st, {online: false, estado: partidaNueva(reglas, n, conReloj(juego.opciones?.(), info, 'relojN')), pantalla: 'play', finVisto: false});
     registrarPartida(info.id);
     juego.reiniciar?.(); render();
     if (quienEmpieza(st.estado)) aviso(quienEmpieza(st.estado));
@@ -574,7 +713,7 @@ export function montar({ reglas, juego }) {
     const name = miNombre();
     $('bCrear').disabled = true;
     try {
-      const cod = await crearSala({reglas, n: jugadoresElegidos(info, 'cantN'), opciones: juego.opciones?.(), nombre: name});
+      const cod = await crearSala({reglas, n: jugadoresElegidos(info, 'cantN'), opciones: conReloj(juego.opciones?.(), info, 'relojN'), nombre: name});
       entrarSala(cod, 0);
     } catch (e) { aviso(e.message); }
     $('bCrear').disabled = false;
@@ -591,15 +730,17 @@ export function montar({ reglas, juego }) {
   $('nombreInv').addEventListener('keydown', ev => { if (ev.key === 'Enter') $('bEntrarInv').click(); });
 
   // ---------- Botones de la partida ----------
-  $('bSalir').onclick = () => {
-    sonar('tap');
+  $('bSalir').onclick = () => { sonar('tap'); salir(); };
+  function salir() {
     if (st.cortar) { st.cortar(); st.cortar = null; }
+    ['cambiar', 'echar', 'mudanza'].forEach(id => { $(id).hidden = true; });
+    cerrarCambiar();
     Object.assign(st, {pantalla: 'menu', online: false, estado: null, sala: null, cod: '', asiento: -1});
     juego.reiniciar?.();
     chat?.reiniciar();
     try { history.replaceState(null, '', location.pathname); } catch {}
     render();
-  };
+  }
   async function revancha() {
     sonar('tap');
     juego.reiniciar?.();
@@ -668,55 +809,161 @@ export function montar({ reglas, juego }) {
     });
   });
 
-  // ---------- Cambiar de juego sin perder la sala ----------
-  // Se crea la sala del otro juego con el mismo código, los mismos asientos y el chat, y se deja
-  // "siguiente" en esta sala: todos los que la están mirando se mudan solos (ver entrarSala).
-  const reglasDe = id => import(new URL(`../${id}/reglas.js`, import.meta.url).href);
-  const juegoDe = id => import(new URL(`../${id}/juego.js`, import.meta.url).href);
-  let cambiarA = null;   // {id, juego} del juego elegido, si tiene opciones (ej. el mazo de ¿Quién soy?)
+  // ---------- Cambiar de juego (o de cantidad) sin perder la sala ----------
+  // Otro juego: se crea su sala con el mismo código, los mismos asientos y el chat, y se deja "siguiente"
+  // en esta: todos los que la están mirando se mudan solos (ver entrarSala).
+  // El mismo juego: se cambia la cantidad y se arranca de nuevo en la misma sala.
+  // Achicar la sala con gente adentro (dejar a alguno afuera) solo lo puede hacer quien la creó.
+  const reglasDe = id => (id === info.id ? Promise.resolve(reglas) : import(new URL(`../${id}/reglas.js`, import.meta.url).href));
+  const juegoDe = id => (id === info.id ? Promise.resolve(juego) : import(new URL(`../${id}/juego.js`, import.meta.url).href));
+  let cambiarA = null;   // {id, juego, info} del juego elegido
   async function abrirCambiar() {
     sonar('tap');
     if (!st.online || !st.sala) return;
     cambiarA = null;
     $('cambiarLista').hidden = false; $('cambiarOpc').hidden = true;
-    const n = st.sala.n, otros = ordenarJuegos(JUEGOS.filter(j => j.id !== info.id));
-    const infos = await Promise.all(otros.map(j => reglasDe(j.id).then(m => m.info).catch(() => null)));
-    $('cambiarLista').innerHTML = otros.map((j, k) => {
-      const inf = infos[k], va = !!inf && cantidades(inf).includes(n);
+    const hay = sentados(), mando = soyDueno();
+    const todos = [datosJuego(info.id), ...ordenarJuegos(JUEGOS.filter(j => j.id !== info.id))];
+    const infos = await Promise.all(todos.map(j => reglasDe(j.id).then(m => m.info).catch(() => null)));
+    $('cambiarLista').innerHTML = todos.map((j, k) => {
+      const inf = infos[k], va = !!inf && (mando || cantidades(inf).some(c => c >= hay));
       return `<button data-id="${j.id}" style="--c:${j.color}"${va ? '' : ' disabled'}><span class="ico">${iconoJuego(j.id)}</span>` +
-             `${esc(j.nombre)}${va ? '' : `<small>es de ${esc(j.jugadores)}</small>`}</button>`;
+             `${esc(j.nombre || info.nombre)}<small>${j.id === info.id ? 'este mismo · ' : ''}${esc(j.jugadores || '')}</small></button>`;
     }).join('');
     $('cambiar').hidden = false;
   }
-  // Si el juego tiene opciones de menú (ej. elegir mazo), se muestran antes de mudarse
+  function cerrarCambiar() {
+    $('cambiar').hidden = true;
+    $('cambiarExtra').innerHTML = '';
+    if (juego.menu && !$('menuExtra').innerHTML) juego.menu($('menuExtra'));   // si se usó el menú de este mismo juego
+  }
+  // Opciones antes de mudarse: cuántos juegan, quiénes (si no entran todos), el reloj y las del juego (ej. el mazo)
   async function elegirJuego(id) {
     const [mod, {info: inf}] = await Promise.all([juegoDe(id), reglasDe(id)]);
-    if (!mod.menu) { mudar(id); return; }
-    cambiarA = {id, juego: mod};
-    const j = datosJuego(id);
+    cambiarA = {id, juego: mod, info: inf};
+    const j = datosJuego(id), hay = sentados(), mando = soyDueno(), ns = cantidades(inf);
     $('cambiarElegido').innerHTML = `<span class="ico" style="--c:${j.color}">${iconoJuego(id)}</span><b>${esc(inf.nombre)}</b>`;
-    mod.menu($('cambiarExtra'));
+    // Cantidad: la de ahora si se puede; si no, la más cercana que alcance para todos
+    const def = ns.includes(hay) ? hay : ns.find(c => c >= hay) || ns[ns.length - 1];
+    $('cambiarCant').innerHTML = `<p class="note">¿Cuántos juegan? (ahora hay ${hay} en la sala)</p>` + (ns.length === 1 ? `<p><b>${ns[0]} jugadores</b></p>`
+      : `<div class="pills" role="radiogroup" aria-label="Cantidad de jugadores">${ns.map(c =>
+          `<label><input type="radio" name="cantC" value="${c}"${c === def ? ' checked' : ''}${c < hay && !mando ? ' disabled' : ''}><span>${c}</span></label>`).join('')}</div>`) +
+      (!mando && ns.some(c => c < hay) ? '<p class="note">Para dejar a alguien afuera lo tiene que elegir quien creó la sala 👑.</p>' : '');
+    pintarQuienes();
+    const relojAhora = id === info.id && st.estado && st.estado.opciones && st.estado.opciones.reloj != null ? +st.estado.opciones.reloj : inf.reloj;
+    $('cambiarReloj').innerHTML = selectorReloj(inf, 'relojC', relojAhora);
+    $('cambiarExtra').innerHTML = '';
+    if (mod.menu) {
+      if (id === info.id) $('menuExtra').innerHTML = '';   // que no haya dos menús iguales a la vez
+      mod.menu($('cambiarExtra'));
+    }
     $('cambiarLista').hidden = true; $('cambiarOpc').hidden = false; $('bCambiarSi').disabled = false;
   }
-  async function mudar(id, opciones) {
+  const cantCambiar = () => {
+    const r = document.querySelector('input[name="cantC"]:checked');
+    return r ? +r.value : cantidades(cambiarA.info)[0];
+  };
+  // Si no entran todos, quien creó la sala elige quiénes juegan (de entrada, los primeros y vos)
+  function pintarQuienes() {
+    const n = cantCambiar(), gente = asientosDe(st.sala).filter(Boolean);
+    if (gente.length <= n) { $('cambiarQuienes').innerHTML = ''; return; }
+    $('cambiarQuienes').innerHTML = `<p class="note">Entran ${n}: elegí quiénes juegan (los demás salen de la sala).</p>
+      <div class="fichas">${gente.map((x, k) => `<label><input type="checkbox" value="${esc(x.id)}"${k < n || x.id === miId ? ' checked' : ''}${
+        x.id === miId ? ' disabled' : ''}><span>${esc(x.name)}${x.id === miId ? ' (vos)' : ''}</span></label>`).join('')}</div>`;
+    const marcados = [...$('cambiarQuienes').querySelectorAll('input:checked')];
+    if (marcados.length > n) marcados.filter(i => !i.disabled).pop().checked = false;
+  }
+  $('cambiarCant').addEventListener('change', () => { sonar('tick'); pintarQuienes(); });
+  $('cambiarQuienes').addEventListener('change', ev => {
+    const n = cantCambiar(), marcados = $('cambiarQuienes').querySelectorAll('input:checked');
+    if (marcados.length > n) { ev.target.checked = false; aviso(`Entran ${n}: sacá a otro primero`); }
+  });
+  async function mudar() {
+    const {id, juego: mod, info: inf} = cambiarA, n = cantCambiar();
+    const gente = asientosDe(st.sala).filter(Boolean);
+    const quedan = gente.length <= n ? gente.map(x => x.id)
+      : [...$('cambiarQuienes').querySelectorAll('input:checked')].map(i => i.value);
+    if (quedan.length > n) { aviso(`Entran ${n}`); return; }
+    if (quedan.length < gente.length && !soyDueno()) { aviso('Solo quien creó la sala puede dejar gente afuera'); return; }
+    const opciones = conReloj(mod.menu ? mod.opciones?.() : undefined, inf, 'relojC');
+    const seats = Object.fromEntries(gente.filter(x => quedan.includes(x.id)).map((x, i) => [i, x]));
+    const fuera = gente.map(x => x.id).filter(x => !quedan.includes(x));
+    const dueno = quedan.includes(duenoId()) ? duenoId() : miId;
     $('cambiarLista').querySelectorAll('button').forEach(b => { b.disabled = true; });
     $('bCambiarSi').disabled = true;
     try {
       const otras = await reglasDe(id);
-      const n = st.sala.n, yo = asientoDe(st.asiento);
+      const yo = asientoDe(st.asiento);
+      if (id === info.id) {
+        await fb.update(fb.ref(fb.db, ruta()), {n, dueno, seats, game: partidaNueva(otras, n, opciones)});
+        marcarActividad(info.id, st.cod, true);
+        juego.reiniciar?.();
+        sonar('entrar');
+        cerrarCambiar();
+        return;
+      }
       await fb.set(fb.ref(fb.db, `juegos/${id}/salas/${st.cod}`),
-                   {n, creada: Date.now(), seats: st.sala.seats, game: partidaNueva(otras, n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
+                   {n, creada: Date.now(), dueno, seats, game: partidaNueva(otras, n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
       marcarActividad(id, st.cod, true);
-      await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, por: (yo && yo.name) || 'Alguien', t: Date.now()});
-    } catch (e) { aviso('No se pudo cambiar: ' + e.message); $('cambiar').hidden = true; }
+      await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, n, por: (yo && yo.name) || 'Alguien', t: Date.now(), ...(fuera.length ? {fuera} : {})});
+    } catch (e) { aviso('No se pudo cambiar: ' + e.message); cerrarCambiar(); }
   }
-  $('bOtroJuego').onclick = $('bOtroJuego2').onclick = abrirCambiar;
-  $('bCambiarNo').onclick = () => { sonar('tap'); $('cambiar').hidden = true; };
+  $('bOtroJuego').onclick = $('bOtroJuego2').onclick = $('bCambiarEspera').onclick = abrirCambiar;
+  $('bCambiarNo').onclick = () => { sonar('tap'); cerrarCambiar(); };
+  $('bCambiarVolver').onclick = () => {
+    $('cambiarExtra').innerHTML = '';
+    if (juego.menu && !$('menuExtra').innerHTML) juego.menu($('menuExtra'));
+    abrirCambiar();
+  };
   $('cambiarLista').addEventListener('click', ev => {
     const b = ev.target.closest('[data-id]');
     if (b && !b.disabled) { sonar('tap'); elegirJuego(b.dataset.id).catch(e => aviso('No se pudo abrir: ' + e.message)); }
   });
-  $('bCambiarSi').onclick = () => { if (cambiarA) { sonar('tap'); mudar(cambiarA.id, cambiarA.juego.opciones?.()); } };
+  $('bCambiarSi').onclick = () => { if (cambiarA) { sonar('tap'); mudar(); } };
+
+  // ---------- Sacar a alguien de la sala (solo quien la creó) ----------
+  let aEchar = null;   // {i, id, name}
+  $('players').addEventListener('click', ev => {
+    const b = ev.target.closest('[data-echar]');
+    if (!b || !soyDueno()) return;
+    sonar('tap');
+    const i = +b.dataset.echar, x = asientoDe(i);
+    if (!x) return;
+    aEchar = {i, id: x.id, name: x.name};
+    const n = st.sala.n, puede = cantidades(info).includes(n - 1);
+    $('echarTxt').textContent = `¿Sacar a ${x.name}?`;
+    $('echarSub').textContent = puede
+      ? `Podés seguir de ${n - 1} (arranca una partida nueva) o dejar su lugar libre para que entre otro.`
+      : `${info.nombre} no se juega de ${n - 1}: su lugar queda libre para que entre otro (o cambiá la cantidad con 🎮).`;
+    $('bEcharAchicar').hidden = !puede;
+    $('bEcharAchicar').textContent = `Sacar y seguir de ${n - 1}`;
+    $('echar').hidden = false;
+  });
+  async function echar(achicar) {
+    const x = aEchar;
+    $('echar').hidden = true;
+    if (!x) return;
+    try {
+      const res = await fb.runTransaction(fb.ref(fb.db, ruta()), sala => {
+        if (!sala) return sala;
+        const seats = asientosDe(sala);
+        if (!seats[x.i] || seats[x.i].id !== x.id) return;          // ya se movió: no se toca
+        seats[x.i] = null;
+        if (achicar && cantidades(info).includes(sala.n - 1)) {
+          const g = reglas.normalizar(sala.game);
+          sala.n--;
+          sala.seats = Object.fromEntries(seats.filter(Boolean).map((s, i) => [i, s]));
+          sala.game = partidaNueva(reglas, sala.n, g.opciones);
+        } else sala.seats = Object.fromEntries(seats.map((s, i) => [i, s]).filter(([, s]) => s));
+        return sala;
+      });
+      if (!res.committed) aviso('No se pudo: la sala cambió, probá de nuevo');
+      else { sonar('cambiar'); if (achicar) juego.reiniciar?.(); }
+    } catch (e) { aviso('Error de conexión: ' + e.message); }
+  }
+  $('bEcharAchicar').onclick = () => { sonar('tap'); echar(true); };
+  $('bEcharLibre').onclick = () => { sonar('tap'); echar(false); };
+  $('bEcharNo').onclick = () => { sonar('tap'); $('echar').hidden = true; };
 
   $('bAyuda').onclick = () => { sonar('tap'); $('ayuda').hidden = false; };
   $('bAyudaOk').onclick = () => { sonar('tap'); $('ayuda').hidden = true; guardar('reglas-vistas-' + info.id, '1'); };
@@ -742,8 +989,10 @@ export function montar({ reglas, juego }) {
   juego.iniciar(ctx);
   render();
 
-  // ?local=N (viene de "Jugar offline" en la portada): arranca directo en esta pantalla
+  // ?local=N (viene de "Jugar offline" en la portada): arranca directo en esta pantalla (con &reloj=S, ese reloj)
   const local = +new URLSearchParams(location.search).get('local');
+  const relojUrl = new URLSearchParams(location.search).get('reloj');
+  if (relojUrl != null) { const r = document.querySelector(`input[name="relojN"][value="${+relojUrl}"]`); if (r) r.checked = true; }
   if (local) {
     try { history.replaceState(null, '', location.pathname); } catch {}
     jugarOffline(Math.min(info.max, Math.max(info.min, local)));

@@ -141,6 +141,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
       <div class="elegido" id="elegido"></div>
       <div class="como" id="comoP"></div>
       <div id="cantP"></div>
+      <div id="relojP"></div>
       <div id="extraP"></div>
       <div class="row"><input id="nombreC" maxlength="14" placeholder="Tu nombre (para jugar online)" autocomplete="off" aria-label="Tu nombre"></div>
       <div id="botonesP"></div>
@@ -151,7 +152,8 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
-         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar, ordenarJuegos, jugadas, limpiarSalas } from './shared/salas.js';
+         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar, ordenarJuegos, jugadas, limpiarSalas,
+         selectorReloj, relojElegido, conReloj } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 
 const $ = id => document.getElementById(id);
@@ -263,12 +265,13 @@ $('paso1').addEventListener('click', async ev => {
   $('bOtro').onclick = () => mostrarPaso(1);
   $('comoP').innerHTML = `<b>⚡ Así se juega</b>${rapidito(j.id, info.reglas)}`;
   $('cantP').innerHTML = selectorJugadores(info, 'cantP');
+  $('relojP').innerHTML = selectorReloj(info, 'relojP');
   $('extraP').innerHTML = '';
   elegido.juego.menu?.($('extraP'));
   $('nombreC').value = $('nombre').value.trim() || nombreGuardado();
   $('botonesP').innerHTML = botonesJugar(info);
   $('bCrear').onclick = crearOnline;
-  if ($('bLocal')) $('bLocal').onclick = () => { location.href = `./${j.id}/?local=${jugadoresElegidos(info, 'cantP')}`; };
+  if ($('bLocal')) $('bLocal').onclick = () => { location.href = `./${j.id}/?local=${jugadoresElegidos(info, 'cantP')}${info.reloj ? '&reloj=' + relojElegido(info, 'relojP') : ''}`; };
   mostrarPaso(2);
 });
 
@@ -279,7 +282,7 @@ async function crearOnline() {
   const {j, reglas, juego} = elegido;
   $('bCrear').disabled = true; $('bCrear').textContent = 'Creando…';
   try {
-    const cod = await crearSala({reglas, n: jugadoresElegidos(reglas.info, 'cantP'), opciones: juego.opciones?.(), nombre});
+    const cod = await crearSala({reglas, n: jugadoresElegidos(reglas.info, 'cantP'), opciones: conReloj(juego.opciones?.(), reglas.info, 'relojP'), nombre});
     location.href = `./${j.id}/?sala=${cod}`;
   } catch (e) {
     aviso(e.message);

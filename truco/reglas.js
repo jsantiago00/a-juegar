@@ -18,6 +18,7 @@ export const info = {
   min: 2, max: 6, cantidades: [2, 4, 6],
   equipos: 2,                // equipo = asiento % 2; de a 4 o 6 se pueden elegir (o sortear) antes de empezar
   soloOnline: true,          // las cartas son secretas: cada uno en su pantalla
+  reloj: 60,                 // tiempo para jugar (se puede cambiar o sacar al armar la sala)
   reglas: [
     'Se juega con el mazo español de 40 cartas, sin flor. Cada mano se reparten 3 cartas y gana la mano el equipo que gana 2 de las 3 bazas.',
     'De a 4 o de a 6 se juega en dos equipos, sentados alternados. Antes de empezar, cada uno puede elegir su equipo (o se arman al azar).',
@@ -27,6 +28,7 @@ export const info = {
     'Envido (2), Real envido (3) y Falta envido (lo que le falta al que va ganando): se canta en la primera baza antes de tirar tu primera carta. El envido está primero: si te cantan truco, podés contestar con envido.',
     'Tanto: dos cartas del mismo palo suman 20 más sus números (las figuras valen 0); si no, vale tu carta más alta. Gana el mejor tanto de cada equipo; si empatan, el que está más cerca del mano.',
     'Irse al mazo le da al otro equipo lo que valía la mano. Gana el equipo que llega primero a los puntos de la partida (15 o 30).',
+    'Si la sala tiene reloj y se te acaba el tiempo: si te cantaron algo, es "no quiero"; si te toca tirar, se tira tu carta más baja; si te toca repartir, se reparte solo.',
     'Punta y hacha (de a 6, a 30, si se eligió): desde los 5 de las malas hasta los 10 de las buenas, se intercala una mano normal con una de tres duelos: cada uno contra el de enfrente, uno después del otro. Los puntos de cada duelo van a su equipo.',
   ],
 };
@@ -285,4 +287,20 @@ export function aplicar(e, j, nombre) {
     }
   }
   return null;
+}
+
+// Reloj: si se te acaba el tiempo, se juega solo lo más tranquilo (no quiero, la carta más baja o repartir)
+export function sinTiempo(e, nombre) {
+  if (e.ganador !== -1) return null;
+  const p = e.turno;
+  let j = null;
+  if (e.fase === 'fin') j = {tipo: 'repartir'};
+  else if (e.canto) j = {tipo: 'noquiero'};
+  else if (e.aJugar === p) {
+    const quedan = e.cartas[p].filter(c => !e.jugadas[p].includes(c)).sort((a, b) => valor(a) - valor(b));
+    if (quedan.length) j = {tipo: 'carta', c: quedan[0]};
+  }
+  if (!j) return null;
+  if (j.tipo !== 'repartir') anotar(e, `⏱️ A ${nombre(p)} se le acabó el tiempo`);
+  return aplicar(e, j, nombre);
 }

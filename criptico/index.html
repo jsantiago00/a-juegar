@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Críptico</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,520px)}
+.ah-panel{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:22px;padding:16px 18px;margin-bottom:14px}
+.ah-panel h3{margin:0 0 6px;font-size:19px}
+.ah-panel input{text-transform:uppercase;letter-spacing:3px;font-weight:600}
+.ah-secreta{background:var(--amarillo);color:var(--oscuro);padding:2px 10px;border-radius:10px;letter-spacing:3px}
+.ah-dibujo{width:min(220px,55vw);margin:0 auto}
+.ah-dibujo svg{display:block;width:100%;height:auto}
+.ah-palabra{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.ah-palabra span{display:grid;place-items:center;width:clamp(26px,7.5vw,38px);height:clamp(34px,9.5vw,46px);border-radius:10px;
+  background:rgba(255,255,255,.08);border-bottom:4px solid var(--mute);font-size:clamp(20px,5.5vw,28px);font-weight:700}
+.ah-palabra span.ok{background:#fff;color:var(--oscuro);border-color:var(--ok);animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+.ah-palabra span.falto{background:#fff;color:var(--bad);border-color:var(--bad)}
+.ah-msg{text-align:center;margin:0 0 12px;font-size:17px;color:var(--mute)}
+.ah-msg b{color:var(--ink)}
+.ah-teclado{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:440px;margin:0 auto}
+.ah-teclado button{min-height:46px;padding:0;border-radius:12px;font-size:19px;font-weight:700;background:var(--wood);color:var(--oscuro);
+  box-shadow:0 4px 0 #c98a4a}
+.ah-teclado button.ok{background:var(--ok);box-shadow:0 4px 0 #3aa877;opacity:1}
+.ah-teclado button.mal{background:#5a4a8a;color:#b9b0d8;box-shadow:none;opacity:.6}
+.ah-teclado button:disabled:not(.ok):not(.mal){opacity:.4}
+.ah-rival{margin-top:16px;background:rgba(10,5,40,.35);border-radius:16px;padding:10px 14px;text-align:center}
+.ah-rival .marcas{letter-spacing:2px;font-size:14px;margin:0 6px}
+.ah-rival p{margin:6px 0 0}
+/* Críptico */
+.ah-panel,.cr-panel{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:22px;padding:16px 18px;margin-bottom:14px}
+.cr-panel h3,.cr-otros h3{margin:0 0 6px;font-size:19px}
+.cr-panel input{text-transform:uppercase;letter-spacing:3px;font-weight:600}
+.cr-panel textarea{width:100%;min-height:84px;resize:vertical;font:inherit;font-size:17px;padding:10px 14px;border-radius:16px;
+  border:2px solid var(--line);background:rgba(10,5,40,.35);color:var(--ink);box-sizing:border-box}
+.cr-enviar{justify-content:space-between;margin-top:8px}
+.cr-enviar .note{margin:0}
+.cr-pista{text-align:center;background:var(--wood);color:var(--oscuro);border-radius:22px;padding:12px 16px;margin-bottom:12px;
+  box-shadow:0 6px 0 rgba(10,5,40,.45)}
+.cr-pista .note{color:#6b5a8f;margin:0}
+.cr-tu-pista{font-size:clamp(18px,5vw,22px);font-weight:600;font-style:italic;margin:6px 0;overflow-wrap:anywhere}
+.cr-arriesgar{justify-content:center;margin:12px auto 0;max-width:440px}
+.cr-arriesgar input{flex:1;min-width:0;text-transform:uppercase;letter-spacing:2px}
+.cr-otros{margin-top:16px;display:grid;gap:6px}
+.cr-otro{background:rgba(10,5,40,.35);border-radius:16px;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cr-otro .marcas{letter-spacing:2px;font-size:13px}
+.cr-otro .note{margin:0}
+.cr-otro .dot,.cr-res .dot{width:12px;height:12px}
+.cr-res{list-style:none;padding:0;margin:8px 0 14px;display:grid;gap:6px}
+.cr-res li{display:flex;align-items:center;gap:8px;background:rgba(10,5,40,.3);border-radius:14px;padding:6px 12px}
+.cr-res .note{margin:0;flex:1}
+.cr-res b:last-child{color:var(--ok)}
+.cr-panel .grande{width:100%}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

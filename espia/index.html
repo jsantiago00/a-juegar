@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Espía</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,560px)}
+/* Tu palabra */
+.es-palabra{text-align:center;background:var(--wood);color:var(--oscuro);border-radius:24px;padding:14px 18px 16px;margin-bottom:14px;
+  box-shadow:0 6px 0 rgba(10,5,40,.45)}
+.es-palabra .note{color:#6b5a8f;margin:0 0 4px}
+.es-palabra.espia{background:#2a1d4f;color:var(--ink);box-shadow:0 6px 0 rgba(0,0,0,.4),inset 0 0 0 3px var(--amarillo)}
+.es-palabra.espia .note{color:var(--mute)}
+.es-pal{display:block;font-size:clamp(30px,9vw,44px);line-height:1.1;margin:4px 0 10px;text-transform:uppercase;overflow-wrap:anywhere;
+  animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+.es-palabra button.chico{background:#fff;color:var(--oscuro)}
+.es-reparto{margin:10px 0 0 !important;font-size:13px}
+.es-afuera{margin:10px 0 0;font-weight:600;color:var(--bad)}
+/* Panel */
+.es-panel{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:22px;padding:14px 16px;margin-bottom:14px}
+.es-panel p{margin:0 0 10px}
+.es-panel .note{margin:0 0 8px}
+.es-panel b,.es-rondas b{display:inline}
+.es-panel .grande{width:100%}
+.es-votos{display:grid;gap:8px;margin-bottom:10px}
+.es-votos button{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:flex-start;text-align:left;background:rgba(10,5,40,.35);
+  box-shadow:inset 0 0 0 2px var(--line);font-weight:500;padding:10px 14px}
+.es-votos button span:last-child{flex-basis:100%;color:var(--mute)}
+.es-votos button.elegido{background:var(--c);color:var(--oscuro);box-shadow:0 4px 0 rgba(10,5,40,.4)}
+.es-votos button.elegido span:last-child{color:var(--oscuro)}
+.es-votos .dot{width:14px;height:14px}
+/* Rondas */
+.es-rondas section{background:rgba(10,5,40,.3);border-radius:18px;padding:10px 14px;margin-bottom:10px;animation:entra .4s}
+.es-rondas h3{margin:0 0 6px;font-size:15px;color:var(--mute)}
+.es-rondas ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.es-rondas li{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.es-rondas .dot{width:12px;height:12px}
+.es-res{margin:8px 0 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.es-res .note{flex-basis:100%;margin:2px 0 0;font-size:13px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

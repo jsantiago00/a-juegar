@@ -29,6 +29,8 @@ truco/                Truco argentino sin flor, de 2, 4 o 6 en equipos alternado
 tutti-frutti/         Tutti Frutti / Basta, con votación de respuestas (2 a 6, solo online)
 pinturillo/           Uno dibuja y los demás adivinan (2 a 6, solo online; los trazos van en la sala, en extra/trazos)
 dibujamiento/         Teléfono descompuesto con dibujos + la película del final (2 a 6, solo online; dibujos en extra/dib)
+espia/                Espía: la mayoría con la misma palabra, impostores con una parecida y espías sin palabra (más cuantos más juegan); pistas y votación (3 a 8, solo online)
+criptico/             Críptico: ahorcado con adivinanzas, cada uno escribe palabra + pista y los demás la descifran (2 a 6, solo online)
 ta-te-ti/             juego mínimo, sirve de plantilla
 ```
 
@@ -49,8 +51,14 @@ Lo que no conviene meter en el estado (ej. los trazos de Pinturillo) va en `jueg
 con `ctx.guardarExtra`, `ctx.sumarExtra` y `ctx.cambiarExtra`; `ctx.ahora()` da la hora del servidor.
 Lo online sale solo: cada juego guarda sus salas en `juegos/<id>/salas/<código>`.
 Si el juego tiene chat, los mensajes van en `juegos/<id>/salas/<código>/chat` (se guardan los últimos ~80).
-Con 🎮 Otro juego, la sala se muda a otro juego con el mismo código, los mismos jugadores y el chat
-(se crea la sala nueva y la vieja queda con `siguiente`, que redirige a todos).
+Con 🎮 Otro juego o cantidad, la sala se muda a otro juego con el mismo código, los mismos jugadores y el chat
+(se crea la sala nueva y la vieja queda con `siguiente`, que redirige a todos). Ahí también se elige cuántos juegan:
+si se achica, quien creó la sala (`dueno`, 👑) elige quiénes siguen (los demás quedan en `siguiente.fuera` y vuelven al menú).
+Eligiendo el mismo juego, se cambia la cantidad en la misma sala. Quien creó la sala también puede sacar a alguien
+con la ✕ de su nombre: deja el lugar libre o sigue con uno menos (partida nueva).
+Reloj por turno: un juego con `info.reloj: 60` muestra el selector (sin reloj, 30 s, 1 o 2 min) y el motor lleva la cuenta
+(`opciones.reloj` y `limite` en el estado). Si se acaba, llama `reglas.sinTiempo(estado, nombre)`;
+`reglas.conReloj(estado)` dice en qué momentos corre. Lo tienen ¿Quién soy?, Minigolf, Truco y Espía.
 Las salas que pasan 24 h sin actividad se borran solas: cada sala anota su última actividad en
 `actividad/<juego>/<código>` y la portada (o crear una sala) limpia las viejas, una vez por hora como mucho.
 Los códigos son únicos entre todos los juegos: desde la portada (o desde cualquier juego) ponés el código

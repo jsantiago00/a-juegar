@@ -104,12 +104,14 @@ export const info = {
   nombre: 'Minigolf',
   desc: 'Embocá la pelota en la menor cantidad de golpes.',
   min: 2, max: 4,
+  reloj: 60,                 // tiempo para tirar (se puede cambiar o sacar al armar la sala)
   reglas: [
     'Por turnos, cada uno le pega a su pelota: arrastrá hacia atrás (como una gomera) y soltá.',
     'Cuanto más lejos arrastrás, más fuerte sale. Los muros y los hongos la hacen rebotar.',
     'La arena frena, las rampas empujan y si cae al agua vuelve a donde estaba, con un golpe de castigo.',
     `Si llegás a ${TOPE} golpes sin embocar, levantás la pelota y te anotan ${TOPE + 1}.`,
     'Cuando todos embocan se pasa al hoyo siguiente. Gana quien termina el recorrido con menos golpes.',
+    'Si la sala tiene reloj y no tirás a tiempo, te anotan un golpe y pasa el turno.',
   ],
 };
 
@@ -165,7 +167,21 @@ export function aplicar(e, j, nombre) {
     e.hecho[p] = 1; e.golpes[p] = TOPE + 1;
     e.ultima = `${nombre(p)} llegó a ${TOPE} golpes y levanta la pelota`;
   } else if (!r.agua) e.ultima = `${nombre(p)} le pegó (${e.golpes[p]})`;
+  return pasarTurno(e, p, nombre);
+}
 
+// Reloj: si no tirás a tiempo, se te anota un golpe y pasa el turno
+export function sinTiempo(e, nombre) {
+  const p = e.turno;
+  if (e.hecho[p]) return null;
+  e.golpes[p]++;
+  e.ultima = `${nombre(p)} no tiró a tiempo (+1)`;
+  if (e.golpes[p] >= TOPE) { e.hecho[p] = 1; e.golpes[p] = TOPE + 1; e.ultima += ` y levanta la pelota`; }
+  return pasarTurno(e, p, nombre);
+}
+
+// Le toca al siguiente que no embocó; si ya embocaron todos, se anota el hoyo y se pasa al otro (o se termina)
+function pasarTurno(e, p, nombre) {
   const q = siguiente(e, p);
   if (q >= 0) { e.turno = q; return e; }
   // Terminó el hoyo: se anota y se pasa al siguiente (o se termina)

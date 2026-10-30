@@ -88,4 +88,19 @@ export const ICONOS = {
     `<path d="M12 27q4-12 9-6t9-8" stroke="${ROJO}" stroke-width="2.6" fill="none" stroke-linecap="round"/>` +
     `<circle cx="17" cy="16" r="2.5" fill="#ffd23f"/>` +
     `<path d="M31 41l9-15 3 2-9 15-4 1z" fill="#ffd23f" stroke="${O}" stroke-width="1.6" stroke-linejoin="round"/><path d="M40 26l3 2" stroke="${ROJO}" stroke-width="2.6"/>`),
+
+  // Espía: sombrero y anteojos oscuros, con un cartelito de palabra
+  espia: svg(
+    `<path d="M10 22h28" stroke="${O}" stroke-width="3" stroke-linecap="round"/><path d="M15 21q1-11 9-11t9 11z" fill="${O}"/>` +
+    `<path d="M15 19h18" stroke="${ROJO}" stroke-width="2.2"/>` +
+    `<circle cx="18.5" cy="28" r="4.6" fill="${O}"/><circle cx="29.5" cy="28" r="4.6" fill="${O}"/><path d="M23 28h2" stroke="${O}" stroke-width="2"/>` +
+    `<circle cx="17" cy="26.6" r="1.3" fill="#fff" opacity=".7"/><circle cx="28" cy="26.6" r="1.3" fill="#fff" opacity=".7"/>` +
+    `<rect x="12" y="35" width="24" height="8" rx="3" fill="#ffd23f" stroke="${O}" stroke-width="1.6"/><path d="M16 39h16" stroke="${O}" stroke-width="1.6" stroke-dasharray="2.5 2" stroke-linecap="round"/>`),
+
+  // Críptico: un cartel con signos sobre las rayitas del ahorcado
+  criptico: svg(
+    `<path d="M10 8h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H22l-5 5v-5h-7a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3z" fill="#b98cff" stroke="${O}" stroke-width="1.8" stroke-linejoin="round"/>` +
+    `<text x="24" y="22.5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="Fredoka,system-ui,sans-serif">?!</text>` +
+    `<rect x="8" y="34" width="7" height="8" rx="1.5" fill="#fff" stroke="${O}" stroke-width="1.2"/><text x="11.5" y="40.4" text-anchor="middle" font-size="6.5" font-weight="700" fill="${ROJO}" font-family="Fredoka,system-ui,sans-serif">C</text>` +
+    `<path d="M19 42h6M29 42h6M37.5 42h3" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>`),
 };

@@ -136,6 +136,7 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
   box-shadow:0 4px 0 #3aa877}
 .pills input:focus-visible + span{outline:3px solid var(--amarillo);outline-offset:2px}
 .pills .note{margin:0 0 0 4px}
+.pills input:disabled + span{opacity:.35;cursor:not-allowed}
 
 /* Pantalla de juego */
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
@@ -151,6 +152,20 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
 .chip.turn{border-color:var(--c);transform:scale(1.06);background:rgba(255,255,255,.1)}
 .chip.vacio{opacity:.5;border-style:dashed;border-color:var(--line)}
 .chip .w{color:var(--mute);font-size:13px}
+.chip .echar{min-height:26px;min-width:26px;width:26px;height:26px;padding:0;margin:0 -8px 0 2px;border-radius:50%;font-size:13px;
+  background:rgba(255,255,255,.12);box-shadow:none;color:var(--mute)}
+.chip .echar:hover{background:var(--bad);color:#fff}
+/* Reloj por turno (juegos con info.reloj) */
+#reloj{display:flex;align-items:center;justify-content:center;gap:8px;width:max-content;margin:6px auto 0;padding:4px 16px;border-radius:999px;
+  background:rgba(10,5,40,.35);font-weight:700;font-size:19px;font-variant-numeric:tabular-nums}
+#reloj[hidden]{display:none}
+#reloj small{font-weight:500;font-size:14px;color:var(--mute)}
+#reloj.mio{box-shadow:inset 0 0 0 2px var(--amarillo)}
+#reloj.apurado{background:var(--bad);color:#fff;animation:latido .8s ease-in-out infinite}
+#reloj.apurado small{color:#fff}
+/* Sacar a alguien de la sala */
+.echar-botones{display:grid;gap:10px}
+.espera #bCambiarEspera{margin:4px 0 14px}
 #roomBar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--mute);font-size:15px;margin-bottom:10px}
 #roomBar b{color:var(--ink);letter-spacing:3px;font-size:18px}
 #tablero{width:100%;max-width:min(100%,68vh);margin:0 auto}
