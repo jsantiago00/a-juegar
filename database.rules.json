@@ -5,6 +5,10 @@
       ".read": true,
       "$juego": { "$sala": { ".write": true, ".validate": "newData.isNumber()" } }
     },
-    "mazos": { ".read": true, ".write": true }
+    "mazos": { ".read": true, ".write": true },
+    "usuarios": {
+      ".read": true,
+      "$uid": { ".write": "auth != null && auth.uid === $uid" }
+    }
   }
 }

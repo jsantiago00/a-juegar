@@ -40,6 +40,10 @@
 //             ctx.extra (lo que hay en juegos/<id>/salas/<código>/extra), ctx.guardarExtra(ruta, valor),
 //             ctx.sumarExtra(ruta, valor) (push) y ctx.cambiarExtra({ruta: valor, ...}). ctx.ahora() = hora del servidor.
 //
+//   Marcador: cada partida lleva un id (estado.pid). Al terminar, se anota en la sala marcador/<pid> = {<id de jugador>: 1}
+//             con los ganadores (los empates no se anotan); se muestra 🏆 en cada chip y viaja al cambiar de juego.
+//             Si tenés cuenta (shared/cuenta.js), además se suma a tus victorias.
+//
 //  Convenciones del estado: { n, turno, ganador, ultima, ...lo que quieras }
 //   ganador: -1 en juego, 0..n-1 ganó ese jugador, -2 empate
 // =====================================================================
@@ -48,11 +52,11 @@ import { JUEGOS } from './juegos.js';
 import { ICONOS } from './iconos.js';
 import { sonar, confeti, botonesSonido, animar } from './efectos.js';
 import { crearChat } from './chat.js';
+import { FB_VER, anotarPartida } from './cuenta.js';
 
 // App instalable (PWA): el service worker está en la raíz (sw.js) y lo registra cualquier página
 if ('serviceWorker' in navigator) navigator.serviceWorker.register(new URL('../sw.js', import.meta.url)).catch(() => {});
 
-const FB_VER = '10.12.2';
 export const COLORES = ['#e8505b', '#3fa7e0', '#f4c430', '#5cc480', '#b07cff', '#ff8c42', '#ff6fb5', '#2ec4b6'];
 export const NOMBRES = ['Rojo', 'Azul', 'Amarillo', 'Verde', 'Violeta', 'Naranja', 'Rosa', 'Turquesa'];
 export const EN_JUEGO = -1, EMPATE = -2;
@@ -72,7 +76,7 @@ async function initFb() {
   if (!FIREBASE_CONFIG) throw new Error('Falta la config de Firebase en shared/firebase.js');
   const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
   const [appM, dbM] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-database.js')]);
-  const app = appM.initializeApp(FIREBASE_CONFIG);
+  const app = appM.getApps().length ? appM.getApp() : appM.initializeApp(FIREBASE_CONFIG);   // cuenta.js puede haberla creado
   fb = {db: dbM.getDatabase(app), ref: dbM.ref, get: dbM.get, set: dbM.set, push: dbM.push, update: dbM.update,
         onValue: dbM.onValue, runTransaction: dbM.runTransaction};
   try { fb.onValue(fb.ref(fb.db, '.info/serverTimeOffset'), s => { desfase = +s.val() || 0; }); } catch {}
@@ -149,6 +153,7 @@ export const conReloj = (opciones, info, nombre) => (info.reloj ? {...(opciones 
 export function partidaNueva(reglas, n, opciones) {
   const quien = Math.floor(Math.random() * n);
   const e = reglas.nuevoJuego(n, opciones, quien);
+  e.pid = Math.random().toString(36).slice(2, 10);   // para anotar el resultado una sola vez (marcador y cuentas)
   if (!reglas.info.sinTurnos) { e.turno = quien; e.empieza = quien; }
   if (reglas.info.reloj) {
     const s = opciones && RELOJES.includes(+opciones.reloj) ? +opciones.reloj : reglas.info.reloj;
@@ -300,6 +305,7 @@ export function montar({ reglas, juego }) {
         <div class="fin-emoji" id="finEmoji"></div>
         <h2 id="finTxt"></h2>
         <p id="finSub"></p>
+        <p class="fin-marcador" id="finMarcador" hidden></p>
         <div class="row centro"><button class="main grande" id="bRevancha2">Revancha</button><button id="bVerTablero">Ver tablero</button></div>
         <button class="chico otro-juego" id="bOtroJuego2">🎮 Jugar a otra cosa</button>
       </div>
@@ -348,7 +354,8 @@ export function montar({ reglas, juego }) {
   </div>`;
 
   const $ = id => document.getElementById(id);
-  const st = {pantalla: 'menu', online: false, estado: null, cod: '', asiento: -1, sala: null, cortar: null, finVisto: false};
+  const st = {pantalla: 'menu', online: false, estado: null, cod: '', asiento: -1, sala: null, cortar: null, finVisto: false,
+              ganLocal: [], anotada: ''};   // ganLocal: victorias por asiento en modo local; anotada: última partida anotada
   const ruta = () => `juegos/${info.id}/salas/${st.cod}`;
 
   const asientoDe = i => (st.sala && st.sala.seats ? st.sala.seats[i] || null : null);
@@ -521,6 +528,37 @@ export function montar({ reglas, juego }) {
   const ganadores = e => (reglas.ganadores ? reglas.ganadores(e) : e.ganador >= 0 ? [e.ganador] : []);
   const nombresGan = e => ganadores(e).map(i => esc(nombre(i))).join(' y ');
 
+  // ---------- Marcador: victorias de cada uno mientras juegan juntos ----------
+  // Online se cuenta por jugador (su id), así sigue igual aunque cambien de asiento o de juego.
+  function victoriasDe(i) {
+    if (!st.online) return st.ganLocal[i] || 0;
+    const s = asientoDe(i);
+    if (!s) return 0;
+    return Object.values((st.sala && st.sala.marcador) || {}).filter(m => m && m[s.id]).length;
+  }
+  const hayMarcador = () => !info.sinGanador && Array.from({length: st.estado ? st.estado.n : 0}, (_, i) => victoriasDe(i)).some(Boolean);
+  function textoMarcador() {
+    const n = st.estado.n, v = Array.from({length: n}, (_, i) => ({i, k: victoriasDe(i)}))
+      .filter(x => !st.online || asientoDe(x.i)).sort((a, b) => b.k - a.k);
+    return '🏆 Van: ' + v.map(x => `${nombre(x.i)} ${x.k}`).join(' · ');
+  }
+  // Al terminar una partida: se anota en la sala (lo hace cualquiera, da lo mismo quién: es la misma clave y el mismo valor)
+  // y en tu cuenta si tenés (una sola vez por partida)
+  function anotarFin(sala) {
+    const e = st.estado;
+    if (!e || e.ganador === EN_JUEGO || !e.pid) return;
+    const gan = ganadores(e);
+    if (!info.sinGanador && gan.length && !(sala.marcador && sala.marcador[e.pid])) {
+      const ids = Object.fromEntries(gan.map(i => asientoDe(i)).filter(Boolean).map(s => [s.id, 1]));
+      if (Object.keys(ids).length) fb.set(fb.ref(fb.db, `${ruta()}/marcador/${e.pid}`), ids).catch(() => {});
+    }
+    const yo = asientoDe(st.asiento);
+    if (st.anotada !== e.pid && yo && yo.id === miId) {
+      st.anotada = e.pid;
+      anotarPartida(info.id, e.pid, info.sinGanador || !gan.length ? 'nada' : gan.includes(st.asiento) ? 'gane' : 'perdi');
+    }
+  }
+
   // Quién empieza (sorteado): se avisa al arrancar, mientras nadie jugó todavía
   const sinJugar = e => !!e && e.ganador === EN_JUEGO && !e.ultima;
   function quienEmpieza(e) {
@@ -555,6 +593,7 @@ export function montar({ reglas, juego }) {
     const s = juego.sonido ? juego.sonido(antes, e, ctx) : 'colocar';
     if (s) sonar(s, antes.turno);
     if (antes.ganador === EN_JUEGO && e.ganador !== EN_JUEGO) {
+      if (!st.online && !info.sinGanador) ganadores(e).forEach(i => { st.ganLocal[i] = (st.ganLocal[i] || 0) + 1; });
       setTimeout(() => {
         if (info.sinGanador) { sonar('ganar'); confeti(COLORES); }
         else if (e.ganador === EMPATE) sonar('empate');
@@ -606,7 +645,7 @@ export function montar({ reglas, juego }) {
     $('status').style.setProperty('--c', e.ganador === EN_JUEGO && listos() && !propio && e.turno >= 0 ? COLORES[e.turno] : 'transparent');
 
     // Quien creó la sala (👑) puede sacar a los demás con la ✕
-    const dueno = duenoId(), mando = soyDueno();
+    const dueno = duenoId(), mando = soyDueno(), marcador = hayMarcador();
     $('players').innerHTML = Array.from({length: e.n}, (_, i) => {
       const extra = reglas.detalle ? reglas.detalle(e, i) : '';
       const s = st.online ? asientoDe(i) : null, vacio = st.online && !s;
@@ -614,6 +653,7 @@ export function montar({ reglas, juego }) {
              `${vacio ? 'Libre' : esc(nombre(i))}${st.online && i === st.asiento ? ' (vos)' : ''}${s && s.id === dueno ? ' 👑' : ''}` +
              `${s && i === st.asiento ? '<button class="renombrar" data-renombrar title="Cambiar tu nombre" aria-label="Cambiar tu nombre">✏️</button>' : ''}` +
              `${extra ? `<span class="w">${esc(extra)}</span>` : ''}` +
+             `${marcador && !vacio ? `<span class="vict" title="Victorias en esta sala">🏆${victoriasDe(i)}</span>` : ''}` +
              `${mando && s && i !== st.asiento ? `<button class="echar" data-echar="${i}" title="Sacar de la sala" aria-label="Sacar a ${esc(s.name)} de la sala">✕</button>` : ''}</div>`;
     }).join('');
 
@@ -637,11 +677,15 @@ export function montar({ reglas, juego }) {
       $('finTxt').innerHTML = (e.ganador >= 0 && !info.sinGanador ? dot(e.ganador) : '') + txt;   // los nombres ya vienen escapados (textoFin también devuelve HTML seguro)
       $('finSub').textContent = juego.resumenFin?.(ctx) || e.ultima || '';
     }
+    if (mostrarFin) {
+      $('finMarcador').hidden = !hayMarcador();
+      if (hayMarcador()) $('finMarcador').textContent = textoMarcador();
+    }
     $('fin').hidden = !mostrarFin;
   }
 
   function entrarSala(cod, asiento) {
-    Object.assign(st, {online: true, cod, asiento, pantalla: 'play', estado: null, sala: null, finVisto: false});
+    Object.assign(st, {online: true, cod, asiento, pantalla: 'play', estado: null, sala: null, finVisto: false, anotada: ''});
     juego.reiniciar?.();
     chat?.reiniciar();
     sonar('entrar');
@@ -669,6 +713,7 @@ export function montar({ reglas, juego }) {
       for (let i = 0; i < v.n; i++) if (v.seats && v.seats[i] && v.seats[i].id === miId) st.asiento = i;
       st.estado = reglas.normalizar(v.game);
       efectos(antes, st.estado, salaAntes);
+      anotarFin(v);
       // Entraste sin nombre ("Jugador"): te lo pedimos ahí mismo (si no estás viendo las reglas)
       if (!salaAntes && asientoDe(st.asiento)?.name === 'Jugador' && $('ayuda').hidden) setTimeout(abrirRenombrar, 300);
       chat?.actualizar(v.chat, miId);
@@ -724,7 +769,7 @@ export function montar({ reglas, juego }) {
   $('menu').addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
   function jugarOffline(n) {
     if (info.soloOnline) return;
-    Object.assign(st, {online: false, estado: partidaNueva(reglas, n, conReloj(juego.opciones?.(), info, 'relojN')), pantalla: 'play', finVisto: false});
+    Object.assign(st, {online: false, estado: partidaNueva(reglas, n, conReloj(juego.opciones?.(), info, 'relojN')), pantalla: 'play', finVisto: false, ganLocal: []});
     registrarPartida(info.id);
     juego.reiniciar?.(); render();
     if (quienEmpieza(st.estado)) aviso(quienEmpieza(st.estado));
@@ -924,7 +969,8 @@ export function montar({ reglas, juego }) {
         return;
       }
       await fb.set(fb.ref(fb.db, `juegos/${id}/salas/${st.cod}`),
-                   {n, creada: Date.now(), dueno, seats, game: partidaNueva(otras, n, opciones), ...(st.sala.chat ? {chat: st.sala.chat} : {})});
+                   {n, creada: Date.now(), dueno, seats, game: partidaNueva(otras, n, opciones),
+                    ...(st.sala.chat ? {chat: st.sala.chat} : {}), ...(st.sala.marcador ? {marcador: st.sala.marcador} : {})});
       marcarActividad(id, st.cod, true);
       await fb.set(fb.ref(fb.db, ruta() + '/siguiente'), {juego: id, n, por: (yo && yo.name) || 'Alguien', t: Date.now(), ...(fuera.length ? {fuera} : {})});
     } catch (e) { aviso('No se pudo cambiar: ' + e.message); cerrarCambiar(); }

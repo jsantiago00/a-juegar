@@ -92,6 +92,17 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 .elegido b{font-size:22px;display:block}
 .elegido button{margin-left:auto}
 #extraP .row{margin-bottom:6px}
+
+/* Cuenta (nick + contraseña): victorias sincronizadas */
+.cuenta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.06);border:2px solid var(--line);
+  border-radius:20px;padding:10px 10px 10px 16px;margin:-14px 0 26px}
+.cuenta .txt{flex:1;min-width:180px;line-height:1.35}
+.cuenta .txt small{color:var(--mute)}
+.cuenta .botones{display:flex;gap:8px}
+.juego small.gano{background:var(--amarillo);color:var(--oscuro)}
+#fCuenta .row{margin-bottom:10px}
+#fCuenta input{flex:1;min-width:0}
+#fCuenta .botones{display:grid;gap:10px;grid-template-columns:1fr 1fr}
 </style>
 </head>
 <body>
@@ -130,6 +141,11 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 
   <div class="yo"><label for="nombre">😎 Tu nombre</label><input id="nombre" maxlength="14" placeholder="¿Cómo te llamás?" autocomplete="off"></div>
 
+  <section class="cuenta" id="cuenta">
+    <span class="txt" id="cuentaTxt">👤 Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.</span>
+    <span class="botones" id="cuentaBotones"><button class="chico main" id="bCuenta">Entrar o crear cuenta</button></span>
+  </section>
+
   <h2 class="titulo-seccion" id="tituloJuegos">Juegos</h2>
   <div class="juegos" id="juegos"></div>
 </main>
@@ -150,12 +166,24 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
   </div>
 </dialog>
 
+<dialog id="dCuenta" aria-labelledby="dCuentaTitulo">
+  <form class="hoja" id="fCuenta">
+    <div class="hoja-top"><h2 id="dCuentaTitulo">👤 Tu cuenta</h2><button type="button" class="icono" id="bCuentaCerrar" aria-label="Cerrar">✕</button></div>
+    <p class="note">Elegí un nick y una contraseña. Con la misma cuenta entrás desde cualquier celu y se suman tus victorias de las partidas online.</p>
+    <div class="row"><input id="cuentaNick" maxlength="14" placeholder="Nick (letras, números o _)" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="Nick"></div>
+    <div class="row"><input id="cuentaPass" type="password" placeholder="Contraseña (6 o más)" autocomplete="current-password" aria-label="Contraseña"></div>
+    <div class="botones"><button class="main" id="bEntrarCuenta">Entrar</button><button type="button" id="bCrearCuenta">Crear cuenta</button></div>
+    <p class="note">No hay forma de recuperar la contraseña: anotala en algún lado.</p>
+  </form>
+</dialog>
+
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
          selectorJugadores, jugadoresElegidos, comoSeJuega, botonesJugar, ordenarJuegos, jugadas, limpiarSalas,
          selectorReloj, relojElegido, conReloj } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
+import { cuentaGuardada, misDatos, entrar, crearCuenta, salirCuenta } from './shared/cuenta.js';
 
 const $ = id => document.getElementById(id);
 const ico = (id, color) => `<span class="ico" style="--c:${color}">${iconoJuego(id)}</span>`;
@@ -174,6 +202,7 @@ $('juegos').innerHTML = ORDEN.map((j, i) =>
   `<a class="juego" href="./${j.id}/" style="--c:${j.color};--i:${i}" title="${esc(j.desc)}">${muestra(j)}
      <b>${esc(j.nombre)}</b><span class="tags"><small>${esc(j.jugadores)} jugadores</small>${
        veces[j.id] ? `<small class="veces" title="Partidas que jugaste">🎮 ×${veces[j.id].n}</small>` : ''}</span></a>`).join('');
+$('juegos').querySelectorAll('.tags').forEach((t, i) => { t.dataset.id = ORDEN[i].id; });
 if (Object.keys(veces).length) $('tituloJuegos').textContent = 'Tus juegos';
 
 botonesSonido();
@@ -217,6 +246,51 @@ setTimeout(() => limpiarSalas(), 2500);
 // ---------- Nombre (se comparte con todos los juegos) ----------
 $('nombre').value = nombreGuardado();
 $('nombre').addEventListener('input', () => guardarNombre($('nombre').value.trim()));
+
+// ---------- Cuenta: nick + contraseña, victorias sincronizadas (ver shared/cuenta.js) ----------
+async function pintarCuenta() {
+  $('juegos').querySelectorAll('small.gano').forEach(x => x.remove());
+  let d = null;
+  if (cuentaGuardada()) {
+    $('cuentaTxt').innerHTML = `👤 <b>${esc(cuentaGuardada())}</b> <small>cargando…</small>`;
+    $('cuentaBotones').innerHTML = '';
+    try { d = await misDatos(); } catch { d = {nick: cuentaGuardada(), g: 0, j: 0, juegos: {}, sinConexion: true}; }
+  }
+  if (!d) {
+    $('cuentaTxt').innerHTML = '👤 Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.';
+    $('cuentaBotones').innerHTML = '<button class="chico main" id="bCuenta">Entrar o crear cuenta</button>';
+    return;
+  }
+  $('cuentaTxt').innerHTML = `👤 <b>${esc(d.nick)}</b> · 🏆 <b>${d.g}</b> ${d.g === 1 ? 'victoria' : 'victorias'} ` +
+    `<small>en ${d.j} ${d.j === 1 ? 'partida online' : 'partidas online'}${d.sinConexion ? ' (sin conexión)' : ''}</small>`;
+  $('cuentaBotones').innerHTML = '<button class="chico" id="bCuentaSalir">Salir</button>';
+  for (const [id, x] of Object.entries(d.juegos)) {
+    const t = $('juegos').querySelector(`.tags[data-id="${id}"]`);
+    if (t && +x.g) t.insertAdjacentHTML('beforeend', `<small class="gano" title="Tus victorias (de ${+x.j || 0} partidas)">🏆 ×${+x.g}</small>`);
+  }
+}
+$('cuenta').addEventListener('click', async ev => {
+  if (ev.target.id === 'bCuenta') { $('cuentaNick').value = ''; $('cuentaPass').value = ''; $('dCuenta').showModal(); $('cuentaNick').focus(); }
+  if (ev.target.id === 'bCuentaSalir') { await salirCuenta(); aviso('Saliste de tu cuenta'); pintarCuenta(); }
+});
+$('bCuentaCerrar').onclick = () => $('dCuenta').close();
+$('dCuenta').addEventListener('click', ev => { if (ev.target === $('dCuenta')) $('dCuenta').close(); });
+async function usarCuenta(crear) {
+  const nick = $('cuentaNick').value.trim(), pass = $('cuentaPass').value;
+  const bs = [$('bEntrarCuenta'), $('bCrearCuenta')];
+  bs.forEach(b => { b.disabled = true; });
+  try {
+    const n = await (crear ? crearCuenta : entrar)(nick, pass);
+    guardarNombre(n); $('nombre').value = n;            // tu nombre en las salas pasa a ser tu nick
+    $('dCuenta').close();
+    sonar('ganar'); aviso(crear ? `¡Listo, ${n}! Cuenta creada` : `¡Hola, ${n}!`);
+    pintarCuenta();
+  } catch (e) { aviso(e.message); sonar('error'); animar($('fCuenta'), 'sacudir'); }
+  bs.forEach(b => { b.disabled = false; });
+}
+$('fCuenta').onsubmit = ev => { ev.preventDefault(); usarCuenta(false); };
+$('bCrearCuenta').onclick = () => usarCuenta(true);
+pintarCuenta();
 
 // ---------- Unirme: el código te lleva solo al juego que corresponde ----------
 $('codigo').addEventListener('input', () => {

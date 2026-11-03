@@ -14,6 +14,7 @@ shared/
   efectos.js          sonidos sintetizados (Web Audio), confeti y animaciones
   iconos.js           ícono SVG de cada juego
   lienzo.js           lienzo de dibujo con herramientas y trazos sincronizados (Pinturillo, Dibujamiento)
+  cuenta.js           cuentas con nick + contraseña (Firebase Auth) y victorias sincronizadas
   chat.js             chat de sala (está en todos los juegos online; un juego lo apaga con `export const chat = false`)
   estilo.css          estilos comunes
   juegos.js           lista de juegos de la portada
@@ -68,12 +69,24 @@ Las salas que pasan 24 h sin actividad se borran solas: cada sala anota su últi
 Los códigos son únicos entre todos los juegos: desde la portada (o desde cualquier juego) ponés el código
 y te lleva solo al juego correcto. El link de invitación (`<juego>/?sala=ABCD`) te mete directo a la sala.
 
+## Victorias
+- **Marcador de la sala**: cada partida tiene un id (`estado.pid`). Cuando termina, se anota en
+  `juegos/<id>/salas/<código>/marcador/<pid>` = `{<id del jugador>: 1}` con los ganadores (los empates no cuentan).
+  Se ve como 🏆 en cada nombre y en el cartel de fin ("Van: Ana 3 · Juan 1"); sigue con la revancha y al cambiar de juego.
+  En modo local se cuenta en el dispositivo mientras dure la partida.
+- **Cuentas** (`shared/cuenta.js`): nick + contraseña desde la portada. Por dentro es Firebase Authentication con
+  Correo/contraseña (el nick se vuelve `nick@<authDomain>`), así que hay que activarlo una vez en la consola:
+  *Authentication → Sign-in method → Correo electrónico/contraseña*. Las victorias y partidas online van a
+  `usuarios/<uid>` (`g`, `j` y `juegos/<id>/{g, j}`); cada uno anota las suyas. No hay recuperación de contraseña.
+
 ## Reglas sugeridas de Firebase
 ```json
 {
   "rules": {
     "juegos": { "$juego": { "salas": { "$sala": { ".read": true, ".write": true } } } },
-    "mazos": { ".read": true, ".write": true }
+    "actividad": { ".read": true, "$juego": { "$sala": { ".write": true, ".validate": "newData.isNumber()" } } },
+    "mazos": { ".read": true, ".write": true },
+    "usuarios": { ".read": true, "$uid": { ".write": "auth != null && auth.uid === $uid" } }
   }
 }
 ```
