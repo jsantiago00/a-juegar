@@ -97,6 +97,12 @@ export const ICONOS = {
     `<circle cx="17" cy="26.6" r="1.3" fill="#fff" opacity=".7"/><circle cx="28" cy="26.6" r="1.3" fill="#fff" opacity=".7"/>` +
     `<rect x="12" y="35" width="24" height="8" rx="3" fill="#ffd23f" stroke="${O}" stroke-width="1.6"/><path d="M16 39h16" stroke="${O}" stroke-width="1.6" stroke-dasharray="2.5 2" stroke-linecap="round"/>`),
 
+  // Código secreto: cuatro bolitas de colores y, abajo, las pistas
+  'codigo-secreto': svg(
+    [ROJO, AZUL, '#f4c430', VERDE].map((c, k) => bola(10.5 + k * 9, 19, c)).join('') +
+    `<rect x="8" y="30" width="32" height="10" rx="4" fill="${O}" opacity=".12"/>` +
+    `<circle cx="16" cy="35" r="2.6" fill="${VERDE}"/><circle cx="24" cy="35" r="2.6" fill="#f4c430"/><path d="M30 33l4 4M34 33l-4 4" stroke="${ROJO}" stroke-width="2" stroke-linecap="round"/>`),
+
   // Críptico: un cartel con signos sobre las rayitas del ahorcado
   criptico: svg(
     `<path d="M10 8h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H22l-5 5v-5h-7a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3z" fill="#b98cff" stroke="${O}" stroke-width="1.8" stroke-linejoin="round"/>` +
