@@ -85,7 +85,8 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
   padding:8px 8px 10px;border-radius:20px;font-size:17px;animation:entra .35s backwards;animation-delay:calc(var(--i)*40ms)}
 .elegir .muestra{border-radius:14px}
 .hoja .como{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:14px}
-.hoja .como b{display:block;margin-bottom:10px;font-size:17px}
+.hoja .como-plegable > summary{font-size:17px}
+.hoja .como-plegable[open] > summary{margin-bottom:10px}
 .elegido{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .elegido .ico{width:64px;height:64px;border-radius:18px;animation:none}
 .elegido b{font-size:22px;display:block}
@@ -152,7 +153,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 <script type="module">
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
-         selectorJugadores, jugadoresElegidos, rapidito, botonesJugar, ordenarJuegos, jugadas, limpiarSalas,
+         selectorJugadores, jugadoresElegidos, comoSeJuega, botonesJugar, ordenarJuegos, jugadas, limpiarSalas,
          selectorReloj, relojElegido, conReloj } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 
@@ -263,7 +264,7 @@ $('paso1').addEventListener('click', async ev => {
   $('elegido').innerHTML = `${ico(j.id, j.color)}<div><b>${esc(info.nombre)}</b><span class="note">${esc(j.jugadores)} jugadores</span></div>
     <button class="chico" id="bOtro">Cambiar</button>`;
   $('bOtro').onclick = () => mostrarPaso(1);
-  $('comoP').innerHTML = `<b>⚡ Así se juega</b>${rapidito(j.id, info.reglas)}`;
+  $('comoP').innerHTML = comoSeJuega(j.id, info.reglas);
   $('cantP').innerHTML = selectorJugadores(info, 'cantP');
   $('relojP').innerHTML = selectorReloj(info, 'relojP');
   $('extraP').innerHTML = '';

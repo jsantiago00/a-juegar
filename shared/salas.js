@@ -119,6 +119,13 @@ export function rapidito(id, reglasLargas = []) {
   const pasos = datosJuego(id).resumen || reglasLargas.slice(0, 3);
   return `<ol class="rapidito">${pasos.map(p => `<li>${esc(p)}</li>`).join('')}</ol>`;
 }
+// "Así se juega" plegable: abierto solo la primera vez que ves el juego en este dispositivo; después, cerrado
+// (se abre tocándolo). Al armarlo ya cuenta como visto.
+export function comoSeJuega(id, reglasLargas, {titulo = '⚡ Así se juega', clase = ''} = {}) {
+  const clave = 'como-visto-' + id, abierto = !leer(clave);
+  guardar(clave, '1');
+  return `<details class="como-plegable ${clase}"${abierto ? ' open' : ''}><summary>${titulo}</summary>${rapidito(id, reglasLargas)}</details>`;
+}
 
 // ---------- Reloj por turno (juegos con info.reloj) ----------
 export const RELOJES = [0, 30, 60, 120];
@@ -243,10 +250,7 @@ export function montar({ reglas, juego }) {
       <div class="row"><input id="nombreInv" placeholder="Tu nombre" maxlength="14" autocomplete="off">
         <button class="main" id="bEntrarInv">¡Entrar!</button></div>
     </section>
-    <section class="tarjeta como">
-      <h2>⚡ Así se juega</h2>
-      ${rapidito(info.id, info.reglas)}
-    </section>
+    ${comoSeJuega(info.id, info.reglas, {clase: 'tarjeta como'})}
     <section class="tarjeta armar">
       <h2>🎮 Armá la partida</h2>
       ${selectorJugadores(info, 'cantN')}
@@ -271,7 +275,7 @@ export function montar({ reglas, juego }) {
       <div class="row centro"><button class="main" id="bCompartir">Compartir link</button><button id="bCopiar">Copiar código</button></div>
       <p class="note" id="espTxt"></p>
       <button class="chico" id="bCambiarEspera">🎮 Cambiar el juego o cuántos juegan</button>
-      <div class="espera-reglas"><b>Mientras tanto, así se juega:</b>${rapidito(info.id, info.reglas)}</div>
+      <details class="como-plegable espera-reglas"><summary>Mientras tanto, así se juega</summary>${rapidito(info.id, info.reglas)}</details>
     </section>
     <section class="tarjeta equipos-caja" id="equipos" hidden></section>
     <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🎮 Otro juego o cantidad</button></div>
@@ -314,6 +318,15 @@ export function montar({ reglas, juego }) {
         </div>
         <button id="bCambiarNo">Cancelar</button>
       </div>
+    </div>
+    <div id="renombrar" class="capa" hidden>
+      <form class="fin-caja" id="fRenombrar">
+        <div class="fin-emoji">✏️</div>
+        <h2>¿Cómo te llamás?</h2>
+        <p>Así te ven los demás en la sala.</p>
+        <div class="row centro"><input id="nombreNuevo" placeholder="Tu nombre" maxlength="14" autocomplete="off" aria-label="Tu nombre"></div>
+        <div class="row centro"><button class="main grande" id="bRenombrarSi">Listo</button><button type="button" id="bRenombrarNo">Cancelar</button></div>
+      </form>
     </div>
     <div id="echar" class="capa" hidden>
       <div class="fin-caja">
@@ -595,6 +608,7 @@ export function montar({ reglas, juego }) {
       const s = st.online ? asientoDe(i) : null, vacio = st.online && !s;
       return `<div class="chip${i === e.turno && e.ganador === EN_JUEGO ? ' turn' : ''}${vacio ? ' vacio' : ''}" style="--c:${COLORES[i]}">${dot(i)}` +
              `${vacio ? 'Libre' : esc(nombre(i))}${st.online && i === st.asiento ? ' (vos)' : ''}${s && s.id === dueno ? ' 👑' : ''}` +
+             `${s && i === st.asiento ? '<button class="renombrar" data-renombrar title="Cambiar tu nombre" aria-label="Cambiar tu nombre">✏️</button>' : ''}` +
              `${extra ? `<span class="w">${esc(extra)}</span>` : ''}` +
              `${mando && s && i !== st.asiento ? `<button class="echar" data-echar="${i}" title="Sacar de la sala" aria-label="Sacar a ${esc(s.name)} de la sala">✕</button>` : ''}</div>`;
     }).join('');
@@ -651,6 +665,8 @@ export function montar({ reglas, juego }) {
       for (let i = 0; i < v.n; i++) if (v.seats && v.seats[i] && v.seats[i].id === miId) st.asiento = i;
       st.estado = reglas.normalizar(v.game);
       efectos(antes, st.estado, salaAntes);
+      // Entraste sin nombre ("Jugador"): te lo pedimos ahí mismo (si no estás viendo las reglas)
+      if (!salaAntes && asientoDe(st.asiento)?.name === 'Jugador' && $('ayuda').hidden) setTimeout(abrirRenombrar, 300);
       chat?.actualizar(v.chat, miId);
       if (v.siguiente && !st.mudando) {        // alguien eligió otro juego: nos mudamos todos
         st.mudando = true;
@@ -665,10 +681,11 @@ export function montar({ reglas, juego }) {
     try { history.replaceState(null, '', '?sala=' + cod); } catch {}
     render();
   }
+  // Sin nombre entrás como "Jugador", pero eso no se guarda: así no queda pegado para las próximas salas
   function miNombre() {
-    const n = $('nombre').value.trim() || 'Jugador';
-    guardarNombre(n);
-    return n;
+    const n = $('nombre').value.trim();
+    if (n) guardarNombre(n);
+    return n || 'Jugador';
   }
 
   async function unirme(cod, name) {
@@ -733,7 +750,7 @@ export function montar({ reglas, juego }) {
   $('bSalir').onclick = () => { sonar('tap'); salir(); };
   function salir() {
     if (st.cortar) { st.cortar(); st.cortar = null; }
-    ['cambiar', 'echar', 'mudanza'].forEach(id => { $(id).hidden = true; });
+    ['cambiar', 'echar', 'mudanza', 'renombrar'].forEach(id => { $(id).hidden = true; });
     cerrarCambiar();
     Object.assign(st, {pantalla: 'menu', online: false, estado: null, sala: null, cod: '', asiento: -1});
     juego.reiniciar?.();
@@ -920,6 +937,34 @@ export function montar({ reglas, juego }) {
     if (b && !b.disabled) { sonar('tap'); elegirJuego(b.dataset.id).catch(e => aviso('No se pudo abrir: ' + e.message)); }
   });
   $('bCambiarSi').onclick = () => { if (cambiarA) { sonar('tap'); mudar(); } };
+
+  // ---------- Cambiar tu nombre en plena partida (tocando ✏️ en tu chip) ----------
+  function abrirRenombrar() {
+    const s = st.online && asientoDe(st.asiento);
+    if (!s) return;
+    $('nombreNuevo').value = s.name === 'Jugador' ? '' : s.name || '';
+    $('renombrar').hidden = false;
+    $('nombreNuevo').focus();
+  }
+  $('players').addEventListener('click', ev => {
+    if (!ev.target.closest('[data-renombrar]')) return;
+    sonar('tap'); abrirRenombrar();
+  });
+  $('bRenombrarNo').onclick = () => { sonar('tap'); $('renombrar').hidden = true; };
+  $('fRenombrar').onsubmit = async ev => {
+    ev.preventDefault();
+    const n = $('nombreNuevo').value.trim();
+    if (!n) { aviso('Poné tu nombre'); animar($('nombreNuevo'), 'sacudir'); return; }
+    const s = asientoDe(st.asiento);
+    if (!st.online || !s || s.id !== miId) { $('renombrar').hidden = true; return; }
+    $('bRenombrarSi').disabled = true;
+    try {
+      await fb.set(fb.ref(fb.db, `${ruta()}/seats/${st.asiento}/name`), n);
+      guardarNombre(n); $('nombre').value = n;
+      sonar('tap'); $('renombrar').hidden = true;
+    } catch (e) { aviso(e.message); }
+    $('bRenombrarSi').disabled = false;
+  };
 
   // ---------- Sacar a alguien de la sala (solo quien la creó) ----------
   let aEchar = null;   // {i, id, name}

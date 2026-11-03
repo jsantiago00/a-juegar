@@ -71,6 +71,17 @@ const quien = (ctx, i) => `<span class="dot" style="background:${ctx.color(i)}">
 // Una pista: escrita, en voz alta o sin pista (se le acabó el tiempo)
 const textoPista = (e, x) => (x.nada ? '<i>⏱️ sin pista</i>' : e.opciones.voz ? '<i>🗣️ la dijo</i>' : `“${esc(x.t)}”`);
 
+// Cómo votó cada uno: una fila por cada votado (el más votado arriba) con quiénes lo votaron
+function tablaVotos(ctx, votos) {
+  const por = new Map();
+  votos.forEach((v, i) => { if (v >= 0) por.set(v, [...(por.get(v) || []), i]); });
+  if (!por.size) return '';
+  const filas = [...por].sort((a, b) => b[1].length - a[1].length).map(([v, qs]) =>
+    `<li>${quien(ctx, v)} <span class="es-cuenta">${qs.length} ${qs.length === 1 ? 'voto' : 'votos'}</span>
+      <span class="es-quienes">← ${qs.map(i => esc(ctx.nombre(i))).join(', ')}</span></li>`);
+  return `<ul class="es-tabla-votos">${filas.join('')}</ul>`;
+}
+
 export function dibujar(c) {
   ctx = c;
   const e = ctx.estado, yo = ctx.miAsiento;
@@ -143,8 +154,8 @@ export function dibujar(c) {
   for (let r = e.ronda; r >= 1; r--) {
     const pr = pistasRonda(e, r), res = e.res.find(x => x.r === r);
     if (!pr.length && !res) continue;
-    const votos = res ? `<p class="es-res">🗳️ ${res.out < 0 ? 'Empate: no salió nadie' : `Salió ${quien(ctx, res.out)}: era ${NOMBRE_ROL[e.roles[res.out]]}`}
-      <span class="note">${res.votos.map((v, i) => (v >= 0 ? `${esc(ctx.nombre(i))} → ${esc(ctx.nombre(v))}` : '')).filter(Boolean).join(' · ')}</span></p>` : '';
+    const votos = res ? `<p class="es-res">🗳️ ${res.out < 0 ? 'Empate: no salió nadie' : `Salió ${quien(ctx, res.out)}: era ${NOMBRE_ROL[e.roles[res.out]]}`}</p>
+      ${tablaVotos(ctx, res.votos)}` : '';
     rondas.push(`<section><h3>Ronda ${r}</h3><ul>${pr.map(x => `<li style="--c:${ctx.color(x.p)}">${quien(ctx, x.p)} ${textoPista(e, x)}</li>`).join('')}</ul>${votos}</section>`);
   }
   const intentos = e.intentos.map(x => `<p class="es-res">🕵️ ${quien(ctx, x.p)} arriesgó ${x.t ? `“${esc(x.t)}”` : 'nada'} ${acierta(x.t, e.pal[0]) ? '✅' : '❌'}</p>`).join('');
