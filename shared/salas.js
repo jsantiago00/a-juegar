@@ -52,7 +52,7 @@ import { JUEGOS } from './juegos.js';
 import { ICONOS } from './iconos.js';
 import { sonar, confeti, botonesSonido, animar } from './efectos.js';
 import { crearChat } from './chat.js';
-import { FB_VER, anotarPartida } from './cuenta.js';
+import { FB_VER, anotarPartida, miCuenta, claveRival, cuentaGuardada } from './cuenta.js';
 
 // App instalable (PWA): el service worker está en la raíz (sw.js) y lo registra cualquier página
 if ('serviceWorker' in navigator) navigator.serviceWorker.register(new URL('../sw.js', import.meta.url)).catch(() => {});
@@ -173,6 +173,11 @@ export async function buscarSala(cod) {
   }));
   return hallados.filter(Boolean).sort((a, b) => b.creada - a.creada)[0] || null;
 }
+// Tu asiento: {id, name} y, si tenés la sesión abierta, también tu cuenta (para el historial contra cada rival)
+async function miAsiento(name) {
+  const c = await miCuenta();
+  return c ? {id: miId, name, uid: c.uid, nick: c.nick} : {id: miId, name};
+}
 // Crea la sala y te sienta en el asiento 0. Devuelve el código.
 export async function crearSala({reglas, n, opciones, nombre}) {
   await initFb();
@@ -183,7 +188,7 @@ export async function crearSala({reglas, n, opciones, nombre}) {
     if (!(await buscarSala(cod))) break;
   }
   await fb.set(fb.ref(fb.db, `juegos/${reglas.info.id}/salas/${cod}`),
-               {n, creada: Date.now(), dueno: miId, seats: {0: {id: miId, name: nombre}}, game: partidaNueva(reglas, n, opciones)});
+               {n, creada: Date.now(), dueno: miId, seats: {0: await miAsiento(nombre)}, game: partidaNueva(reglas, n, opciones)});
   marcarActividad(reglas.info.id, cod, true);
   return cod;
 }
@@ -355,7 +360,8 @@ export function montar({ reglas, juego }) {
 
   const $ = id => document.getElementById(id);
   const st = {pantalla: 'menu', online: false, estado: null, cod: '', asiento: -1, sala: null, cortar: null, finVisto: false,
-              ganLocal: [], anotada: ''};   // ganLocal: victorias por asiento en modo local; anotada: última partida anotada
+              ganLocal: [], anotada: '', historial: null, cuentaPuesta: false};
+  // ganLocal: victorias por asiento en modo local; anotada: última partida anotada; historial: vos contra cada rival (de tu cuenta)
   const ruta = () => `juegos/${info.id}/salas/${st.cod}`;
 
   const asientoDe = i => (st.sala && st.sala.seats ? st.sala.seats[i] || null : null);
@@ -554,9 +560,28 @@ export function montar({ reglas, juego }) {
     }
     const yo = asientoDe(st.asiento);
     if (st.anotada !== e.pid && yo && yo.id === miId) {
-      st.anotada = e.pid;
-      anotarPartida(info.id, e.pid, info.sinGanador || !gan.length ? 'nada' : gan.includes(st.asiento) ? 'gane' : 'perdi');
+      st.anotada = e.pid; st.historial = null;
+      // Contra cada uno: le ganaste (vos ganaste y él no), te ganó (al revés) o nada (empate o mismo equipo)
+      const gane = gan.includes(st.asiento), conGanador = !info.sinGanador && gan.length > 0;
+      const rivales = asientosDe(sala).map((x, i) => ({x, i})).filter(({x, i}) => x && i !== st.asiento && x.id !== miId).map(({x, i}) => ({
+        clave: claveRival(x), nick: x.nick || x.name,
+        r: !conGanador ? 'n' : gane && !gan.includes(i) ? 'g' : !gane && gan.includes(i) ? 'p' : 'n'}));
+      anotarPartida(info.id, e.pid, !conGanador ? 'nada' : gane ? 'gane' : 'perdi', rivales).then(h => {
+        if (!h || !st.estado || st.estado.pid !== e.pid) return;
+        st.historial = rivales.map(r => ({nick: r.nick, ...(h[r.clave] || {})})).filter(r => +r.j);
+        render();                                    // suma el historial al cartel de fin
+      });
     }
+  }
+  function textoHistorial() {
+    return (st.historial || []).map(r => `Contra ${r.nick}: ${+r.g || 0} – ${+r.p || 0}`).join(' · ');
+  }
+  // Si entraste antes de abrir tu cuenta (o en una sala vieja), se le agrega la cuenta a tu asiento
+  function ponerCuenta() {
+    const yo = asientoDe(st.asiento);
+    if (st.cuentaPuesta || !yo || yo.id !== miId || yo.uid || !cuentaGuardada()) return;
+    st.cuentaPuesta = true;
+    miCuenta().then(c => { if (c && st.online) fb.update(fb.ref(fb.db, `${ruta()}/seats/${st.asiento}`), {uid: c.uid, nick: c.nick}).catch(() => {}); });
   }
 
   // Quién empieza (sorteado): se avisa al arrancar, mientras nadie jugó todavía
@@ -678,14 +703,15 @@ export function montar({ reglas, juego }) {
       $('finSub').textContent = juego.resumenFin?.(ctx) || e.ultima || '';
     }
     if (mostrarFin) {
-      $('finMarcador').hidden = !hayMarcador();
-      if (hayMarcador()) $('finMarcador').textContent = textoMarcador();
+      const lineas = [hayMarcador() ? textoMarcador() : '', st.online && st.historial && st.historial.length ? '📒 Historial: ' + textoHistorial() : ''].filter(Boolean);
+      $('finMarcador').hidden = !lineas.length;
+      $('finMarcador').innerHTML = lineas.map(esc).join('<br>');
     }
     $('fin').hidden = !mostrarFin;
   }
 
   function entrarSala(cod, asiento) {
-    Object.assign(st, {online: true, cod, asiento, pantalla: 'play', estado: null, sala: null, finVisto: false, anotada: ''});
+    Object.assign(st, {online: true, cod, asiento, pantalla: 'play', estado: null, sala: null, finVisto: false, anotada: '', historial: null, cuentaPuesta: false});
     juego.reiniciar?.();
     chat?.reiniciar();
     sonar('entrar');
@@ -713,6 +739,7 @@ export function montar({ reglas, juego }) {
       for (let i = 0; i < v.n; i++) if (v.seats && v.seats[i] && v.seats[i].id === miId) st.asiento = i;
       st.estado = reglas.normalizar(v.game);
       efectos(antes, st.estado, salaAntes);
+      ponerCuenta();
       anotarFin(v);
       // Entraste sin nombre ("Jugador"): te lo pedimos ahí mismo (si no estás viendo las reglas)
       if (!salaAntes && asientoDe(st.asiento)?.name === 'Jugador' && $('ayuda').hidden) setTimeout(abrirRenombrar, 300);
@@ -749,13 +776,13 @@ export function montar({ reglas, juego }) {
         aviso('No existe la sala ' + cod); sonar('error'); animar($('codigo'), 'sacudir');
         return false;
       }
-      const n = snap.val().n;
+      const n = snap.val().n, yo = await miAsiento(name);
       let asiento = -1;
       const res = await fb.runTransaction(fb.ref(fb.db, base + '/seats'), seats => {
         if (seats === null) return seats;
         asiento = -1;
-        for (let i = 0; i < n; i++) if (seats[i] && seats[i].id === miId) { asiento = i; seats[i].name = name; return seats; }
-        for (let i = 0; i < n; i++) if (!seats[i]) { seats[i] = {id: miId, name}; asiento = i; return seats; }
+        for (let i = 0; i < n; i++) if (seats[i] && seats[i].id === miId) { asiento = i; seats[i] = yo; return seats; }
+        for (let i = 0; i < n; i++) if (!seats[i]) { seats[i] = yo; asiento = i; return seats; }
         return; // llena
       });
       if (!res.committed || asiento < 0) { aviso('La sala está llena'); sonar('error'); return false; }

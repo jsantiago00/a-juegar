@@ -5,7 +5,10 @@
 //  Hay que activarlo una vez en la consola: Authentication → Sign-in method → Correo/contraseña.
 //
 //  Datos: usuarios/<uid> = { nick, creada, g: ganadas, j: jugadas, ult: última partida anotada,
-//                           juegos: { <juego>: { g, j } } }
+//                           juegos: { <juego>: { g, j } },
+//                           rivales: { <clave>: { nick, g: le ganaste, p: te ganó, j: partidas juntos, t: última vez } } }
+//  La clave del rival es su uid si tiene cuenta (así no importa si se cambia el nombre) o "n_<nombre>" si no.
+//  Cada asiento de la sala guarda {id, name, uid?, nick?}: uid y nick solo si esa persona tenía la sesión abierta.
 //  (las reglas dejan leer a todos y escribir solo a uno mismo; ver database.rules.json)
 //  El SDK de Auth se carga solo si hace falta (entrar, crear cuenta o si ya tenías la sesión abierta).
 // =====================================================================
@@ -81,29 +84,54 @@ export async function salirCuenta() {
   try { const {auth, authM} = await cargar(); await authM.signOut(auth); } catch {}
 }
 
+// {uid, nick} si hay sesión abierta en este dispositivo (null si no). Lo usa la sala para marcar tu asiento.
+export async function miCuenta() {
+  if (!cuentaGuardada()) return null;
+  try {
+    const {auth} = await cargar();
+    return auth.currentUser ? {uid: auth.currentUser.uid, nick: cuentaGuardada()} : null;
+  } catch { return null; }
+}
+// Clave de un rival a partir de su asiento en la sala
+export function claveRival(asiento) {
+  if (asiento.uid) return asiento.uid;
+  const n = String(asiento.name || '').trim().toLowerCase().replace(/[.#$/\[\]]/g, '_');
+  return n && n !== 'jugador' ? 'n_' + n : '';
+}
+
 // Tus datos (null si no hay sesión)
 export async function misDatos() {
   if (!cuentaGuardada()) return null;
   const {auth, db, dbM} = await cargar();
   if (!auth.currentUser) { guardar(MARCA, ''); return null; }   // la sesión venció
   const v = (await dbM.get(dbM.ref(db, 'usuarios/' + auth.currentUser.uid))).val() || {};
-  return {nick: v.nick || cuentaGuardada(), g: +v.g || 0, j: +v.j || 0, juegos: v.juegos || {}};
+  return {nick: v.nick || cuentaGuardada(), g: +v.g || 0, j: +v.j || 0, juegos: v.juegos || {}, rivales: v.rivales || {}};
 }
 
 // Anota una partida terminada (una sola vez por partida, aunque se llame varias veces o desde varios dispositivos).
 // resultado: 'gane' | 'perdi' | 'nada' (empate o juegos sin ganador: suma jugada, no victoria)
-export async function anotarPartida(juegoId, pid, resultado) {
-  if (!cuentaGuardada() || !pid) return;
+// rivales: [{clave, nick, r}] con r = 'g' (le ganaste), 'p' (te ganó) o 'n' (empate, o estaban en el mismo equipo)
+// Devuelve tus datos de rivales actualizados (o null si no se pudo).
+export async function anotarPartida(juegoId, pid, resultado, rivales = []) {
+  if (!cuentaGuardada() || !pid) return null;
   try {
     const {auth, db, dbM} = await cargar();
-    if (!auth.currentUser) return;
-    await dbM.runTransaction(dbM.ref(db, 'usuarios/' + auth.currentUser.uid), u => {
+    if (!auth.currentUser) return null;
+    const res = await dbM.runTransaction(dbM.ref(db, 'usuarios/' + auth.currentUser.uid), u => {
       u = u || {nick: cuentaGuardada(), creada: Date.now()};
       if (u.ult === pid) return;                     // ya estaba anotada
       const gane = resultado === 'gane' ? 1 : 0;
       const juegos = u.juegos || {}, x = juegos[juegoId] || {};
       juegos[juegoId] = {g: (+x.g || 0) + gane, j: (+x.j || 0) + 1};
-      return {...u, juegos, ult: pid, g: (+u.g || 0) + gane, j: (+u.j || 0) + 1};
+      const riv = u.rivales || {};
+      for (const x of rivales) {
+        if (!x.clave || x.clave === auth.currentUser.uid) continue;
+        const a = riv[x.clave] || {};
+        riv[x.clave] = {nick: x.nick || a.nick || '?', g: (+a.g || 0) + (x.r === 'g' ? 1 : 0), p: (+a.p || 0) + (x.r === 'p' ? 1 : 0),
+                        j: (+a.j || 0) + 1, t: Date.now()};
+      }
+      return {...u, juegos, rivales: riv, ult: pid, g: (+u.g || 0) + gane, j: (+u.j || 0) + 1};
     });
-  } catch {}
+    return (res.snapshot.val() || {}).rivales || {};
+  } catch { return null; }
 }

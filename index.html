@@ -99,6 +99,15 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 .cuenta .txt{flex:1;min-width:180px;line-height:1.35}
 .cuenta .txt small{color:var(--mute)}
 .cuenta .botones{display:flex;gap:8px}
+.rivales{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:20px;padding:12px 16px;margin:-12px 0 26px}
+.rivales h2{font-size:20px;margin:0 0 8px}
+.rivales ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rivales li{display:flex;align-items:center;gap:10px}
+.rivales .quien{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.rivales .score{font-weight:700;font-size:18px;white-space:nowrap}
+.rivales .score .g{color:var(--ok)}
+.rivales .score .p{color:var(--bad)}
+.rivales small{color:var(--mute);white-space:nowrap}
 .juego small.gano{background:var(--amarillo);color:var(--oscuro)}
 #fCuenta .row{margin-bottom:10px}
 #fCuenta input{flex:1;min-width:0}
@@ -145,6 +154,7 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
     <span class="txt" id="cuentaTxt">👤 Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.</span>
     <span class="botones" id="cuentaBotones"><button class="chico main" id="bCuenta">Entrar o crear cuenta</button></span>
   </section>
+  <section class="rivales" id="rivales" hidden></section>
 
   <h2 class="titulo-seccion" id="tituloJuegos">Juegos</h2>
   <div class="juegos" id="juegos"></div>
@@ -250,6 +260,7 @@ $('nombre').addEventListener('input', () => guardarNombre($('nombre').value.trim
 // ---------- Cuenta: nick + contraseña, victorias sincronizadas (ver shared/cuenta.js) ----------
 async function pintarCuenta() {
   $('juegos').querySelectorAll('small.gano').forEach(x => x.remove());
+  $('rivales').hidden = true;
   let d = null;
   if (cuentaGuardada()) {
     $('cuentaTxt').innerHTML = `👤 <b>${esc(cuentaGuardada())}</b> <small>cargando…</small>`;
@@ -264,6 +275,15 @@ async function pintarCuenta() {
   $('cuentaTxt').innerHTML = `👤 <b>${esc(d.nick)}</b> · 🏆 <b>${d.g}</b> ${d.g === 1 ? 'victoria' : 'victorias'} ` +
     `<small>en ${d.j} ${d.j === 1 ? 'partida online' : 'partidas online'}${d.sinConexion ? ' (sin conexión)' : ''}</small>`;
   $('cuentaBotones').innerHTML = '<button class="chico" id="bCuentaSalir">Salir</button>';
+  // Vos contra cada rival: le ganaste – te ganó (los que más jugaron con vos, primero)
+  const riv = Object.values(d.rivales || {}).filter(r => +r.j).sort((a, b) => b.j - a.j || (+b.t || 0) - (+a.t || 0));
+  if (riv.length) {
+    $('rivales').innerHTML = `<h2>⚔️ Tus rivales</h2><ul>${riv.map(r =>
+      `<li><span class="quien">${esc(r.nick || '?')}</span><span class="score"><span class="g">${+r.g || 0}</span> – <span class="p">${+r.p || 0}</span></span>` +
+      `<small>${+r.j} ${+r.j === 1 ? 'partida' : 'partidas'}</small></li>`).join('')}</ul>` +
+      '<p class="note">Verde: veces que le ganaste. Rojo: veces que te ganó. Cuenta las partidas online jugadas con tu cuenta abierta.</p>';
+    $('rivales').hidden = false;
+  }
   for (const [id, x] of Object.entries(d.juegos)) {
     const t = $('juegos').querySelector(`.tags[data-id="${id}"]`);
     if (t && +x.g) t.insertAdjacentHTML('beforeend', `<small class="gano" title="Tus victorias (de ${+x.j || 0} partidas)">🏆 ×${+x.g}</small>`);

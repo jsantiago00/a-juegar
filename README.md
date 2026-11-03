@@ -77,7 +77,10 @@ y te lleva solo al juego correcto. El link de invitación (`<juego>/?sala=ABCD`)
 - **Cuentas** (`shared/cuenta.js`): nick + contraseña desde la portada. Por dentro es Firebase Authentication con
   Correo/contraseña (el nick se vuelve `nick@<authDomain>`), así que hay que activarlo una vez en la consola:
   *Authentication → Sign-in method → Correo electrónico/contraseña*. Las victorias y partidas online van a
-  `usuarios/<uid>` (`g`, `j` y `juegos/<id>/{g, j}`); cada uno anota las suyas. No hay recuperación de contraseña.
+  `usuarios/<uid>` (`g`, `j` y `juegos/<id>/{g, j}`); cada uno anota las suyas.
+  También el historial contra cada rival en `rivales/<clave>` = `{nick, g: le ganaste, p: te ganó, j: partidas juntos}`:
+  la clave es el uid del rival si tiene cuenta (cada asiento guarda `uid` y `nick` si esa persona tenía la sesión abierta)
+  o `n_<nombre>` si no. En equipos, el compañero suma partida pero no victoria ni derrota. No hay recuperación de contraseña.
 
 ## Reglas sugeridas de Firebase
 ```json
