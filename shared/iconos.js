@@ -103,6 +103,12 @@ export const ICONOS = {
     `<rect x="8" y="30" width="32" height="10" rx="4" fill="${O}" opacity=".12"/>` +
     `<circle cx="16" cy="35" r="2.6" fill="${VERDE}"/><circle cx="24" cy="35" r="2.6" fill="#f4c430"/><path d="M30 33l4 4M34 33l-4 4" stroke="${ROJO}" stroke-width="2" stroke-linecap="round"/>`),
 
+  // Más alto o más bajo: un número con flechitas arriba y abajo
+  'alto-bajo': svg(
+    `<rect x="9" y="15" width="24" height="18" rx="4" fill="${CREMA}" stroke="#e09a55" stroke-width="1.6"/>` +
+    `<text x="21" y="29" text-anchor="middle" font-size="13" font-weight="700" fill="${O}" font-family="Fredoka,system-ui,sans-serif">42</text>` +
+    `<path d="M39 8l-4.5 6h9z" fill="#f4c430"/><path d="M39 40l-4.5-6h9z" fill="${AZUL}"/><path d="M39 15v18" stroke="${O}" stroke-opacity=".2" stroke-width="2" stroke-linecap="round"/>`),
+
   // Críptico: un cartel con signos sobre las rayitas del ahorcado
   criptico: svg(
     `<path d="M10 8h28a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H22l-5 5v-5h-7a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3z" fill="#b98cff" stroke="${O}" stroke-width="1.8" stroke-linejoin="round"/>` +

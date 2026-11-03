@@ -1,5 +1,6 @@
-// Pantalla de Código secreto: primero cada uno esconde el código del otro; después los dos prueban a la vez.
-import { LARGO, MODOS, COLORES, simbolos, esColores, comparar, objetivo, intentosDe } from './reglas.js';
+// Pantalla de Código secreto: primero cada uno esconde el código del otro; después prueban por turnos.
+// Mientras juega el otro, podés ir armando tu próximo intento (se manda cuando te toca).
+import { LARGO, MODOS, COLORES, PERDIDO, simbolos, esColores, comparar, objetivo, intentosDe } from './reglas.js';
 import { esc } from '../shared/salas.js';
 
 let ctx, $, menuEl = null;
@@ -22,16 +23,16 @@ export function opciones() {
 export function sonido(a, e, ctx) {
   const yo = ctx.miAsiento;
   if (a.fase !== e.fase) return 'entrar';
-  if (e.intentos[yo] !== a.intentos[yo]) return e.fin[yo] === 1 ? 'punto' : 'colocar';
+  if (e.intentos[yo] !== a.intentos[yo]) return e.fin[yo] === 1 ? 'punto' : intentosDe(e, yo).at(-1) === PERDIDO ? null : 'colocar';
+  if (e.intentos[1 - yo] !== a.intentos[1 - yo]) return e.fin[1 - yo] === 1 ? 'no' : 'tick';   // jugó el otro: te toca
   if (e.codigos.join() !== a.codigos.join()) return 'tick';
-  return null;               // lo que hace el rival no suena (solo se ve)
+  return null;
 }
-// No hay turnos: el cartel de arriba dice en qué andás vos
+// Mientras esconden, el cartel de arriba dice en qué andás vos; después, el de siempre (de quién es el turno)
 export function estado(ctx) {
   const e = ctx.estado, yo = ctx.miAsiento, rival = ctx.nombre(1 - yo);
-  if (yo < 0) return '';
-  if (e.fase === 'codigos') return e.codigos[yo] ? `⏳ Esperando a ${rival}` : '🔒 Escondé tu código';
-  return e.fin[yo] ? `⏳ Esperando a ${rival}` : '🔍 ¡Descifrá!';
+  if (yo < 0 || e.fase !== 'codigos') return '';
+  return e.codigos[yo] ? `⏳ Esperando a ${rival}` : '🔒 Escondé tu código';
 }
 
 // Un casillero: el número o la bolita del color
@@ -48,7 +49,8 @@ function resultado(r) {
          `<span class="errado">⚠ ${r.errado} ${r.errado === 1 ? 'errado' : 'errados'}</span></span>`;
 }
 function historial(e, lista, codigo) {
-  return lista.map((cod, k) => `<li><span class="nro">${k + 1}</span>${fichas(e, cod)}${resultado(comparar(cod, codigo))}</li>`).reverse().join('');
+  return lista.map((cod, k) => `<li><span class="nro">${k + 1}</span>${cod === PERDIDO
+    ? '<span class="note">⏱️ Se pasó el tiempo</span>' : fichas(e, cod) + resultado(comparar(cod, codigo))}</li>`).reverse().join('');
 }
 
 export function iniciar(c) {
@@ -104,9 +106,11 @@ function borrar() {
 async function enviar() {
   const e = ctx.estado;
   if (entrada.some(x => x == null)) { ctx.sonar('error'); ctx.aviso(`Completá los ${LARGO} casilleros`); return; }
-  const cod = entrada.join(''), tipo = e.fase === 'codigos' ? 'codigo' : 'intento';
-  if (await ctx.jugarLibre({tipo, codigo: cod})) { entrada = Array(LARGO).fill(null); cursor = 0; pintarEntrada(); }
-  else ctx.aviso('No se pudo mandar, probá de nuevo');
+  const cod = entrada.join('');
+  if (e.fase === 'jugar' && e.turno !== ctx.miAsiento) { ctx.sonar('error'); ctx.aviso(`Esperá tu turno: está jugando ${ctx.nombre(e.turno)}`); return; }
+  const ok = e.fase === 'codigos' ? await ctx.jugarLibre({tipo: 'codigo', codigo: cod}) : await ctx.jugar({tipo: 'intento', codigo: cod});
+  if (ok) { entrada = Array(LARGO).fill(null); cursor = 0; pintarEntrada(); }
+  else if (e.fase === 'codigos') ctx.aviso('No se pudo mandar, probá de nuevo');
 }
 
 function pintarEntrada() {
@@ -152,7 +156,9 @@ export function dibujar(ctx) {
   const armando = !termino && (e.fase === 'codigos' ? !mio : !e.fin[yo]);
   $('csArmar').hidden = !armando;
   if (armando) {
-    $('csOk').textContent = e.fase === 'codigos' ? '🔒 Esconder' : '🔍 Probar';
+    const espero = jugando && e.turno !== yo;
+    $('csOk').textContent = e.fase === 'codigos' ? '🔒 Esconder' : espero ? `⏳ Turno de ${ctx.nombre(otro)}` : '🔍 Probar';
+    $('csOk').disabled = espero;
     pintarEntrada();
   }
 
@@ -175,6 +181,7 @@ export function dibujar(ctx) {
   $('csRival').innerHTML = `<details${termino ? ' open' : ''}><summary><b>${rival}</b> · ${suyos.length} ${suyos.length === 1 ? 'intento' : 'intentos'} · <span class="note">${estadoR}</span></summary>
       ${suyos.length ? `<ol class="cs-hist chico">${historial(e, suyos, mio)}</ol>` : '<p class="note">Todavía no probó ninguno.</p>'}</details>`;
 
-  if (e.fin[yo] && !termino) return `Esperando que ${rival} termine…`;
+  if (e.fin[yo] && !termino) return `¡Lo sacaste! ${rival} tiene un último intento para empatar…`;
+  if (armando && e.turno !== yo) return `Mientras ${rival} juega, andá armando tu próximo intento`;
   return armando ? (esColores(e) ? 'Tocá los colores (en la compu, del 1 al 6) y después Probar' : 'Escribí 4 números y tocá Probar') : '';
 }

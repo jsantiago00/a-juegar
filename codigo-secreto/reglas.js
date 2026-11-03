@@ -1,4 +1,4 @@
-// Código secreto: cada uno esconde un código de 4 para el otro y los dos lo adivinan a la vez, sin turnos.
+// Código secreto: cada uno esconde un código de 4 para el otro y después lo adivinan por turnos.
 // Cada intento devuelve cuántos están bien (lugar justo), y cuántos errados (van, pero en otro lugar).
 // Gana quien lo saca en menos intentos; con los mismos intentos, empate.
 export const LARGO = 4;
@@ -17,14 +17,15 @@ export const info = {
   desc: 'Escondé un código de 4 números o colores y descifrá el del otro antes que él.',
   min: 2, max: 2,
   soloOnline: true,            // el código es secreto: cada uno en su pantalla
-  sinTurnos: true,             // los dos adivinan a la vez: no se sortea quién empieza
+  reloj: 30,                   // para esconder el código y para cada intento
   reglas: [
     'Antes de empezar se elige el modo: Números (del 0 al 9) o Colores (rojo, azul, amarillo, verde, blanco y violeta).',
     `Cada uno escribe un código secreto de ${LARGO} para el otro. Se pueden repetir: 0000 o cuatro rojos también valen.`,
-    `Después, cada uno prueba códigos de ${LARGO} a su ritmo para descifrar el del otro: no hay turnos.`,
+    `Después, por turnos, cada uno prueba un código de ${LARGO} para descifrar el del otro. Mientras juega el otro, andá pensando el tuyo.`,
     '✔ Bien: cuántos están en su lugar. ⚠ Errados: cuántos van, pero en otro lugar.',
     'Solo te dice cuántos, nunca cuáles.',
-    'Gana quien lo descifra en menos intentos. Si los dos tardan lo mismo, es empate. Si te rendís, gana el otro.',
+    'Gana quien lo descifra en menos intentos. Si lo saca el que empezó, el otro tiene un último intento para empatar. Si te rendís, gana el otro.',
+    '⏱️ Con reloj, tenés ese tiempo en tu turno: si se te acaba, perdés ese intento (cuenta igual) y le toca al otro. Si se acaba mientras esconden los códigos, se esconde uno al azar.',
   ],
 };
 
@@ -49,7 +50,7 @@ export function comparar(intento, codigo) {
 
 // codigos[p]: el que escondió p (lo adivina el otro). intentos[p]: los que probó p, separados por coma.
 // fin[p]: 0 jugando, 1 lo descifró, 2 se rindió.
-export function nuevoJuego(n, opciones) {
+export function nuevoJuego(n, opciones) {   // el motor sortea quién empieza (turno y empieza)
   const modo = opciones && MODOS[opciones.modo] ? opciones.modo : 'numeros';
   return {n, opciones: {modo}, fase: 'codigos', codigos: ['', ''], intentos: ['', ''], fin: [0, 0],
           turno: 0, ganador: -1, ultima: ''};
@@ -66,15 +67,23 @@ export function normalizar(e) {
 }
 export const objetivo = (e, p) => e.codigos[1 - p];               // el código que adivina p
 export const intentosDe = (e, p) => (e.intentos[p] ? e.intentos[p].split(',') : []);
+export const PERDIDO = '-';                                        // intento que se pasó del tiempo
 const veces = k => `${k} ${k === 1 ? 'intento' : 'intentos'}`;
 export const detalle = (e, i) => (e.fase === 'codigos' ? (e.codigos[i] ? 'listo ✔' : 'eligiendo…')
   : e.fin[i] === 1 ? `¡lo sacó en ${veces(intentosDe(e, i).length)}!` : e.fin[i] === 2 ? 'se rindió 🏳️'
   : veces(intentosDe(e, i).length));
 
-// No hay jugadas por turno: todo pasa por libre()
-export const aplicar = () => null;
+// Mientras esconden, el reloj es de los dos; después, del que tiene el turno
+export const quienReloj = e => (e.fase === 'codigos' ? -1 : e.turno);
+// Escondidos los dos, empieza a adivinar el que salió sorteado
+function arrancar(e, nombre) {
+  e.fase = 'jugar';
+  if (e.empieza != null) e.turno = e.empieza;
+  e.ultima = `¡A descifrar! Empieza ${nombre(e.turno)}`;
+}
 
 // Se decide apenas se sabe: si uno lo sacó en k y el otro ya usó k sin sacarlo, ganó.
+// Si no, le toca al otro (si el primero lo sacó, el otro tiene su intento para empatar).
 function decidir(e, nombre) {
   const k = [0, 1].map(p => intentosDe(e, p).length);
   for (const p of [0, 1]) {
@@ -85,25 +94,50 @@ function decidir(e, nombre) {
       e.ganador = p; e.ultima = `${nombre(p)} lo descifró en ${veces(k[p])}`; return;
     }
   }
+  if (!e.fin[1 - e.turno]) e.turno = 1 - e.turno;
+}
+const sumar = (e, p, cod) => { e.intentos[p] = e.intentos[p] ? e.intentos[p] + ',' + cod : cod; };
+
+// En tu turno: {tipo:'intento', codigo}
+export function aplicar(e, j, nombre = i => 'Jugador ' + (i + 1)) {
+  const yo = e.turno;
+  if (e.fase !== 'jugar' || j.tipo !== 'intento' || e.fin[yo] || !valido(e, j.codigo)) return null;
+  sumar(e, yo, j.codigo);
+  if (j.codigo === objetivo(e, yo)) { e.fin[yo] = 1; e.ultima = `¡${nombre(yo)} descifró el código!`; }
+  else { const r = comparar(j.codigo, objetivo(e, yo)); e.ultima = `${nombre(yo)}: ✔ ${r.bien} bien, ⚠ ${r.errado} ${r.errado === 1 ? 'errado' : 'errados'}`; }
+  decidir(e, nombre);
+  return e;
 }
 
-// {tipo:'codigo', codigo}: esconder el código del otro   {tipo:'intento', codigo}: probar uno   {tipo:'rendirse'}
+// Sin turno: {tipo:'codigo', codigo}: esconder el código del otro   {tipo:'rendirse'}
 export function libre(e, j, yo, nombre = i => 'Jugador ' + (i + 1)) {
   if (j.tipo === 'codigo') {
     if (e.fase !== 'codigos' || e.codigos[yo] || !valido(e, j.codigo)) return null;
     e.codigos[yo] = j.codigo;
-    if (e.codigos[0] && e.codigos[1]) { e.fase = 'jugar'; e.ultima = '¡A descifrar!'; }
+    if (e.codigos[0] && e.codigos[1]) arrancar(e, nombre);
     return e;
   }
-  if (e.fase !== 'jugar' || e.fin[yo]) return null;
-  if (j.tipo === 'intento') {
-    if (!valido(e, j.codigo)) return null;
-    e.intentos[yo] = e.intentos[yo] ? e.intentos[yo] + ',' + j.codigo : j.codigo;
-    if (j.codigo === objetivo(e, yo)) { e.fin[yo] = 1; e.ultima = `¡${nombre(yo)} descifró el código!`; }
-  } else if (j.tipo === 'rendirse') {
+  if (j.tipo === 'rendirse' && e.fase === 'jugar' && !e.fin[yo]) {
     e.fin[yo] = 2; e.ganador = 1 - yo; e.ultima = `${nombre(yo)} se rindió`;
     return e;
-  } else return null;
+  }
+  return null;
+}
+
+// Se acabó el tiempo: al que no escondió se le esconde uno al azar; al que estaba adivinando se le va el intento
+export function sinTiempo(e, nombre) {
+  if (e.fase === 'codigos') {
+    const tarde = [0, 1].filter(p => !e.codigos[p]);
+    if (!tarde.length) return null;
+    for (const p of tarde) e.codigos[p] = Array.from({length: LARGO}, () => Math.floor(Math.random() * simbolos(e))).join('');
+    arrancar(e, nombre);
+    e.ultima = `⏱️ A ${tarde.map(p => nombre(p)).join(' y ')} se ${tarde.length > 1 ? 'les' : 'le'} escondió uno al azar. Empieza ${nombre(e.turno)}`;
+    return e;
+  }
+  const p = e.turno;
+  if (e.fin[p]) return null;
+  sumar(e, p, PERDIDO);
+  e.ultima = `⏱️ ${nombre(p)} perdió el intento por tiempo`;
   decidir(e, nombre);
   return e;
 }

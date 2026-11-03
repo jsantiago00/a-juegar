@@ -31,7 +31,8 @@ pinturillo/           Uno dibuja y los demás adivinan (2 a 6, solo online; los 
 dibujamiento/         Teléfono descompuesto con dibujos + la película del final (2 a 6, solo online; dibujos en extra/dib)
 espia/                Espía: la mayoría con la misma palabra, impostores con una parecida y espías sin palabra (más cuantos más juegan); pistas y votación (3 a 8, solo online)
 criptico/             Críptico: cada uno escribe palabra + críptico y los demás tienen 3 intentos para adivinarla (2 a 6, solo online)
-codigo-secreto/       Código secreto: cada uno esconde 4 números (0-9) o 4 colores (6) y descifra el del otro con pistas de bien/errados (2, solo online)
+codigo-secreto/       Código secreto: cada uno esconde 4 números (0-9) o 4 colores (6) y descifra el del otro por turnos con pistas de bien/errados (2, solo online)
+alto-bajo/            Más alto o más bajo: cada uno esconde un número (hasta 100, 1.000, 10.000 o 1.000.000) y busca el del otro por turnos (2, solo online)
 ta-te-ti/             juego mínimo, sirve de plantilla
 ```
 
@@ -60,6 +61,8 @@ con la ✕ de su nombre: deja el lugar libre o sigue con uno menos (partida nuev
 Reloj por turno: un juego con `info.reloj: 60` muestra el selector (sin reloj, 30 s, 1 o 2 min) y el motor lleva la cuenta
 (`opciones.reloj` y `limite` en el estado). Si se acaba, llama `reglas.sinTiempo(estado, nombre)`;
 `reglas.conReloj(estado)` dice en qué momentos corre. Lo tienen ¿Quién soy?, Minigolf, Truco y Espía.
+`reglas.quienReloj(estado)` dice de quién es el reloj (si no, del que tiene el turno; -1 = de todos, como mientras
+cada uno esconde su código en Código secreto y Más alto o más bajo). Si cambia, el reloj vuelve a arrancar.
 Las salas que pasan 24 h sin actividad se borran solas: cada sala anota su última actividad en
 `actividad/<juego>/<código>` y la portada (o crear una sala) limpia las viejas, una vez por hora como mucho.
 Los códigos son únicos entre todos los juegos: desde la portada (o desde cualquier juego) ponés el código

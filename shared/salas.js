@@ -26,6 +26,8 @@
 //             a arrancar con cada jugada y cuando cambia el turno. Si se acaba, el motor llama
 //             reglas.sinTiempo(estado, nombre) (lo que pasa: perder el turno, tirar solo…; null = nada) y
 //             reglas.conReloj(estado) [opcional] dice si en ese momento corre el reloj (ej. solo al preguntar).
+//             reglas.quienReloj(estado) [opcional] dice de quién es el reloj (si no, del que tiene el turno;
+//             -1 = de todos, ej. mientras cada uno esconde su código). Si cambia, el reloj vuelve a arrancar.
 //   info.sinGanador: true si al final no gana nadie (ej. Dibujamiento): el juego termina con ganador = EMPATE
 //             y el cartel de fin usa juego.textoFin(ctx) ({emoji, txt}).
 //   reglas.ganadores(estado) [opcional]: todos los asientos que ganaron (juegos por equipos)
@@ -389,7 +391,8 @@ export function montar({ reglas, juego }) {
   // ---------- Reloj por turno ----------
   const segReloj = e => (info.reloj && e && e.opciones ? +e.opciones.reloj || 0 : 0);
   const relojCorre = e => !!e && segReloj(e) > 0 && e.ganador === EN_JUEGO && (!reglas.conReloj || !!reglas.conReloj(e));
-  const firmaReloj = e => `${e.turno}|${relojCorre(e)}`;
+  const quienReloj = e => (reglas.quienReloj ? reglas.quienReloj(e) : e.turno);
+  const firmaReloj = e => `${e.turno}|${quienReloj(e)}|${relojCorre(e)}`;
   // Después de una jugada el reloj arranca de nuevo; después de una jugada libre, solo si cambió el turno
   function reponerReloj(nx, firma = null) {
     if (segReloj(nx) && (firma === null || firmaReloj(nx) !== firma)) nx.limite = ahora() + segReloj(nx) * 1000;
@@ -451,10 +454,10 @@ export function montar({ reglas, juego }) {
     if (st.pantalla !== 'play' || !relojCorre(e) || !listos() || (st.online && !st.sala)) { el.hidden = true; return; }
     if (!e.limite) { el.hidden = true; arrancarReloj(); return; }
     const falta = e.limite - ahora(), queda = Math.max(0, Math.ceil(falta / 1000));
-    const mio = !st.online || st.asiento === e.turno;
+    const q = quienReloj(e), mio = !st.online || q < 0 || st.asiento === q;
     el.hidden = false;
     el.innerHTML = `⏱️ ${Math.floor(queda / 60)}:${String(queda % 60).padStart(2, '0')}` +
-      (st.online && !mio && e.turno >= 0 ? ` <small>${esc(nombre(e.turno))}</small>` : '');
+      (st.online && !mio ? ` <small>${esc(nombre(q))}</small>` : '');
     el.classList.toggle('apurado', queda <= 10);
     el.classList.toggle('mio', mio);
     if (mio && queda <= 10 && queda > 0 && queda !== ticReloj) { ticReloj = queda; sonar('reloj'); }
@@ -475,7 +478,7 @@ export function montar({ reglas, juego }) {
   }
   function sinTiempo(cur, lim) {
     if (cur.ganador !== EN_JUEGO || +cur.limite !== lim || ahora() < lim || !relojCorre(cur) || !reglas.sinTiempo) return null;
-    const p = cur.turno, k = (cur.vencio ? +cur.vencio.k || 0 : 0) + 1;
+    const p = quienReloj(cur), k = (cur.vencio ? +cur.vencio.k || 0 : 0) + 1;
     const nx = reglas.sinTiempo(cur, nombre);
     if (!nx) return null;
     nx.limite = ahora() + segReloj(nx) * 1000;
@@ -539,7 +542,8 @@ export function montar({ reglas, juego }) {
     if (!antes || !e || JSON.stringify(antes) === JSON.stringify(e)) return;
     if (e.vencio && (!antes.vencio || antes.vencio.k !== e.vencio.k)) {
       sonar('no');
-      aviso(st.online && e.vencio.p === st.asiento ? '⏱️ ¡Se te acabó el tiempo!' : `⏱️ Se le acabó el tiempo a ${nombre(e.vencio.p)}`);
+      aviso(e.vencio.p < 0 ? '⏱️ ¡Se acabó el tiempo!' : st.online && e.vencio.p === st.asiento ? '⏱️ ¡Se te acabó el tiempo!'
+        : `⏱️ Se le acabó el tiempo a ${nombre(e.vencio.p)}`);
     }
     // Se volvió a repartir antes de jugar (ej. cambiaron los equipos): quién empieza puede ser otro
     if (antes.ganador === EN_JUEGO && sinJugar(e) && antes.empieza !== e.empieza && listos() && quienEmpieza(e)) aviso(quienEmpieza(e));
