@@ -8,6 +8,8 @@ import { sonar } from './efectos.js';
 const RAPIDOS = ['😂', '🤔', '😱', '👍', '🙈', '🔥'];
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
 const soloEmoji = t => /^[\p{Extended_Pictographic}‍️\s]{1,12}$/u.test(t);
+const ESPERA_EMOJI = 3000;   // entre emoji y emoji (los rápidos o escritos solos), para que no se llene de spam
+const BORRADOR = 'minijuegos-chat-borrador';
 
 export function crearChat(raiz, {enviar, colorDe, aviso}) {
   raiz.insertAdjacentHTML('beforeend', `
@@ -22,7 +24,13 @@ export function crearChat(raiz, {enviar, colorDe, aviso}) {
       </form>
     </section>`);
   const $ = id => raiz.querySelector('#' + id);
-  let abierto = false, ultima = null, primera = true, noLeidos = 0, dibujado = '', yo = '';
+  let abierto = false, ultima = null, primera = true, noLeidos = 0, dibujado = '', yo = '', ultimoEmoji = 0, frenoEmoji = 0;
+
+  // Lo que vas escribiendo queda guardado: si el celu recarga la página (al volver de otra app,
+  // al mudarse de juego, etc.) o se cierra el panel, el texto sigue ahí.
+  try { $('chatTxt').value = sessionStorage.getItem(BORRADOR) || ''; } catch {}
+  const guardarBorrador = () => { try { sessionStorage.setItem(BORRADOR, $('chatTxt').value); } catch {} };
+  $('chatTxt').addEventListener('input', guardarBorrador);
 
   function badge() {
     $('chatBadge').hidden = !noLeidos;
@@ -39,28 +47,65 @@ export function crearChat(raiz, {enviar, colorDe, aviso}) {
     if (v) { noLeidos = 0; badge(); ajustar(); alFondo(); if (conMouse) $('chatTxt').focus({preventScroll: true}); }
   }
 
-  // El teclado del celu se dibuja encima de la página sin achicarla: con visualViewport
-  // medimos cuánto tapa y subimos el panel para que quede justo arriba del teclado.
+  // El teclado del celu tapa parte de la pantalla. Mientras escribís, el panel se acomoda en la parte
+  // que queda visible (visualViewport): arriba del teclado y con el campo a la vista. Los navegadores
+  // avisan tarde o a los saltos mientras sube el teclado, así que además medimos varias veces.
   const vv = window.visualViewport;
   function ajustar() {
-    if (!vv) return;
-    const teclado = Math.max(0, innerHeight - vv.height - vv.offsetTop);
-    $('chat').style.setProperty('--teclado', teclado + 'px');
-    $('chat').style.setProperty('--visible', vv.height + 'px');
+    const c = $('chat');
+    c.style.setProperty('--arriba', (vv ? vv.offsetTop : 0) + 'px');
+    c.style.setProperty('--visible', (vv ? vv.height : innerHeight) + 'px');
+    c.classList.toggle('apretado', (vv ? vv.height : innerHeight) < 360);   // celu acostado + teclado: no entra todo
     if (abierto) alFondo();
+  }
+  let medir = 0;
+  function seguirTeclado() {
+    clearInterval(medir);
+    let veces = 0;
+    ajustar();
+    medir = setInterval(() => { ajustar(); if (++veces > 12) clearInterval(medir); }, 80);
   }
   vv?.addEventListener('resize', ajustar);
   vv?.addEventListener('scroll', ajustar);
+  addEventListener('resize', ajustar);
+  $('chatTxt').addEventListener('focus', () => { document.body.classList.add('chat-escribiendo'); seguirTeclado(); });
+  // Tocar ➤ o un emoji no le saca el foco al campo: el teclado sigue abierto y el panel no salta bajo el dedo
+  const quedarse = ev => { if (document.activeElement === $('chatTxt')) ev.preventDefault(); };
+  raiz.querySelectorAll('.chat-form button, .chat-rapidos button').forEach(b => {
+    b.addEventListener('pointerdown', quedarse);
+    b.addEventListener('mousedown', quedarse);
+  });
+  $('chatTxt').addEventListener('blur', () => { document.body.classList.remove('chat-escribiendo'); seguirTeclado(); });
+  // Los emojis tienen freno: mientras corre, los botones rápidos quedan apagados
+  function frenarEmojis() {
+    ultimoEmoji = Date.now();
+    const rap = raiz.querySelector('.chat-rapidos');
+    rap.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    clearTimeout(frenoEmoji);
+    frenoEmoji = setTimeout(() => {
+      rap.querySelectorAll('button').forEach(b => { b.disabled = false; });
+    }, ESPERA_EMOJI);
+  }
+  // Devuelve true si salió (si no, lo escrito se queda en el campo)
   async function mandar(texto) {
     const t = texto.trim();
-    if (!t) return;
+    if (!t) return false;
+    const emoji = soloEmoji(t);
+    if (emoji && Date.now() - ultimoEmoji < ESPERA_EMOJI) { sonar('error'); aviso('Pará un poco con los emojis 😅'); return false; }
+    if (emoji) frenarEmojis();
     sonar('enviar');
-    try { await enviar(t); } catch (e) { aviso('No se pudo mandar: ' + e.message); }
+    try { await enviar(t); return true; } catch (e) { aviso('No se pudo mandar: ' + e.message); return false; }
   }
 
   $('bChat').onclick = () => { sonar('tap'); abrir(!abierto); };
   $('bChatCerrar').onclick = () => { sonar('tap'); abrir(false); };
-  $('fChat').onsubmit = ev => { ev.preventDefault(); const t = $('chatTxt').value; $('chatTxt').value = ''; mandar(t); };
+  $('fChat').onsubmit = async ev => {
+    ev.preventDefault();
+    const campo = $('chatTxt'), t = campo.value;
+    if (!t.trim() || (soloEmoji(t.trim()) && Date.now() - ultimoEmoji < ESPERA_EMOJI)) { mandar(t); return; }
+    campo.value = ''; guardarBorrador();
+    if (!(await mandar(t)) && !campo.value) { campo.value = t; guardarBorrador(); }   // si falló, te lo devolvemos
+  };
   raiz.querySelector('.chat-rapidos').addEventListener('click', ev => { const b = ev.target.closest('[data-e]'); if (b) mandar(b.dataset.e); });
   addEventListener('keydown', ev => { if (ev.key === 'Escape' && abierto) abrir(false); });
 

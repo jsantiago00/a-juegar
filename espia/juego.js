@@ -134,7 +134,8 @@ export function dibujar(c) {
     }
     $('esPanel').innerHTML = h;
     $('esPanel').hidden = !h;
-    $('esTxt')?.focus();
+    // Solo si no estás escribiendo en otro lado (por ejemplo, en el chat)
+    if (!document.activeElement || document.activeElement === document.body) $('esTxt')?.focus();
   }
 
   // ---------- Las rondas: pistas y cómo terminó cada votación ----------
