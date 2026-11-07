@@ -49,6 +49,19 @@
 .cs-teclado small{font-size:13px}
 .cs-acciones{justify-content:center;margin-top:14px}
 
+/* Tachar a mano: ✕ no va, ? duda */
+.cs-herr{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.cs-herr .note{margin:0;font-size:13px}
+.cs-tachar{flex:none;white-space:nowrap}
+.cs-tachar.on{background:var(--amarillo);color:var(--oscuro);box-shadow:0 4px 0 #c99a00}
+.cs-teclado button{position:relative}
+.cs-teclado.tachando{outline:2px dashed var(--amarillo);outline-offset:6px;border-radius:12px}
+.cs-teclado button[data-marca="no"]{opacity:.5}
+.cs-teclado button[data-marca="no"]::after{content:'';position:absolute;inset:6px;pointer-events:none;
+  background:linear-gradient(to top right,transparent calc(50% - 2.5px),var(--bad) calc(50% - 2.5px) calc(50% + 2.5px),transparent calc(50% + 2.5px))}
+.cs-teclado button[data-marca="duda"]::after{content:'?';position:absolute;top:-7px;right:-5px;width:22px;height:22px;border-radius:50%;
+  display:grid;place-items:center;background:var(--amarillo);color:var(--oscuro);font-size:14px;font-weight:700;box-shadow:0 2px 0 #c99a00;pointer-events:none}
+
 /* Historial */
 .cs-hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .cs-hist li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(10,5,40,.3);border-radius:14px;padding:6px 10px}

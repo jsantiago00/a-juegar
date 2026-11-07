@@ -6,7 +6,9 @@ import { esc } from '../shared/salas.js';
 let ctx, $, menuEl = null;
 let entrada = [], cursor = 0;     // lo que estás armando (código o intento) y en qué casillero va el próximo
 let clave = '', teclas = '', verMio = false;
-export function reiniciar() { entrada = Array(LARGO).fill(null); cursor = 0; clave = ''; verMio = false; }
+// Tus marcas en el teclado (las ponés vos, a mano): símbolo -> 'no' (tachado) o 'duda'
+let marcas = {}, tachando = false, pidMarcas = null;
+export function reiniciar() { entrada = Array(LARGO).fill(null); cursor = 0; clave = ''; verMio = false; marcas = {}; tachando = false; pidMarcas = null; }
 reiniciar();
 
 // ---------- Menú: números o colores ----------
@@ -60,13 +62,15 @@ export function iniciar(c) {
     <div class="cs-panel" id="csArriba"></div>
     <div class="cs-panel" id="csArmar">
       <div class="cs-slots" id="csSlots"></div>
+      <div class="cs-herr" id="csHerr"><button class="chico cs-tachar" id="csTachar"></button><span class="note" id="csTacharTxt"></span></div>
       <div class="cs-teclado" id="csTeclado"></div>
       <div class="row cs-acciones"><button id="csBorrar">⌫ Borrar</button><button class="main" id="csOk"></button></div>
     </div>
     <div id="csMios"></div>
     <div class="cs-rival" id="csRival"></div>`;
   $('csSlots').addEventListener('click', ev => { const s = ev.target.closest('[data-k]'); if (s) { cursor = +s.dataset.k; pintarEntrada(); } });
-  $('csTeclado').addEventListener('click', ev => { const b = ev.target.closest('[data-s]'); if (b) poner(b.dataset.s); });
+  $('csTeclado').addEventListener('click', ev => { const b = ev.target.closest('[data-s]'); if (b) (tachando ? marcar : poner)(b.dataset.s); });
+  $('csTachar').onclick = () => { tachando = !tachando; ctx.sonar('tap'); pintarMarcas(); };
   $('csBorrar').onclick = borrar;
   $('csOk').onclick = enviar;
   ctx.tablero.addEventListener('click', ev => {
@@ -113,6 +117,26 @@ async function enviar() {
   else if (e.fase === 'codigos') ctx.aviso('No se pudo mandar, probá de nuevo');
 }
 
+// Tachar: cada toque pasa de sin marca a ✕ (no va), a ? (duda) y de vuelta a sin marca
+const claveMarcas = () => `cs-marcas-${pidMarcas}`;
+function marcar(s) {
+  marcas[s] = marcas[s] === 'no' ? 'duda' : marcas[s] === 'duda' ? undefined : 'no';
+  if (!marcas[s]) delete marcas[s];
+  try { sessionStorage.setItem(claveMarcas(), JSON.stringify(marcas)); } catch {}
+  ctx.sonar('tick');
+  pintarMarcas();
+}
+function pintarMarcas() {
+  $('csTeclado').classList.toggle('tachando', tachando);
+  $('csTeclado').querySelectorAll('[data-s]').forEach(b => {
+    if (marcas[b.dataset.s]) b.dataset.marca = marcas[b.dataset.s]; else delete b.dataset.marca;
+  });
+  $('csTachar').classList.toggle('on', tachando);
+  $('csTachar').textContent = tachando ? '✔ Listo' : '✏️ Tachar';
+  $('csTacharTxt').textContent = tachando ? 'Tocá para marcar: ✕ no va → ? duda → sin marca'
+    : Object.keys(marcas).length ? '' : 'Marcá los que creés que no van';
+}
+
 function pintarEntrada() {
   const e = ctx.estado;
   $('csSlots').innerHTML = entrada.map((ch, k) =>
@@ -121,14 +145,16 @@ function pintarEntrada() {
 function armarTeclado(e) {
   const t = `${e.opciones.modo}`;
   if (t === teclas) return;
+  const cambio = teclas !== '';                 // cambió de Números a Colores (o al revés), no la primera vez
   teclas = t;
   const n = simbolos(e);
   $('csTeclado').className = 'cs-teclado ' + (esColores(e) ? 'colores' : 'numeros');
   $('csTeclado').innerHTML = Array.from({length: n}, (_, s) => esColores(e)
     ? `<button data-s="${s}" style="--c:${COLORES[s].c}" aria-label="${COLORES[s].nombre}"><span class="bola-t"></span><small>${COLORES[s].nombre}</small></button>`
     : `<button data-s="${s}">${s}</button>`).join('');
-  // Si cambió el modo, lo que estaba escrito ya no sirve
+  // Si cambió el modo, lo que estaba escrito (y lo marcado) ya no sirve
   entrada = Array(LARGO).fill(null); cursor = 0;
+  if (cambio) { marcas = {}; try { sessionStorage.removeItem(claveMarcas()); } catch {} }
 }
 
 export function dibujar(ctx) {
@@ -136,6 +162,11 @@ export function dibujar(ctx) {
   if (yo < 0) return '';
   const otro = 1 - yo, rival = esc(ctx.nombre(otro)), termino = e.ganador !== -1;
   const jugando = e.fase === 'jugar', mio = e.codigos[yo];
+  // Partida nueva: marcas nuevas (si recargaste la página, vuelven las que tenías)
+  if (pidMarcas !== e.pid) {
+    pidMarcas = e.pid; tachando = false;
+    try { marcas = JSON.parse(sessionStorage.getItem(claveMarcas())) || {}; } catch { marcas = {}; }
+  }
   armarTeclado(e);
 
   // Si empezó otra partida (revancha) o cambió la fase, se limpia lo escrito
@@ -159,7 +190,10 @@ export function dibujar(ctx) {
     const espero = jugando && e.turno !== yo;
     $('csOk').textContent = e.fase === 'codigos' ? '🔒 Esconder' : espero ? `⏳ Turno de ${ctx.nombre(otro)}` : '🔍 Probar';
     $('csOk').disabled = espero;
+    $('csHerr').hidden = !jugando;              // tachar sirve para adivinar, no para esconder el tuyo
+    if (!jugando) tachando = false;
     pintarEntrada();
+    pintarMarcas();
   }
 
   if (!jugando) { $('csMios').innerHTML = ''; $('csRival').innerHTML = ''; return mio ? '' : `Armá el código que va a tener que descifrar ${rival}`; }
