@@ -20,8 +20,8 @@ export const info = {
   soloOnline: true,            // la palabra es secreta: cada uno en su pantalla
   reloj: 60,                   // para esconder la palabra y para cada intento
   reglas: [
-    'Cada uno escribe una palabra secreta para el otro (de 4, 5 o 6 letras, según se elija). Tiene que ser una palabra de verdad, sin nombres propios.',
-    'Después, por turnos, cada uno prueba una palabra del mismo largo para descubrir la del otro.',
+    'Cada uno escribe una palabra secreta para el otro (de 4, 5 o 6 letras, según se elija). Tiene que existir: el juego la revisa con un diccionario.',
+    'Después, por turnos, cada uno prueba una palabra del mismo largo para descubrir la del otro. Las que probás también tienen que existir.',
     'Cada letra se pinta: 🟩 verde si está en ese lugar, 🟨 amarilla si está pero en otro lugar, y gris si no está.',
     'Gana quien la descubre en menos intentos. Si el primero la saca, el otro tiene un último intento para empatar.',
     'Las tildes no cuentan: Á es lo mismo que A. La Ñ sí es una letra aparte.',

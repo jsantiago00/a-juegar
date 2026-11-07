@@ -3,7 +3,7 @@
 //    3 segundos (a veces algún servidor de GitHub Pages no contesta), lo guardado, y la red sigue para la próxima.
 //  - Imágenes, fuentes y el SDK de Firebase: primero lo guardado (no cambian).
 //  - La base de datos de Firebase no pasa por acá (para jugar online hace falta internet).
-const CACHE = 'a-juegar-v12';
+const CACHE = 'a-juegar-v13';
 const BASICOS = ['./', 'index.html', 'shared/estilo.css', 'shared/salas.js', 'shared/efectos.js', 'shared/chat.js', 'shared/cuenta.js',
                  'shared/juegos.js', 'shared/iconos.js', 'shared/firebase.js', 'icono.svg', 'manifest.webmanifest'];
 

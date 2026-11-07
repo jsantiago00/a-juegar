@@ -6,6 +6,19 @@ import { esc } from '../shared/salas.js';
 let ctx, $, menuEl = null;
 let escrito = '', clave = '', verMio = false;
 const TECLAS = ['QWERTYUIOP', 'ASDFGHJKLÑ', 'ZXCVBNM'];
+
+// Diccionario: solo valen palabras que existen (la secreta y los intentos). Se baja la lista del largo que se juega
+// (palabras-4/5/6.txt, sacadas de an-array-of-spanish-words, licencia MIT). Si no se puede bajar, no se traba el juego.
+const dics = {}, listos = {};
+function diccionario(l) {
+  dics[l] ??= fetch(new URL(`./palabras-${l}.txt`, import.meta.url))
+    .then(r => (r.ok ? r.text() : Promise.reject(new Error(r.status))))
+    .then(t => (listos[l] = new Set(t.split(/\r?\n/))))
+    .catch(() => { delete dics[l]; return null; });
+  return dics[l];
+}
+// true: existe · false: no existe · null: todavía no sé (no bajó la lista)
+const existe = w => (listos[w.length] ? listos[w.length].has(w) : null);
 export function reiniciar() { escrito = ''; clave = ''; verMio = false; }
 
 // ---------- Menú: de cuántas letras ----------
@@ -48,6 +61,7 @@ export function iniciar(c) {
     <div class="dp-panel" id="dpArriba"></div>
     <div class="dp-panel" id="dpArmar">
       <div class="dp-slots" id="dpSlots"></div>
+      <p class="dp-noexiste" id="dpNoExiste" hidden>Esa palabra no está en el diccionario</p>
       <div class="dp-teclado" id="dpTeclado">${TECLAS.map((fila, f) => `<div>${[...fila].map(ch => `<button data-t="${ch}">${ch}</button>`).join('')}${
         f === 2 ? '<button data-t="⌫" class="dp-borrar" aria-label="Borrar">⌫</button>' : ''}</div>`).join('')}</div>
       <button class="main grande dp-ok" id="dpOk"></button>
@@ -86,6 +100,12 @@ function borrar() { escrito = escrito.slice(0, -1); pintarEntrada(); }
 async function enviar() {
   const e = ctx.estado, l = largo(e);
   if (escrito.length !== l) { ctx.sonar('error'); ctx.aviso(`Tiene que tener ${l} letras`); return; }
+  await diccionario(l);
+  if (existe(escrito) === false) {
+    ctx.sonar('error'); ctx.animar($('dpSlots'), 'sacudir');
+    ctx.aviso(`“${escrito}” no está en el diccionario: probá con otra palabra`);
+    return;
+  }
   if (e.fase === 'jugar' && e.turno !== ctx.miAsiento) { ctx.sonar('error'); ctx.aviso(`Esperá tu turno: está jugando ${ctx.nombre(e.turno)}`); return; }
   // Se limpia antes de mandar, así lo que escribas mientras viaja no se pierde; si no se pudo, vuelve
   const w = escrito;
@@ -99,8 +119,10 @@ async function enviar() {
 
 function pintarEntrada() {
   const e = ctx.estado, l = largo(e);
+  const mal = escrito.length === l && existe(escrito) === false;    // completa y no existe: en rojo
   $('dpSlots').innerHTML = Array.from({length: l}, (_, k) =>
-    `<span class="dp-l grande${k === escrito.length ? ' cursor' : ''}">${escrito[k] || ''}</span>`).join('');
+    `<span class="dp-l grande${k === escrito.length ? ' cursor' : ''}${mal ? ' mal' : ''}">${escrito[k] || ''}</span>`).join('');
+  $('dpNoExiste').hidden = !mal;
 }
 // Lo que sabés de cada letra por tus intentos: verde le gana a amarilla y amarilla a gris
 function pintarTeclado(e, yo) {
@@ -120,6 +142,7 @@ export function dibujar(ctx) {
   const otro = 1 - yo, rival = esc(ctx.nombre(otro)), termino = e.ganador !== -1, l = largo(e);
   const jugando = e.fase === 'jugar', mia = e.palabras[yo];
   if (escrito.length > l) escrito = escrito.slice(0, l);
+  if (!listos[l]) diccionario(l).then(d => { if (d) pintarEntrada(); });   // se baja mientras escribís
 
   // Si empezó otra partida o cambió la fase, se limpia lo escrito
   const k = [l, e.fase, mia ? 1 : 0, e.palabras[otro] ? 1 : 0, verMio, termino].join('|');
@@ -129,7 +152,7 @@ export function dibujar(ctx) {
     const tuya = mia ? `<span class="dp-tuya">Tu palabra para ${rival}: ${verMio || termino ? letras(mia) : tapada(l)}
       ${termino ? '' : `<button class="icono dp-ver" data-a="ver" title="${verMio ? 'Tapar' : 'Ver'}">${verMio ? '🙈' : '👁'}</button>`}</span>` : '';
     $('dpArriba').innerHTML = !mia
-      ? `<h3>🔒 Escondé una palabra para ${rival}</h3><p class="note">De ${l} letras, que exista de verdad (sin nombres propios). Las tildes no cuentan.</p>`
+      ? `<h3>🔒 Escondé una palabra para ${rival}</h3><p class="note">De ${l} letras y que exista: se revisa con un diccionario. Las tildes no cuentan.</p>`
       : !jugando ? `${tuya}<p class="note">Esperando que ${rival} esconda la tuya…</p>`
       : tuya + (termino ? `<p class="note">La de ${rival} era ${letras(objetivo(e, yo))}</p>` : '');
   }
