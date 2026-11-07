@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>¿Quién es más probable?</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,540px)}
+.qm-frase{text-align:center;background:var(--wood);color:var(--oscuro);border-radius:22px;padding:16px 18px;margin-bottom:14px;
+  box-shadow:0 6px 0 rgba(10,5,40,.4)}
+.qm-frase .note{color:#6b5a8f;margin:0}
+.qm-pre{margin:6px 0 0;font-size:16px;font-weight:600;opacity:.8}
+.qm-txt{margin:2px 0 0;font-size:clamp(21px,6vw,27px);font-weight:700;line-height:1.2}
+.qm-panel{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:22px;padding:14px 14px;margin-bottom:14px}
+.qm-votos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:10px}
+.qm-votos button{display:flex;align-items:center;gap:8px;justify-content:flex-start;text-align:left;border-left:5px solid var(--c)}
+.qm-votos button small{color:var(--mute);font-weight:400}
+.qm-votos button.elegido{background:var(--c);color:var(--oscuro);box-shadow:0 5px 0 rgba(10,5,40,.4)}
+.qm-votos button.elegido small{color:var(--oscuro)}
+.qm-res{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:8px}
+.qm-res li{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:10px 12px;border-radius:14px;
+  background:rgba(10,5,40,.35);overflow:hidden;font-weight:600}
+.qm-barra{position:absolute;inset:0 auto 0 0;width:var(--p);background:var(--c);opacity:.25;animation:qmCrece .6s cubic-bezier(.3,1.2,.5,1)}
+@keyframes qmCrece{from{width:0}}
+.qm-res li.top .qm-barra{opacity:.45}
+.qm-res > li > *:not(.qm-barra){position:relative}
+.qm-quien{display:flex;align-items:center;gap:6px;flex:1}
+.qm-res b{font-size:22px}
+.qm-res small{flex-basis:100%;color:var(--mute);font-weight:400;font-size:13px}
+.qm-pts{text-align:center;margin:0 0 12px}
+.qm-panel .grande{width:100%}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

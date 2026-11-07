@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Cuatro en línea</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,460px)}
+.c4-flechas{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:0 10px;height:20px}
+.c4-flechas span{display:block;justify-self:center;width:0;height:0;border:9px solid transparent;border-top:12px solid var(--c,#fff);
+  opacity:0;transition:opacity .15s}
+.c4-flechas span.on{opacity:1}
+.c4-tab{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;background:var(--groove);padding:10px 10px 14px;border-radius:22px;
+  box-shadow:0 8px 0 rgba(10,5,40,.45)}
+.c4-tab button{aspect-ratio:1;min-height:0;padding:0;border-radius:50%;background:var(--felt2);display:grid;place-items:center;
+  box-shadow:inset 0 4px 0 rgba(0,0,0,.35)}
+.c4-tab button:disabled{opacity:1;cursor:default}
+.c4-tab button:active:not(:disabled){transform:none;box-shadow:inset 0 4px 0 rgba(0,0,0,.35)}
+.c4-tab span{width:86%;height:86%;border-radius:50%;box-shadow:inset 0 -4px 0 rgba(0,0,0,.22)}
+.c4-tab button[data-v="."] span{visibility:hidden}
+.c4-tab span.cae{animation:c4cae .42s cubic-bezier(.55,0,.75,1.15)}
+@keyframes c4cae{from{transform:translateY(calc(var(--f) * -118%))}}
+.c4-tab button.gana span{outline:4px solid #fff;outline-offset:-3px;animation:c4brilla .7s ease-in-out infinite alternate}
+@keyframes c4brilla{to{transform:scale(.86)}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

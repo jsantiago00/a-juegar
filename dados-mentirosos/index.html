@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Dados mentirosos</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,520px)}
+.dm-panel{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:22px;padding:14px 16px;margin-bottom:14px}
+.dm-panel h3{margin:0 0 10px;font-size:19px}
+.dm-panel .note{margin:6px 0 0}
+
+/* Dados */
+.dm-dado{width:44px;height:44px;flex:none;vertical-align:middle}
+.dm-dado rect{fill:#fff8ea;stroke:#c98a4a;stroke-width:5}
+.dm-dado circle{fill:var(--oscuro)}
+.dm-dado.chico{width:30px;height:30px}
+.dm-dados{display:flex;flex-wrap:wrap;gap:8px}
+.dm-dados.chicos{gap:4px}
+.dm-dados.chicos .dm-dado{width:28px;height:28px}
+.dm-dado.cuenta rect{fill:#ffd23f;stroke:#c99a00}
+.dm-dado.no{opacity:.45}
+.dm-tapado{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--btn);color:var(--mute);font-size:12px;font-weight:700}
+
+/* La mesa */
+.dm-apuesta{font-size:18px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.dm-grande{display:inline-flex;align-items:center;gap:6px;font-size:24px;font-weight:700}
+.dm-hist{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:2px;font-size:14px;color:var(--mute)}
+.dm-hist li{display:flex;align-items:center;gap:6px}
+.dm-vasos{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dm-vaso{display:inline-flex;flex-direction:column;gap:4px;padding:6px 10px;border-radius:12px;background:rgba(10,5,40,.3);
+  border-left:4px solid var(--c);font-size:13px;font-weight:600}
+.dm-vaso span{display:flex;gap:3px}
+
+/* Tu turno */
+.dm-elegir{display:grid;gap:12px;justify-items:center}
+.dm-cant{display:flex;align-items:center;gap:14px}
+.dm-cant b{font-size:40px;min-width:56px;text-align:center}
+.dm-cant button{width:52px;min-height:52px;padding:0;font-size:28px;border-radius:50%}
+.dm-caras{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.dm-caras button{padding:2px;min-height:0;border-radius:12px;background:transparent;box-shadow:none;border:3px solid transparent}
+.dm-caras .dm-dado{width:min(40px,9.5vw);height:min(40px,9.5vw)}
+.dm-caras button.on{border-color:var(--amarillo);background:rgba(255,210,63,.15)}
+.dm-caras button:disabled{opacity:.25}
+.dm-botones{display:grid;gap:10px;margin-top:14px}
+.dm-botones .grande{width:100%}
+.dm-dudo{background:var(--bad);color:#fff;box-shadow:0 5px 0 #b33a4d}
+
+/* Se levantan los vasos */
+.dm-veredicto{margin:0 0 6px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.dm-habia{margin:4px 0;justify-content:center;width:100%}
+.dm-perdio{text-align:center;margin:0 0 12px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px}
+.dm-todos{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:8px}
+.dm-todos li{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;background:rgba(10,5,40,.3);border-radius:14px;padding:8px 10px}
+.dm-todos .dm-dados{margin-left:auto}
+#dmVer .grande{width:100%}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>

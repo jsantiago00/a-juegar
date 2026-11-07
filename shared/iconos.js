@@ -115,4 +115,57 @@ export const ICONOS = {
     `<text x="24" y="22.5" text-anchor="middle" font-size="14" font-weight="700" fill="#fff" font-family="Fredoka,system-ui,sans-serif">?!</text>` +
     `<rect x="8" y="34" width="7" height="8" rx="1.5" fill="#fff" stroke="${O}" stroke-width="1.2"/><text x="11.5" y="40.4" text-anchor="middle" font-size="6.5" font-weight="700" fill="${ROJO}" font-family="Fredoka,system-ui,sans-serif">C</text>` +
     `<path d="M19 42h6M29 42h6M37.5 42h3" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>`),
+
+  // Cuatro en línea: tablero con agujeros y una diagonal roja
+  'cuatro-en-linea': svg(
+    `<rect x="5" y="9" width="38" height="31" rx="7" fill="#e09a55"/>` +
+    [16, 24.5, 33].flatMap((y, f) => [12, 20, 28, 36].map((x, c) => {
+      const col = (f === 2 && c === 0) || (f === 1 && c === 1) || (f === 0 && c === 2) ? ROJO
+        : (f === 2 && (c === 1 || c === 2)) || (f === 1 && c === 2) ? AZUL : '#fff8ea';
+      return `<circle cx="${x}" cy="${y}" r="3.4" fill="${col}"/>`;
+    })).join('') + `<path d="M36 4v4" stroke="${ROJO}" stroke-width="2.6" stroke-linecap="round"/>`),
+
+  // Mancala: tablero de madera con dos graneros y semillas
+  mancala: svg(
+    `<rect x="3" y="13" width="42" height="22" rx="11" fill="#e09a55"/>` +
+    `<ellipse cx="10" cy="24" rx="3.6" ry="7.4" fill="${CREMA}"/><ellipse cx="38" cy="24" rx="3.6" ry="7.4" fill="${CREMA}"/>` +
+    [18, 24, 30].flatMap(x => [19.5, 28.5].map(y => `<circle cx="${x}" cy="${y}" r="3.1" fill="${CREMA}"/>`)).join('') +
+    `<circle cx="17.2" cy="19" r="1.1" fill="${ROJO}"/><circle cx="18.9" cy="20.3" r="1.1" fill="${AZUL}"/>` +
+    `<circle cx="29.3" cy="28" r="1.1" fill="#f4c430"/><circle cx="30.8" cy="29.2" r="1.1" fill="${VERDE}"/><circle cx="24" cy="28.5" r="1.1" fill="${ROJO}"/>` +
+    `<circle cx="38" cy="21" r="1.1" fill="${AZUL}"/><circle cx="37.6" cy="24.5" r="1.1" fill="#f4c430"/><circle cx="38.5" cy="27.6" r="1.1" fill="${ROJO}"/>`),
+
+  // Duelo de palabras: cuatro letras pintadas
+  'duelo-de-palabras': svg(
+    [['A', VERDE], ['M', '#f4c430'], ['O', '#8a80b0'], ['R', VERDE]].map(([l, c], k) =>
+      `<rect x="${4.5 + k * 10}" y="17" width="9" height="11" rx="2.4" fill="${c}"/>` +
+      `<text x="${9 + k * 10}" y="25.6" text-anchor="middle" font-size="8" font-weight="700" fill="#fff" font-family="Fredoka,system-ui,sans-serif">${l}</text>`).join('') +
+    `<path d="M10 35h28" stroke="${O}" stroke-opacity=".18" stroke-width="2.4" stroke-linecap="round"/>`),
+
+  // Dados mentirosos: un vaso dado vuelta y dos dados
+  'dados-mentirosos': svg(
+    `<path d="M9 10h15l-2.4 20H11.4z" fill="#8a4b2a" stroke="${O}" stroke-width="1.6" stroke-linejoin="round"/>` +
+    `<rect x="7" y="8" width="19" height="4" rx="2" fill="#b0663c" stroke="${O}" stroke-width="1.4"/>` +
+    `<g transform="rotate(-10 20 33)"><rect x="13" y="26" width="13" height="13" rx="3" fill="#fff" stroke="${O}" stroke-width="1.6"/>` +
+    `<circle cx="16.6" cy="29.6" r="1.3" fill="${O}"/><circle cx="19.5" cy="32.5" r="1.3" fill="${O}"/><circle cx="22.4" cy="35.4" r="1.3" fill="${O}"/></g>` +
+    `<g transform="rotate(12 35 30)"><rect x="28.5" y="23.5" width="13" height="13" rx="3" fill="#fff" stroke="${O}" stroke-width="1.6"/>` +
+    `<circle cx="32" cy="27" r="1.3" fill="${ROJO}"/><circle cx="38" cy="27" r="1.3" fill="${ROJO}"/><circle cx="32" cy="33" r="1.3" fill="${ROJO}"/><circle cx="38" cy="33" r="1.3" fill="${ROJO}"/></g>`),
+
+  // Ordenados: tres cartas que van de menor a mayor
+  ordenados: svg(
+    [[8, 26, AZUL, '7'], [19, 20, '#f4c430', '48'], [30, 14, ROJO, '93']].map(([x, y, c, t]) =>
+      `<rect x="${x}" y="${y}" width="10" height="${40 - y}" rx="2.6" fill="${c}"/>` +
+      `<text x="${x + 5}" y="${y + 7.5}" text-anchor="middle" font-size="${t.length > 1 ? 5.6 : 7}" font-weight="700" fill="#fff" font-family="Fredoka,system-ui,sans-serif">${t}</text>`).join('') +
+    `<path d="M8 43.5h32" stroke="${O}" stroke-opacity=".25" stroke-width="2" stroke-linecap="round"/>`),
+
+  // Dos verdades y una mentira: tres renglones, dos bien y uno mal
+  'dos-verdades': svg(
+    [12.5, 22, 31.5].map(y => `<rect x="7" y="${y}" width="24" height="6" rx="3" fill="${O}" opacity=".16"/>`).join('') +
+    `<path d="M35 15.5l2.4 2.4 4.2-4.6M35 25l2.4 2.4 4.2-4.6" fill="none" stroke="${VERDE}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>` +
+    cruz(38.3, 34.5)),
+
+  // ¿Quién es más probable?: tres personas y la del medio con corona
+  'quien-es-mas': svg(
+    [[12, 26, AZUL], [36, 26, VERDE], [24, 22, ROJO]].map(([x, y, c]) =>
+      `<circle cx="${x}" cy="${y}" r="4.6" fill="${c}"/><path d="M${x - 7} ${y + 16}a7 7.5 0 0 1 14 0z" fill="${c}"/>`).join('') +
+    `<path d="M18.5 15l2-6 3.5 4 3.5-4 2 6z" fill="#f4c430" stroke="${O}" stroke-width="1.2" stroke-linejoin="round"/>`),
 };
