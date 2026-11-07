@@ -4,7 +4,7 @@ Juegos de mesa por turnos, local u online (Firebase Realtime Database + GitHub P
 
 ## Estructura
 ```
-index.html            portada: crear partida (elegís juego) y unirte con código
+index.html            portada: grilla de juegos (con filtro por cantidad); tocás uno y armás la partida; Unirme y perfil arriba
 icono.svg             ícono (+ icono-180/192/512.png y manifest.webmanifest)
 sw.js                 service worker: hace que se pueda instalar como app (PWA) y abrir sin conexión
 capturas/             imagen de muestra de cada juego (<id>.webp) para las tarjetas
@@ -54,7 +54,7 @@ Lo que no conviene meter en el estado (ej. los trazos de Pinturillo) va en `jueg
 con `ctx.guardarExtra`, `ctx.sumarExtra` y `ctx.cambiarExtra`; `ctx.ahora()` da la hora del servidor.
 Lo online sale solo: cada juego guarda sus salas en `juegos/<id>/salas/<código>`.
 Si el juego tiene chat, los mensajes van en `juegos/<id>/salas/<código>/chat` (se guardan los últimos ~80).
-Con 🎮 Otro juego o cantidad, la sala se muda a otro juego con el mismo código, los mismos jugadores y el chat
+Con 🔄 Cambiar juego o jugadores, la sala se muda a otro juego con el mismo código, los mismos jugadores y el chat
 (se crea la sala nueva y la vieja queda con `siguiente`, que redirige a todos). Ahí también se elige cuántos juegan:
 si se achica, quien creó la sala (`dueno`, 👑) elige quiénes siguen (los demás quedan en `siguiente.fuera` y vuelven al menú).
 Eligiendo el mismo juego, se cambia la cantidad en la misma sala. Quien creó la sala también puede sacar a alguien

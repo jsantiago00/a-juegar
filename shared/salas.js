@@ -231,14 +231,17 @@ export function selectorJugadores(info, nombre) {
     <span class="note">jugadores</span></div>`;
 }
 // Los dos caminos para jugar, siempre juntos: online (sala con código) u offline (esta pantalla)
+export const TEXTO_ONLINE = '🌎 Jugar online';
 export function botonesJugar(info) {
   return `<div class="jugar-botones">
-    <button class="main grande" id="bCrear">🌎 Crear sala online</button>
-    ${info.soloOnline ? '<p class="note">Este juego es solo online: cada uno necesita su pantalla.</p>'
-      : `<button class="grande offline" id="bLocal">📱 Jugar offline</button>
-         <p class="note">Offline: se van pasando esta pantalla por turnos.</p>`}
+    <button class="main grande" id="bCrear">${TEXTO_ONLINE}</button>
+    ${info.soloOnline ? '<p class="note">Cada uno juega desde su celu: creás la sala y les pasás el código.</p>'
+      : `<button class="grande offline" id="bLocal">📱 Jugar en este celu</button>
+         <p class="note">Online: cada uno desde su celu. En este celu: se lo van pasando por turnos.</p>`}
   </div>`;
 }
+// Opciones secundarias (reloj y las propias del juego), plegadas: los valores de siempre ya sirven
+export const masOpciones = contenido => `<details class="mas-opciones"><summary>Más opciones</summary>${contenido}</details>`;
 export function jugadoresElegidos(info, nombre) {
   const r = document.querySelector(`input[name="${nombre}"]:checked`);
   return r ? +r.value : info.min;
@@ -264,18 +267,18 @@ export function montar({ reglas, juego }) {
     </section>
     ${comoSeJuega(info.id, info.reglas, {clase: 'tarjeta como'})}
     <section class="tarjeta armar">
-      <h2>🎮 Armá la partida</h2>
+      <h2>Armá la partida</h2>
       ${selectorJugadores(info, 'cantN')}
-      ${selectorReloj(info, 'relojN')}
-      <div id="menuExtra"></div>
-      <div class="row"><input id="nombre" placeholder="Tu nombre" maxlength="14" autocomplete="off" aria-label="Tu nombre"></div>
+      ${info.reloj || juego.menu ? masOpciones(`${selectorReloj(info, 'relojN')}<div id="menuExtra"></div>`) : '<div id="menuExtra" hidden></div>'}
+      <div class="row"${nombreGuardado() ? ' hidden' : ''}><input id="nombre" placeholder="Tu nombre (así te ven los demás)" maxlength="14" autocomplete="off" aria-label="Tu nombre"></div>
       ${botonesJugar(info)}
       <p class="note" id="fbNote" hidden>Para jugar online falta pegar la config en <code>shared/firebase.js</code>.</p>
-      <div class="separador"><span>o si tenés un código</span></div>
-      <form class="row" id="fUnirme">
-        <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false">
-        <button id="bUnirme">Unirme</button>
-      </form>
+      <details class="tengo-codigo"><summary>¿Te pasaron un código?</summary>
+        <form class="row" id="fUnirme">
+          <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código de sala">
+          <button id="bUnirme">Unirme</button>
+        </form>
+      </details>
     </section>
     <details class="tarjeta reglas"><summary>📖 Reglas completas</summary><ul>${info.reglas.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>
   </div>
@@ -286,11 +289,11 @@ export function montar({ reglas, juego }) {
       <div class="cod-grande" id="espCod"></div>
       <div class="row centro"><button class="main" id="bCompartir">Compartir link</button><button id="bCopiar">Copiar código</button></div>
       <p class="note" id="espTxt"></p>
-      <button class="chico" id="bCambiarEspera">🎮 Cambiar el juego o cuántos juegan</button>
+      <button class="chico" id="bCambiarEspera">🔄 Cambiar juego o jugadores</button>
       <details class="como-plegable espera-reglas"><summary>Mientras tanto, así se juega</summary>${rapidito(info.id, info.reglas)}</details>
     </section>
     <section class="tarjeta equipos-caja" id="equipos" hidden></section>
-    <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🎮 Otro juego o cantidad</button></div>
+    <div id="roomBar" hidden>Sala <b id="salaCod"></b><button class="chico" id="bInvitar">Invitar</button><button class="chico" id="bOtroJuego">🔄 Cambiar juego o jugadores</button></div>
     <div id="players"></div>
     <div id="reloj" hidden></div>
     <div id="hint"></div>
@@ -318,7 +321,7 @@ export function montar({ reglas, juego }) {
     <div id="cambiar" class="capa" hidden>
       <div class="fin-caja cambiar-caja">
         <h2>🎮 ¿A qué jugamos ahora?</h2>
-        <p>Se mudan todos los de la sala, con el mismo código. También podés cambiar cuántos juegan.</p>
+        <p>Todos los de la sala se pasan al juego que elijas, con el mismo código. También podés cambiar cuántos juegan.</p>
         <div class="cambiar-lista" id="cambiarLista"></div>
         <div class="cambiar-opc" id="cambiarOpc" hidden>
           <div class="cambiar-elegido" id="cambiarElegido"></div>
@@ -1056,7 +1059,7 @@ export function montar({ reglas, juego }) {
     $('echarTxt').textContent = `¿Sacar a ${x.name}?`;
     $('echarSub').textContent = puede
       ? `Podés seguir de ${n - 1} (arranca una partida nueva) o dejar su lugar libre para que entre otro.`
-      : `${info.nombre} no se juega de ${n - 1}: su lugar queda libre para que entre otro (o cambiá la cantidad con 🎮).`;
+      : `${info.nombre} no se juega de ${n - 1}: su lugar queda libre para que entre otro (o tocá 🔄 Cambiar juego o jugadores).`;
     $('bEcharAchicar').hidden = !puede;
     $('bEcharAchicar').textContent = `Sacar y seguir de ${n - 1}`;
     $('echar').hidden = false;

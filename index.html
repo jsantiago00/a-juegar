@@ -15,92 +15,87 @@
 <meta name="apple-mobile-web-app-title" content="A Juegar">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-.cabecera{display:flex;align-items:center;gap:16px;margin:8px 0 22px}
-.cabecera .logo{width:clamp(60px,16vw,104px);height:auto;flex:none;filter:drop-shadow(0 8px 0 rgba(10,5,40,.4));
-  animation:flota 4s ease-in-out infinite}
-.cabecera .textos{flex:1;min-width:0}
-.cabecera .b-sonido{align-self:flex-start}
-.marca{font-size:clamp(32px,8.6vw,72px);line-height:.95;margin:0;white-space:nowrap}
-.marca span{display:inline-block;animation:letra .7s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(var(--i)*55ms)}
+/* ---------- Cabecera: marca + Unirme + perfil ---------- */
+.cabecera{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
+.cabecera .logo{width:52px;height:auto;flex:none;filter:drop-shadow(0 5px 0 rgba(10,5,40,.4))}
+.marca{flex:1;min-width:0;font-size:clamp(28px,7.5vw,52px);line-height:1;margin:0;white-space:nowrap}
+.marca span{display:inline-block;animation:letra .7s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(var(--i)*45ms)}
 .marca span:nth-child(4n+1){color:#ff7a85;transform:rotate(-4deg)}
 .marca span:nth-child(4n+2){color:#5cc3f5;transform:rotate(3deg)}
 .marca span:nth-child(4n+3){color:#ffd23f;transform:rotate(-2deg)}
 .marca span:nth-child(4n+4){color:#6fdc9b;transform:rotate(4deg)}
 .marca .esp{width:.25em}
-@keyframes letra{from{opacity:0;transform:translateY(-40px) scale(.5)}}
+@keyframes letra{from{opacity:0;transform:translateY(-30px) scale(.6)}}
+.arriba{display:flex;gap:8px;flex:none}
+.avatar{font-weight:700;font-size:20px;display:grid;place-items:center}
+.cabecera + .sub{margin:0 0 18px;font-size:16px}
+@media (max-width:440px){ .cabecera .logo{display:none} }
 
+/* ---------- Aviso de instalar (solo después de la primera partida) ---------- */
 .instalar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.08);border:2px solid var(--line);
-  border-radius:20px;padding:10px 10px 10px 14px;margin-bottom:16px;animation:entra .4s cubic-bezier(.3,1.5,.5,1)}
-.instalar-ico{font-size:26px}
-.instalar-txt{flex:1;line-height:1.35}
+  border-radius:18px;padding:8px 8px 8px 14px;margin-bottom:16px;animation:entra .4s cubic-bezier(.3,1.5,.5,1)}
+.instalar-ico{font-size:24px}
+.instalar-txt{flex:1;line-height:1.35;font-size:15px}
 .instalar .chico{flex:none}
-.acciones{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:14px}
-.accion{border-radius:26px;padding:20px;box-shadow:var(--sombra);position:relative;overflow:hidden;
-  animation:entra .45s cubic-bezier(.3,1.5,.5,1) backwards}
-.accion h2{font-size:26px;margin:0 0 4px}
-.accion p{margin:0 0 14px;opacity:.9}
-.accion::after{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;
-  background:rgba(255,255,255,.14);pointer-events:none}
-.accion.crear{background:linear-gradient(135deg,#ff8a5c,#ff4f8b)}
-.accion.unirse{background:linear-gradient(135deg,#4fb6ff,#5b5cf0);animation-delay:.08s}
-.accion .grande{width:100%}
-.accion .row{margin:0;flex-wrap:nowrap}
-.accion input.code{flex:1;width:auto;background:#fff;color:var(--oscuro);border-color:transparent}
-.accion input.code::placeholder{color:#b9b2d6}
-.accion button:not(.main){background:var(--oscuro)}
 
-.yo{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:2px solid var(--line);
-  border-radius:20px;padding:8px 8px 8px 16px;margin-bottom:26px}
-.yo label{white-space:nowrap;font-weight:600;color:var(--ink)}
-.yo input{background:transparent;border-color:transparent;min-width:0}
-.yo input:focus{background:rgba(10,5,40,.35)}
+/* ---------- Filtro: ¿cuántos son? ---------- */
+.filtro{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.filtro > span{color:var(--mute);font-size:15px;margin-right:2px}
+.filtro label{position:relative;cursor:pointer}
+.filtro input{position:absolute;inset:0;opacity:0;margin:0;min-height:0;min-width:0;cursor:pointer}
+.filtro label span{display:grid;place-items:center;height:40px;padding:0 14px;border-radius:999px;font-weight:600;font-size:16px;
+  color:var(--ink);background:rgba(255,255,255,.07);border:2px solid var(--line);transition:background .15s,color .15s}
+.filtro input:checked + span{background:var(--ink);color:var(--oscuro);border-color:transparent}
+.filtro input:focus-visible + span{outline:3px solid var(--ok);outline-offset:2px}
 
-.titulo-seccion{font-size:24px;margin:0 0 12px}
-.juegos{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(155px,1fr))}
-.juego{display:flex;flex-direction:column;gap:10px;text-decoration:none;color:var(--oscuro);background:var(--c);
-  border-radius:24px;padding:10px 10px 12px;box-shadow:var(--sombra);transition:transform .15s cubic-bezier(.3,1.6,.5,1),box-shadow .1s;
-  animation:entra .45s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(.15s + var(--i)*60ms)}
-.juego:hover{transform:translateY(-4px) rotate(-1.5deg)}
+/* ---------- Tarjetas de juego ---------- */
+.juegos{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.juego{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--oscuro);background:var(--c);
+  border-radius:22px;padding:8px 8px 12px;box-shadow:var(--sombra);transition:transform .15s cubic-bezier(.3,1.6,.5,1),box-shadow .1s;
+  animation:entra .4s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:calc(var(--i)*35ms)}
+.juego[hidden]{display:none}
+.juego:hover{transform:translateY(-3px)}
 .juego:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(10,5,40,.45)}
-.juego b{font-size:20px;display:block;line-height:1.1;padding:0 4px}
-.juego .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 4px}
-.juego small{background:rgba(255,255,255,.55);padding:2px 10px;border-radius:999px;font-weight:600;font-size:13px}
+.juego b{font-size:19px;display:block;line-height:1.1;padding:4px 4px 0}
+.juego .desc{font-size:14px;line-height:1.3;padding:0 4px;opacity:.78;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.juego .tags{display:flex;flex-wrap:wrap;gap:6px;margin:auto 4px 0;padding-top:4px}
+.juego small{background:rgba(255,255,255,.55);padding:2px 9px;border-radius:999px;font-weight:600;font-size:13px}
 .juego small.veces{background:var(--oscuro);color:var(--ink)}
+.juego small.gano{background:var(--amarillo);color:var(--oscuro)}
 /* Imagen de muestra del tablero (capturas/<id>.webp); si falta, se ve el ícono */
-.muestra{display:grid;place-items:center;aspect-ratio:1;border-radius:18px;background:rgba(255,255,255,.3);overflow:hidden}
+.muestra{display:grid;place-items:center;aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.3);overflow:hidden}
 .muestra img{width:94%;height:94%;object-fit:contain;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .muestra svg{display:none;width:60%;height:60%}
 .muestra.sin-img svg{display:block}
-.juego:hover .muestra img,.elegir button:hover .muestra img{transform:scale(1.07) rotate(-2deg)}
+.juego:hover .muestra img{transform:scale(1.05)}
+.vacio{color:var(--mute);text-align:center;padding:30px 0}
 
-/* Hoja para crear partida */
-dialog{border:0;padding:0;background:transparent;color:var(--ink);width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
+/* ---------- Hojas (ficha del juego, perfil, unirme) ---------- */
+dialog{border:0;padding:0;background:transparent;color:var(--ink);width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
 dialog::backdrop{background:rgba(15,8,40,.65);backdrop-filter:blur(3px)}
-dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
-.hoja{background:var(--felt2);border:2px solid var(--line);border-radius:28px;padding:18px 18px 22px;max-height:calc(100dvh - 24px);overflow:auto}
-.hoja-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
-.hoja-top h2{margin:0;font-size:24px}
-.elegir{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
-.elegir button{display:flex;flex-direction:column;align-items:stretch;gap:8px;background:var(--c);color:var(--oscuro);
-  padding:8px 8px 10px;border-radius:20px;font-size:17px;animation:entra .35s backwards;animation-delay:calc(var(--i)*40ms)}
-.elegir .muestra{border-radius:14px}
-.hoja .como{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:20px;padding:14px 16px;margin-bottom:14px}
+dialog[open] .hoja{animation:entra .3s cubic-bezier(.3,1.5,.5,1)}
+.hoja{background:var(--felt2);border:2px solid var(--line);border-radius:26px;padding:18px 18px 22px;max-height:calc(100dvh - 24px);overflow:auto}
+.hoja-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.hoja-top h2{margin:0;font-size:23px}
+.hoja .como{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:14px}
 .hoja .como-plegable > summary{font-size:17px}
 .hoja .como-plegable[open] > summary{margin-bottom:10px}
-.elegido{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-.elegido .ico{width:64px;height:64px;border-radius:18px;animation:none}
-.elegido b{font-size:22px;display:block}
-.elegido button{margin-left:auto}
+.elegido{display:flex;align-items:center;gap:14px;min-width:0}
+.elegido .ico{width:60px;height:60px;border-radius:17px;animation:none}
+.elegido b{font-size:23px;display:block;line-height:1.1}
+.elegido .note{margin:2px 0 0}
 #extraP .row{margin-bottom:6px}
+.etiqueta{display:block;margin:0 0 6px}
 
-/* Cuenta (nick + contraseña): victorias sincronizadas */
+/* Perfil: nombre, cuenta, rivales, sonido */
 .cuenta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,255,255,.06);border:2px solid var(--line);
-  border-radius:20px;padding:10px 10px 10px 16px;margin:-14px 0 26px}
+  border-radius:18px;padding:10px 10px 10px 16px;margin:6px 0 14px}
 .cuenta .txt{flex:1;min-width:180px;line-height:1.35}
 .cuenta .txt small{color:var(--mute)}
 .cuenta .botones{display:flex;gap:8px}
-.rivales{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:20px;padding:12px 16px;margin:-12px 0 26px}
-.rivales h2{font-size:20px;margin:0 0 8px}
+.rivales{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:18px;padding:12px 16px;margin:0 0 14px}
+.rivales h2{font-size:19px;margin:0 0 8px}
 .rivales ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .rivales li{display:flex;align-items:center;gap:10px}
 .rivales .quien{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -108,22 +103,25 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 .rivales .score .g{color:var(--ok)}
 .rivales .score .p{color:var(--bad)}
 .rivales small{color:var(--mute);white-space:nowrap}
-.juego small.gano{background:var(--amarillo);color:var(--oscuro)}
+.fila-sonido{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--mute)}
 #fCuenta .row{margin-bottom:10px}
 #fCuenta input{flex:1;min-width:0}
 #fCuenta .botones{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+#fUnirme .row{flex-wrap:nowrap;margin:0}
+#fUnirme input.code{flex:1;width:auto}
 </style>
 </head>
 <body>
 <main>
   <header class="cabecera">
-    <img class="logo" src="icono.svg" alt="" width="104" height="104">
-    <div class="textos">
-      <h1 class="marca" aria-label="¡A Juegar!"></h1>
-      <p class="sub">Juegos de mesa para jugar en la misma pantalla u online con amigos.</p>
+    <img class="logo" src="icono.svg" alt="" width="52" height="52">
+    <h1 class="marca" aria-label="¡A Juegar!"></h1>
+    <div class="arriba">
+      <button class="chico" id="bCodigo">Unirme</button>
+      <button class="icono avatar" id="bPerfil" aria-label="Tu perfil">👤</button>
     </div>
-    <button class="icono b-sonido"></button>
   </header>
+  <p class="sub">Juegos de mesa para jugar en este celu o online con amigos.</p>
 
   <div class="instalar" id="instalar" hidden>
     <span class="instalar-ico">📲</span>
@@ -132,53 +130,59 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
     <button class="chico" id="bInstalarNo" aria-label="No, gracias">✕</button>
   </div>
 
-  <section class="acciones">
-    <div class="accion crear">
-      <h2>🎲 Crear partida</h2>
-      <p>Elegí un juego y jugá online con amigos u offline en esta pantalla.</p>
-      <button class="main grande" id="bAbrir">¡Elegir juego!</button>
-    </div>
-    <form class="accion unirse" id="fUnirme">
-      <h2>🚪 Unirme</h2>
-      <p>¿Te pasaron un código? Ponelo acá.</p>
-      <div class="row">
-        <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código de sala">
-        <button id="bUnirme">Entrar</button>
-      </div>
-    </form>
-  </section>
-
-  <div class="yo"><label for="nombre">😎 Tu nombre</label><input id="nombre" maxlength="14" placeholder="¿Cómo te llamás?" autocomplete="off"></div>
-
-  <section class="cuenta" id="cuenta">
-    <span class="txt" id="cuentaTxt">👤 Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.</span>
-    <span class="botones" id="cuentaBotones"><button class="chico main" id="bCuenta">Entrar o crear cuenta</button></span>
-  </section>
-  <section class="rivales" id="rivales" hidden></section>
-
-  <h2 class="titulo-seccion" id="tituloJuegos">Juegos</h2>
+  <div class="filtro" id="filtro" role="radiogroup" aria-label="¿Cuántos juegan?">
+    <span>¿Cuántos son?</span>
+    <label><input type="radio" name="filtro" value=""><span>Todos</span></label>
+    <label><input type="radio" name="filtro" value="2"><span>2</span></label>
+    <label><input type="radio" name="filtro" value="34"><span>3–4</span></label>
+    <label><input type="radio" name="filtro" value="5"><span>5+</span></label>
+  </div>
   <div class="juegos" id="juegos"></div>
+  <p class="vacio" id="vacio" hidden>No hay juegos para esa cantidad.</p>
 </main>
 
+<!-- Ficha del juego: cómo se juega + armar la partida -->
 <dialog id="dCrear" aria-labelledby="dTitulo">
   <div class="hoja">
-    <div class="hoja-top"><h2 id="dTitulo">¿A qué jugamos?</h2><button class="icono" id="bCerrar" aria-label="Cerrar">✕</button></div>
-    <div id="paso1" class="elegir"></div>
-    <div id="paso2" hidden>
-      <div class="elegido" id="elegido"></div>
-      <div class="como" id="comoP"></div>
-      <div id="cantP"></div>
-      <div id="relojP"></div>
-      <div id="extraP"></div>
-      <div class="row"><input id="nombreC" maxlength="14" placeholder="Tu nombre (para jugar online)" autocomplete="off" aria-label="Tu nombre"></div>
-      <div id="botonesP"></div>
+    <div class="hoja-top"><div class="elegido" id="elegido"></div><button class="icono" id="bCerrar" aria-label="Cerrar">✕</button></div>
+    <div class="como" id="comoP"></div>
+    <div id="cantP"></div>
+    <details class="mas-opciones" id="masP"><summary>Más opciones</summary><div id="relojP"></div><div id="extraP"></div></details>
+    <div class="row" id="filaNombre" hidden><input id="nombreC" maxlength="14" placeholder="Tu nombre (así te ven los demás)" autocomplete="off" aria-label="Tu nombre"></div>
+    <div id="botonesP"></div>
+  </div>
+</dialog>
+
+<!-- Unirme con código -->
+<dialog id="dUnirme" aria-labelledby="dUnirmeTitulo">
+  <form class="hoja" id="fUnirme">
+    <div class="hoja-top"><h2 id="dUnirmeTitulo">Unirme a una sala</h2><button type="button" class="icono" id="bUnirmeCerrar" aria-label="Cerrar">✕</button></div>
+    <p class="note">Poné el código de 4 letras que te pasaron.</p>
+    <div class="row">
+      <input id="codigo" class="code" placeholder="ABCD" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código de sala">
+      <button class="main" id="bUnirme">Entrar</button>
     </div>
+  </form>
+</dialog>
+
+<!-- Perfil: nombre, cuenta, rivales, sonido -->
+<dialog id="dPerfil" aria-labelledby="dPerfilTitulo">
+  <div class="hoja">
+    <div class="hoja-top"><h2 id="dPerfilTitulo">Tu perfil</h2><button class="icono" id="bPerfilCerrar" aria-label="Cerrar">✕</button></div>
+    <label class="etiqueta" for="nombre">Tu nombre en las partidas</label>
+    <div class="row"><input id="nombre" maxlength="14" placeholder="¿Cómo te llamás?" autocomplete="off"></div>
+    <section class="cuenta" id="cuenta">
+      <span class="txt" id="cuentaTxt">Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.</span>
+      <span class="botones" id="cuentaBotones"><button class="chico main" id="bCuenta">Entrar o crear cuenta</button></span>
+    </section>
+    <section class="rivales" id="rivales" hidden></section>
+    <div class="fila-sonido"><span>Sonido</span><button class="icono b-sonido"></button></div>
   </div>
 </dialog>
 
 <dialog id="dCuenta" aria-labelledby="dCuentaTitulo">
   <form class="hoja" id="fCuenta">
-    <div class="hoja-top"><h2 id="dCuentaTitulo">👤 Tu cuenta</h2><button type="button" class="icono" id="bCuentaCerrar" aria-label="Cerrar">✕</button></div>
+    <div class="hoja-top"><h2 id="dCuentaTitulo">Tu cuenta</h2><button type="button" class="icono" id="bCuentaCerrar" aria-label="Cerrar">✕</button></div>
     <p class="note">Elegí un nick y una contraseña. Con la misma cuenta entrás desde cualquier celu y se suman tus victorias de las partidas online.</p>
     <div class="row"><input id="cuentaNick" maxlength="14" placeholder="Nick (letras, números o _)" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="Nick"></div>
     <div class="row"><input id="cuentaPass" type="password" placeholder="Contraseña (6 o más)" autocomplete="current-password" aria-label="Contraseña"></div>
@@ -191,41 +195,69 @@ dialog[open] .hoja{animation:entra .35s cubic-bezier(.3,1.5,.5,1)}
 import { JUEGOS } from './shared/juegos.js';
 import { buscarSala, crearSala, aviso, esc, iconoJuego, nombreGuardado, guardarNombre,
          selectorJugadores, jugadoresElegidos, comoSeJuega, botonesJugar, ordenarJuegos, jugadas, limpiarSalas,
-         selectorReloj, relojElegido, conReloj } from './shared/salas.js';
+         selectorReloj, relojElegido, conReloj, TEXTO_ONLINE } from './shared/salas.js';
 import { sonar, botonesSonido, animar } from './shared/efectos.js';
 import { cuentaGuardada, misDatos, entrar, crearCuenta, salirCuenta } from './shared/cuenta.js';
 
 const $ = id => document.getElementById(id);
 const ico = (id, color) => `<span class="ico" style="--c:${color}">${iconoJuego(id)}</span>`;
+const leer = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 
 // Marca con letras de colores
 document.querySelector('.marca').innerHTML = [...'¡A Juegar!'].map((ch, i) =>
   ch === ' ' ? '<span class="esp"> </span>' : `<span style="--i:${i}" aria-hidden="true">${ch}</span>`).join('');
 
-// Imagen de muestra del juego; si no existe la captura, queda el ícono
-const muestra = j => `<span class="muestra">${iconoJuego(j.id)}<img src="capturas/${j.id}.webp" alt="Tablero de ${esc(j.nombre)}"
-  loading="lazy" onerror="this.parentNode.classList.add('sin-img'); this.remove()"></span>`;
+// Todas las hojas se cierran tocando afuera
+for (const d of document.querySelectorAll('dialog')) d.addEventListener('click', ev => { if (ev.target === d) d.close(); });
 
-// Los que más jugaste (en este dispositivo) van primero
+// Imagen de muestra del juego; si no existe la captura, queda el ícono
+const muestra = j => `<span class="muestra">${iconoJuego(j.id)}<img src="capturas/${j.id}.webp" alt=""
+  loading="lazy" onerror="this.parentNode.classList.add('sin-img'); this.remove()"></span>`;
+const textoJugadores = s => s.replace(/ a /g, '–');
+
+// ---------- Grilla de juegos (los que más jugaste en este dispositivo van primero) ----------
 const veces = jugadas(), ORDEN = ordenarJuegos(JUEGOS);
 $('juegos').innerHTML = ORDEN.map((j, i) =>
-  `<a class="juego" href="./${j.id}/" style="--c:${j.color};--i:${i}" title="${esc(j.desc)}">${muestra(j)}
-     <b>${esc(j.nombre)}</b><span class="tags"><small>${esc(j.jugadores)} jugadores</small>${
-       veces[j.id] ? `<small class="veces" title="Partidas que jugaste">🎮 ×${veces[j.id].n}</small>` : ''}</span></a>`).join('');
-$('juegos').querySelectorAll('.tags').forEach((t, i) => { t.dataset.id = ORDEN[i].id; });
-if (Object.keys(veces).length) $('tituloJuegos').textContent = 'Tus juegos';
+  `<a class="juego" href="./${j.id}/" data-id="${j.id}" style="--c:${j.color};--i:${i}">${muestra(j)}
+     <b>${esc(j.nombre)}</b><span class="desc">${esc(j.desc)}</span>
+     <span class="tags" data-id="${j.id}"><small>👥 ${esc(textoJugadores(j.jugadores))}</small>${
+       veces[j.id] ? `<small class="veces" title="Partidas que jugaste">×${veces[j.id].n}</small>` : ''}</span></a>`).join('');
+
+// ---------- Filtro "¿Cuántos son?" ----------
+// "2 a 4" es un rango; "2, 4 o 6" son cantidades sueltas.
+function encaja(j, f) {
+  if (!f) return true;
+  const ns = j.jugadores.match(/\d+/g).map(Number), rango = / a /.test(j.jugadores);
+  const va = n => (rango ? n >= ns[0] && n <= ns[ns.length - 1] : ns.includes(n));
+  if (f === '2') return va(2);
+  if (f === '34') return va(3) || va(4);
+  return rango ? ns[ns.length - 1] >= 5 : ns.some(n => n >= 5);
+}
+function filtrar(f) {
+  let hay = 0;
+  for (const a of $('juegos').children) {
+    const ok = encaja(JUEGOS.find(x => x.id === a.dataset.id), f);
+    a.hidden = !ok; hay += ok;
+  }
+  $('vacio').hidden = hay > 0;
+}
+const filtroInicial = ['', '2', '34', '5'].includes(leer('minijuegos-filtro')) ? leer('minijuegos-filtro') : '';
+document.querySelector(`#filtro input[value="${filtroInicial}"]`).checked = true;
+filtrar(filtroInicial);
+$('filtro').addEventListener('change', ev => { sonar('tick'); guardar('minijuegos-filtro', ev.target.value); filtrar(ev.target.value); });
 
 botonesSonido();
 document.addEventListener('click', ev => { if (ev.target.closest('button:not(.b-sonido), .juego')) sonar('tap'); });
 document.addEventListener('change', ev => { if (ev.target.matches('.pills input')) sonar('tick'); });
 
-// ---------- Instalar como app (PWA) ----------
+// ---------- Instalar como app (PWA): recién después de jugar alguna vez ----------
 // Android/Chrome: el navegador avisa que se puede instalar y usamos su ventanita.
 // iPhone: no hay ventanita, así que se explica cómo hacerlo desde Compartir.
 const yaInstalada = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-const noInstalar = (() => { try { return localStorage.getItem('minijuegos-no-instalar') === '1'; } catch { return false; } })();
+const yaJugo = Object.keys(veces).length > 0;
 let pedidoInstalar = null;
-if (!yaInstalada && !noInstalar) {
+if (!yaInstalada && yaJugo && leer('minijuegos-no-instalar') !== '1') {
   addEventListener('beforeinstallprompt', ev => {
     ev.preventDefault();
     pedidoInstalar = ev;
@@ -244,41 +276,47 @@ $('bInstalar').onclick = async () => {
   pedidoInstalar = null;
   $('instalar').hidden = true;
 };
-$('bInstalarNo').onclick = () => {
-  $('instalar').hidden = true;
-  try { localStorage.setItem('minijuegos-no-instalar', '1'); } catch {}
-};
+$('bInstalarNo').onclick = () => { $('instalar').hidden = true; guardar('minijuegos-no-instalar', '1'); };
 addEventListener('appinstalled', () => { $('instalar').hidden = true; });
 
 // Salas abandonadas (más de 24 h sin actividad): se borran de paso, sin frenar la portada
 setTimeout(() => limpiarSalas(), 2500);
 
-// ---------- Nombre (se comparte con todos los juegos) ----------
+// ---------- Perfil: nombre (se comparte con todos los juegos), cuenta y sonido ----------
+const PERSONA = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8" r="4.2"/><path d="M3.8 21a8.2 8.2 0 0 1 16.4 0z"/></svg>';
+function pintarAvatar() {
+  const n = cuentaGuardada() || nombreGuardado();
+  $('bPerfil').innerHTML = n ? esc([...n][0].toUpperCase()) : PERSONA;
+}
 $('nombre').value = nombreGuardado();
-$('nombre').addEventListener('input', () => guardarNombre($('nombre').value.trim()));
+$('nombre').addEventListener('input', () => { guardarNombre($('nombre').value.trim()); pintarAvatar(); });
+$('bPerfil').onclick = () => { $('nombre').value = nombreGuardado(); $('dPerfil').showModal(); };
+$('bPerfilCerrar').onclick = () => $('dPerfil').close();
+pintarAvatar();
 
-// ---------- Cuenta: nick + contraseña, victorias sincronizadas (ver shared/cuenta.js) ----------
+// Cuenta: nick + contraseña, victorias sincronizadas (ver shared/cuenta.js)
 async function pintarCuenta() {
   $('juegos').querySelectorAll('small.gano').forEach(x => x.remove());
   $('rivales').hidden = true;
+  pintarAvatar();
   let d = null;
   if (cuentaGuardada()) {
-    $('cuentaTxt').innerHTML = `👤 <b>${esc(cuentaGuardada())}</b> <small>cargando…</small>`;
+    $('cuentaTxt').innerHTML = `<b>${esc(cuentaGuardada())}</b> <small>cargando…</small>`;
     $('cuentaBotones').innerHTML = '';
     try { d = await misDatos(); } catch { d = {nick: cuentaGuardada(), g: 0, j: 0, juegos: {}, sinConexion: true}; }
   }
   if (!d) {
-    $('cuentaTxt').innerHTML = '👤 Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.';
+    $('cuentaTxt').innerHTML = 'Con una cuenta se guardan tus victorias en todos los juegos y en cualquier celu.';
     $('cuentaBotones').innerHTML = '<button class="chico main" id="bCuenta">Entrar o crear cuenta</button>';
     return;
   }
-  $('cuentaTxt').innerHTML = `👤 <b>${esc(d.nick)}</b> · 🏆 <b>${d.g}</b> ${d.g === 1 ? 'victoria' : 'victorias'} ` +
+  $('cuentaTxt').innerHTML = `<b>${esc(d.nick)}</b> · 🏆 <b>${d.g}</b> ${d.g === 1 ? 'victoria' : 'victorias'} ` +
     `<small>en ${d.j} ${d.j === 1 ? 'partida online' : 'partidas online'}${d.sinConexion ? ' (sin conexión)' : ''}</small>`;
   $('cuentaBotones').innerHTML = '<button class="chico" id="bCuentaSalir">Salir</button>';
   // Vos contra cada rival: le ganaste – te ganó (los que más jugaron con vos, primero)
   const riv = Object.values(d.rivales || {}).filter(r => +r.j).sort((a, b) => b.j - a.j || (+b.t || 0) - (+a.t || 0));
   if (riv.length) {
-    $('rivales').innerHTML = `<h2>⚔️ Tus rivales</h2><ul>${riv.map(r =>
+    $('rivales').innerHTML = `<h2>Tus rivales</h2><ul>${riv.map(r =>
       `<li><span class="quien">${esc(r.nick || '?')}</span><span class="score"><span class="g">${+r.g || 0}</span> – <span class="p">${+r.p || 0}</span></span>` +
       `<small>${+r.j} ${+r.j === 1 ? 'partida' : 'partidas'}</small></li>`).join('')}</ul>` +
       '<p class="note">Verde: veces que le ganaste. Rojo: veces que te ganó. Cuenta las partidas online jugadas con tu cuenta abierta.</p>';
@@ -294,7 +332,6 @@ $('cuenta').addEventListener('click', async ev => {
   if (ev.target.id === 'bCuentaSalir') { await salirCuenta(); aviso('Saliste de tu cuenta'); pintarCuenta(); }
 });
 $('bCuentaCerrar').onclick = () => $('dCuenta').close();
-$('dCuenta').addEventListener('click', ev => { if (ev.target === $('dCuenta')) $('dCuenta').close(); });
 async function usarCuenta(crear) {
   const nick = $('cuentaNick').value.trim(), pass = $('cuentaPass').value;
   const bs = [$('bEntrarCuenta'), $('bCrearCuenta')];
@@ -313,6 +350,8 @@ $('bCrearCuenta').onclick = () => usarCuenta(true);
 pintarCuenta();
 
 // ---------- Unirme: el código te lleva solo al juego que corresponde ----------
+$('bCodigo').onclick = () => { $('codigo').value = ''; $('dUnirme').showModal(); $('codigo').focus(); };
+$('bUnirmeCerrar').onclick = () => $('dUnirme').close();
 $('codigo').addEventListener('input', () => {
   $('codigo').value = $('codigo').value.toUpperCase().replace(/[^A-Z]/g, '');
 });
@@ -329,51 +368,52 @@ $('fUnirme').onsubmit = async ev => {
   $('bUnirme').disabled = false; $('bUnirme').textContent = 'Entrar';
 };
 
-// ---------- Crear partida: elegir juego, jugadores y listo ----------
-let elegido = null;   // {j, reglas, juego}
-$('paso1').innerHTML = ORDEN.map((j, i) =>
-  `<button data-id="${j.id}" style="--c:${j.color};--i:${i}">${muestra(j)}${esc(j.nombre)}</button>`).join('');
-
-function abrirHoja() {
-  mostrarPaso(1);
-  $('dCrear').showModal();
-}
-function mostrarPaso(n) {
-  $('paso1').hidden = n !== 1; $('paso2').hidden = n !== 2;
-  $('dTitulo').textContent = n === 1 ? '¿A qué jugamos?' : 'Armá la partida';
-}
-$('bAbrir').onclick = abrirHoja;
+// ---------- Ficha del juego: tocás la tarjeta y armás la partida ahí mismo ----------
+let elegido = null, cargando = false;   // {j, reglas, juego}
+$('juegos').addEventListener('click', ev => {
+  const a = ev.target.closest('.juego');
+  if (!a || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;   // abrir en pestaña nueva sigue andando
+  ev.preventDefault();
+  abrirFicha(a.dataset.id);
+});
 $('bCerrar').onclick = () => $('dCrear').close();
-$('dCrear').addEventListener('click', ev => { if (ev.target === $('dCrear')) $('dCrear').close(); });  // tocar afuera cierra
 
-$('paso1').addEventListener('click', async ev => {
-  const b = ev.target.closest('[data-id]');
-  if (!b) return;
-  const j = JUEGOS.find(x => x.id === b.dataset.id);
+async function abrirFicha(id) {
+  if (cargando) return;
+  cargando = true;
+  const j = JUEGOS.find(x => x.id === id);
   try {
     const [reglas, juego] = await Promise.all([import(`./${j.id}/reglas.js`), import(`./${j.id}/juego.js`)]);
     elegido = {j, reglas, juego};
-  } catch (e) { aviso('No pude cargar ' + j.nombre); return; }
+  } catch (e) { aviso('No pude cargar ' + j.nombre); cargando = false; return; }
+  cargando = false;
   const {info} = elegido.reglas;
-  $('elegido').innerHTML = `${ico(j.id, j.color)}<div><b>${esc(info.nombre)}</b><span class="note">${esc(j.jugadores)} jugadores</span></div>
-    <button class="chico" id="bOtro">Cambiar</button>`;
-  $('bOtro').onclick = () => mostrarPaso(1);
+  $('elegido').innerHTML = `${ico(j.id, j.color)}<div><b id="dTitulo">${esc(info.nombre)}</b><p class="note">👥 ${esc(textoJugadores(j.jugadores))} jugadores</p></div>`;
   $('comoP').innerHTML = comoSeJuega(j.id, info.reglas);
-  $('cantP').innerHTML = selectorJugadores(info, 'cantP');
+  $('cantP').innerHTML = info.min === info.max ? '' : selectorJugadores(info, 'cantP');   // si es fija, ya lo dice arriba
   $('relojP').innerHTML = selectorReloj(info, 'relojP');
   $('extraP').innerHTML = '';
   elegido.juego.menu?.($('extraP'));
-  $('nombreC').value = $('nombre').value.trim() || nombreGuardado();
+  $('masP').hidden = !info.reloj && !elegido.juego.menu;   // reloj y opciones propias, plegados
+  $('masP').open = false;
+  // El nombre solo hace falta para online: se pide recién al tocar "Jugar online", si no lo tenemos
+  $('nombreC').value = nombreGuardado();
+  $('filaNombre').hidden = true;
   $('botonesP').innerHTML = botonesJugar(info);
   $('bCrear').onclick = crearOnline;
   if ($('bLocal')) $('bLocal').onclick = () => { location.href = `./${j.id}/?local=${jugadoresElegidos(info, 'cantP')}${info.reloj ? '&reloj=' + relojElegido(info, 'relojP') : ''}`; };
-  mostrarPaso(2);
-});
+  $('dCrear').showModal();
+  $('dCrear').querySelector('.hoja').scrollTop = 0;
+}
 
 async function crearOnline() {
   const nombre = $('nombreC').value.trim();
-  if (!nombre) { aviso('Poné tu nombre'); sonar('error'); animar($('nombreC'), 'sacudir'); $('nombreC').focus(); return; }
-  guardarNombre(nombre); $('nombre').value = nombre;
+  if (!nombre) {
+    $('filaNombre').hidden = false;
+    aviso('¿Cómo te llamás? Así te ven los demás'); sonar('error'); animar($('nombreC'), 'sacudir'); $('nombreC').focus();
+    return;
+  }
+  guardarNombre(nombre); $('nombre').value = nombre; pintarAvatar();
   const {j, reglas, juego} = elegido;
   $('bCrear').disabled = true; $('bCrear').textContent = 'Creando…';
   try {
@@ -381,7 +421,7 @@ async function crearOnline() {
     location.href = `./${j.id}/?sala=${cod}`;
   } catch (e) {
     aviso(e.message);
-    $('bCrear').disabled = false; $('bCrear').textContent = '🌎 Crear sala online';
+    $('bCrear').disabled = false; $('bCrear').textContent = TEXTO_ONLINE;
   }
 }
 </script>

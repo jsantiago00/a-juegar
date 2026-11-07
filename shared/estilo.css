@@ -231,6 +231,13 @@ details ul{line-height:1.6;padding-left:20px;margin:12px 0 0;color:var(--mute)}
 .rapidito li{counter-increment:paso;display:flex;align-items:flex-start;gap:12px;font-size:17px;line-height:1.35}
 .rapidito li::before{content:counter(paso);flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
   background:var(--amarillo);color:var(--oscuro);font-weight:700;font-size:16px;box-shadow:0 3px 0 #c99a00;margin-top:-3px}
+/* "Más opciones" y "¿Te pasaron un código?": plegados, en chiquito */
+.mas-opciones,.tengo-codigo{margin:2px 0 14px}
+.mas-opciones > summary,.tengo-codigo > summary{display:inline-block;font-size:16px;color:var(--mute);padding:4px 0}
+.mas-opciones[open] > summary,.tengo-codigo[open] > summary{margin-bottom:10px}
+.tengo-codigo{margin:16px 0 0;text-align:center}
+.tengo-codigo .row{justify-content:center;margin:0}
+
 /* "Así se juega" plegable: abierto la primera vez, después cerrado */
 .como-plegable > summary{font-size:21px}
 .como-plegable[open] > summary{margin-bottom:14px}
