@@ -13,11 +13,13 @@ export const info = {
   nombre: 'Carrera al 100',
   desc: 'Tirá el dado: ¿sumás lo que sale o diez veces eso?',
   min: 2, max: 6,
+  reloj: 30,                   // para tirar y elegir (se puede cambiar o sacar al armar la sala)
   reglas: [
     'Por turnos, cada uno tira un dado.',
     'Con lo que sale, elegís: sumar ese número o diez veces ese número (si sale 4, sumás 4 o 40). Una vez elegido, no se cambia.',
     `Cada uno tira ${TIROS} veces.`,
     `Gana quien termina más cerca del ${META}. Pasarse también cuenta: 104 está igual de cerca que 96.`,
+    '⏱️ Con reloj, si no jugás a tiempo se tira el dado solo (si no lo tiraste) y se suma lo que salió, sin multiplicar.',
   ],
 };
 
@@ -57,17 +59,29 @@ export function aplicar(e, j, nombre) {
   if (j.tipo === 'elegir') {
     const x = +j.x;
     if (!e.dado || (x !== 1 && x !== 10)) return null;
-    const suma = e.dado * x;
-    e.tiros[p] = (e.tiros[p] ? e.tiros[p] + ',' : '') + suma;
-    e.dado = 0;
-    e.ultima = `${nombre(p)} sumó ${suma} y va ${total(e, p)}`;
-    if (e.tiros.every((_, i) => quedan(e, i) === 0)) {
-      const gan = masCerca(e);
-      e.ganador = gan.length === e.n ? EMPATE : gan[0];
-      e.ultima = Array.from({length: e.n}, (_, i) => i).sort((a, b) => distancia(e, a) - distancia(e, b))
-        .map(i => `${nombre(i)} ${total(e, i)}`).join(' · ');
-    } else e.turno = (p + 1) % e.n;
-    return e;
+    return sumar(e, p, x, `${nombre(p)} sumó ${e.dado * x}`, nombre);
   }
   return null;
+}
+
+// Reloj: si se te acaba el tiempo, se tira el dado solo (si no lo tiraste) y se suma lo que salió, sin multiplicar
+export function sinTiempo(e, nombre) {
+  const p = e.turno;
+  if (quedan(e, p) <= 0) return null;
+  if (!e.dado) e.dado = 1 + Math.floor(Math.random() * 6);
+  return sumar(e, p, 1, `⏱️ ${nombre(p)} no llegó a tiempo: salió un ${e.dado} y sumó ${e.dado}`, nombre);
+}
+
+// Anota lo que salió (× 1 o × 10) y pasa el turno; si ya tiraron todos, termina
+function sumar(e, p, x, texto, nombre) {
+  e.tiros[p] = (e.tiros[p] ? e.tiros[p] + ',' : '') + e.dado * x;
+  e.dado = 0;
+  e.ultima = `${texto} y va ${total(e, p)}`;
+  if (e.tiros.every((_, i) => quedan(e, i) === 0)) {
+    const gan = masCerca(e);
+    e.ganador = gan.length === e.n ? EMPATE : gan[0];
+    e.ultima = Array.from({length: e.n}, (_, i) => i).sort((a, b) => distancia(e, a) - distancia(e, b))
+      .map(i => `${nombre(i)} ${total(e, i)}`).join(' · ');
+  } else e.turno = (p + 1) % e.n;
+  return e;
 }

@@ -70,7 +70,7 @@ Eligiendo el mismo juego, se cambia la cantidad en la misma sala. Quien creó la
 con la ✕ de su nombre: deja el lugar libre o sigue con uno menos (partida nueva).
 Reloj por turno: un juego con `info.reloj: 60` muestra el selector (sin reloj, 30 s, 1 o 2 min) y el motor lleva la cuenta
 (`opciones.reloj` y `limite` en el estado). Si se acaba, llama `reglas.sinTiempo(estado, nombre)`;
-`reglas.conReloj(estado)` dice en qué momentos corre. Lo tienen ¿Quién soy?, Minigolf, Truco y Espía.
+`reglas.conReloj(estado)` dice en qué momentos corre. Lo tienen ¿Quién soy?, Minigolf, Truco, Espía y Carrera al 100.
 `reglas.quienReloj(estado)` dice de quién es el reloj (si no, del que tiene el turno; -1 = de todos, como mientras
 cada uno esconde su código en Código secreto y Más alto o más bajo). Si cambia, el reloj vuelve a arrancar.
 Las salas que pasan 24 h sin actividad se borran solas: cada sala anota su última actividad en
