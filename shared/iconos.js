@@ -150,6 +150,15 @@ export const ICONOS = {
     `<g transform="rotate(12 35 30)"><rect x="28.5" y="23.5" width="13" height="13" rx="3" fill="#fff" stroke="${O}" stroke-width="1.6"/>` +
     `<circle cx="32" cy="27" r="1.3" fill="${ROJO}"/><circle cx="38" cy="27" r="1.3" fill="${ROJO}"/><circle cx="32" cy="33" r="1.3" fill="${ROJO}"/><circle cx="38" cy="33" r="1.3" fill="${ROJO}"/></g>`),
 
+  // Carrera al 100: un dado y la bandera de llegada
+  'carrera-al-100': svg(
+    `<g transform="rotate(-12 17 31)"><rect x="8" y="22" width="18" height="18" rx="4" fill="#fff" stroke="${O}" stroke-width="1.8"/>` +
+    `<circle cx="12.8" cy="26.8" r="1.7" fill="${O}"/><circle cx="21.2" cy="26.8" r="1.7" fill="${O}"/><circle cx="17" cy="31" r="1.7" fill="${O}"/>` +
+    `<circle cx="12.8" cy="35.2" r="1.7" fill="${O}"/><circle cx="21.2" cy="35.2" r="1.7" fill="${O}"/></g>` +
+    `<path d="M29 41V7" stroke="${O}" stroke-width="2.2" stroke-linecap="round"/>` +
+    `<path d="M30 8h14l-2.6 5.5 2.6 5.5H30z" fill="${ROJO}"/>` +
+    `<text x="36.3" y="16.4" text-anchor="middle" font-size="7.4" font-weight="700" fill="#fff" font-family="Fredoka,system-ui,sans-serif">100</text>`),
+
   // Ordenados: tres cartas que van de menor a mayor
   ordenados: svg(
     [[8, 26, AZUL, '7'], [19, 20, '#f4c430', '48'], [30, 14, ROJO, '93']].map(([x, y, c, t]) =>

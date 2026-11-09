@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Carrera al 100</title>
+<link rel="stylesheet" href="../shared/estilo.css">
+<link rel="icon" href="../icono.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1d1449">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="apple-touch-icon" href="../icono-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="A Juegar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+#tablero{max-width:min(100%,520px)}
+.ca-panel{background:rgba(255,255,255,.06);border:2px solid var(--line);border-radius:22px;padding:14px 16px;margin-bottom:14px}
+
+/* El dado */
+.ca-mesa{display:grid;justify-items:center;gap:12px;text-align:center}
+.ca-cab{margin:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;font-size:17px}
+.ca-dado-lugar{height:96px;display:grid;place-items:center}
+.ca-dado{width:88px;height:88px}
+.ca-dado rect{fill:#fff8ea;stroke:#c98a4a;stroke-width:5}
+.ca-dado circle{fill:var(--oscuro)}
+.ca-dado text{font-size:46px;font-weight:700;fill:#c98a4a;font-family:inherit}
+.ca-dado.vacio{opacity:.55}
+.ca-dado.rodando{animation:ca-rodar .16s linear infinite}
+.ca-dado.cayo{animation:ca-cae .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes ca-rodar{0%{transform:rotate(0) translateY(0)}50%{transform:rotate(180deg) translateY(-8px)}100%{transform:rotate(360deg) translateY(0)}}
+@keyframes ca-cae{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+.ca-tirar{width:100%}
+.ca-espera{margin:0}
+
+/* Sumar el número o diez veces */
+.ca-opciones{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.ca-op{display:grid;gap:2px;justify-items:center;padding:12px 8px;border-radius:20px;min-height:0;
+  background:var(--wood);color:var(--oscuro);box-shadow:0 5px 0 #c98a4a}
+.ca-op.diez{background:var(--amarillo);box-shadow:0 5px 0 #c99a00}
+.ca-op-suma{font-size:36px;font-weight:700;line-height:1.1}
+.ca-op-txt{font-size:14px;opacity:.7}
+.ca-op-res{font-size:15px;display:grid;margin-top:4px}
+.ca-op-res b{font-size:18px}
+.ca-op-res small{font-size:13px;opacity:.75}
+
+/* La carrera */
+.ca-carrera{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.ca-fila{background:rgba(10,5,40,.3);border-radius:18px;padding:10px 12px;border-left:5px solid var(--c);display:grid;gap:8px}
+.ca-fila.turno{background:rgba(255,255,255,.1);box-shadow:0 0 0 2px var(--c) inset}
+.ca-fila.gana{background:rgba(255,210,63,.16);box-shadow:0 0 0 2px var(--amarillo) inset}
+.ca-fila-cab{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ca-fila-cab .note{margin:0}
+.ca-total{margin-left:auto;display:flex;align-items:baseline;gap:6px}
+.ca-total b{font-size:26px}
+.ca-total small{font-size:13px;color:var(--mute)}
+.ca-pista{position:relative;height:12px;border-radius:99px;background:rgba(255,255,255,.1);overflow:visible}
+.ca-pista i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--c);transition:width .5s ease}
+.ca-pista::after{content:'';position:absolute;left:var(--meta);top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--ink)}
+.ca-bandera{position:absolute;left:var(--meta);top:-22px;font-size:14px;transform:translateX(-30%)}
+.ca-tiros{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.ca-tiro{display:grid;place-items:center;height:34px;border-radius:10px;background:var(--wood);color:var(--oscuro);font-weight:700;font-size:17px}
+.ca-tiro.diez{background:var(--amarillo)}
+.ca-tiro.libre{background:transparent;border:2px dashed var(--line)}
+.ca-tiro.ahora{border-color:var(--c)}
+.ca-tiro.nuevo{animation:ca-cae .4s cubic-bezier(.3,1.6,.5,1)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script type="module">
+  import { montar } from '../shared/salas.js';
+  import * as reglas from './reglas.js';
+  import * as juego from './juego.js';
+  montar({ reglas, juego });
+</script>
+</body>
+</html>
