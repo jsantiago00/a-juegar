@@ -39,6 +39,10 @@
 .dp-l.grande{width:min(50px,13vw);height:min(56px,14.5vw);font-size:28px;background:rgba(10,5,40,.35);color:var(--ink);
   border:3px solid var(--line);box-shadow:none}
 .dp-l.grande.cursor{border-color:var(--amarillo)}
+.dp-slots .dp-l{cursor:pointer;position:relative;user-select:none;-webkit-tap-highlight-color:transparent}
+.dp-l.grande.fija{border-color:#3fbf7f;background:rgba(63,191,127,.28)}
+.dp-l.grande.fija::after{content:'🔒';position:absolute;top:-9px;right:-8px;font-size:13px;line-height:1}
+.dp-tip{text-align:center;font-size:13px;margin:-6px 0 10px}
 .dp-l.grande.mal{border-color:var(--bad);color:#ffb4c0}
 .dp-noexiste{text-align:center;color:#ffb4c0;font-size:14px;font-weight:600;margin:-6px 0 10px}
 
@@ -63,6 +67,27 @@
 .dp-rival:empty{display:none}
 .dp-rival summary{cursor:pointer}
 .dp-rival .dp-hist{margin-top:8px}
+
+/* En la compu: a la izquierda se arma la palabra y a la derecha quedan los intentos, usando el ancho de la pantalla */
+@media (min-width:900px){
+  main:has(#play:not([hidden]) .dp-col){max-width:1120px}
+  #tablero{max-width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px;align-items:start}
+  #tablero:has(#dpMios:empty){grid-template-columns:minmax(0,560px);justify-content:center}
+  .dp-col-armar{position:sticky;top:12px}
+  .dp-panel{padding:18px 20px}
+  .dp-slots{gap:8px;margin-bottom:18px}
+  .dp-l.grande{width:64px;height:70px;font-size:34px;border-radius:12px}
+  .dp-teclado{max-width:540px;gap:8px}
+  .dp-teclado div{gap:6px}
+  .dp-teclado button{max-width:50px;min-height:54px;font-size:20px}
+  .dp-teclado button.dp-borrar{max-width:76px}
+  .dp-hist{gap:8px}
+  .dp-hist li{padding:8px 14px;gap:14px}
+  .dp-hist:not(.chico) .dp-l{width:42px;height:46px;font-size:24px;border-radius:10px}
+  .dp-hist:not(.chico) .dp-pal{gap:6px}
+  .dp-hist.chico .dp-l{width:30px;height:34px;font-size:18px}
+  .dp-ley{font-size:14px}
+}
 </style>
 </head>
 <body>

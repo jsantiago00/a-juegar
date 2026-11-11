@@ -23,6 +23,7 @@ export const info = {
     'Cada uno escribe una palabra secreta para el otro (de 4, 5 o 6 letras, según se elija). Tiene que existir: el juego la revisa con un diccionario.',
     'Después, por turnos, cada uno prueba una palabra del mismo largo para descubrir la del otro. Las que probás también tienen que existir.',
     'Cada letra se pinta: 🟩 verde si está en ese lugar, 🟨 amarilla si está pero en otro lugar, y gris si no está.',
+    'Si ya sabés dónde va una letra, tocá su casilla para fijarla 🔒: queda puesta para los próximos intentos. Tocala de nuevo para sacarla.',
     'Gana quien la descubre en menos intentos. Si el primero la saca, el otro tiene un último intento para empatar.',
     'Las tildes no cuentan: Á es lo mismo que A. La Ñ sí es una letra aparte.',
   ],
