@@ -3,19 +3,19 @@
 import { textoApuesta, total, cuenta, sube, minCara, apuestas, siguiente } from './reglas.js';
 import { esc } from '../shared/salas.js';
 
-let ctx, $, menuEl = null, selC = 1, selV = 2, claveSel = '';
+let ctx, $, menuEl = null, selC = 1, selV = 2, claveSel = '', verHtml = '';
 
 // ---------- Menú: comodines ----------
 export function menu(el) {
   menuEl = el;
-  el.innerHTML = `<label class="opcion-check"><input type="checkbox" id="dmComodines"> Los unos son comodines
+  el.innerHTML = `<label class="opcion-check"><input type="checkbox" id="dmComodines" checked> Los unos son comodines
     <span class="note">(cuentan como cualquier número)</span></label>`;
 }
 export function opciones() {
   const x = menuEl && menuEl.querySelector('#dmComodines');
-  return {comodines: !!(x && x.checked)};
+  return {comodines: x ? x.checked : true};
 }
-export function reiniciar() { claveSel = ''; }
+export function reiniciar() { claveSel = ''; verHtml = ''; }
 
 export function sonido(a, e) {
   if (a.fase !== e.fase) return e.fase === 'ver' ? 'canto' : 'carta';
@@ -52,6 +52,7 @@ export function iniciar(c) {
     else if (a === 'cara') selV = +b.dataset.v;
     else if (a === 'apostar') { ctx.jugar({tipo: 'apostar', c: selC, v: selV}); return; }
     else if (a === 'dudo') { ctx.jugar({tipo: 'dudo'}); return; }
+    else if (a === 'justo') { ctx.jugar({tipo: 'justo'}); return; }
     else if (a === 'seguir') { ctx.jugarLibre({tipo: 'seguir'}); return; }
     ctx.sonar('tick'); ctx.refrescar();
   });
@@ -63,6 +64,14 @@ function minimo(e) {
   if (!e.ap.c) return {c: Math.max(1, Math.round(total(e) / 6)), v: m};
   if (e.ap.v < 6) return {c: e.ap.c, v: Math.max(m, e.ap.v + 1)};
   return {c: e.ap.c + 1, v: m};
+}
+
+// Cuántos de ese número tenés vos (con comodines, tus unos también) y cuántos harían falta entre los dados que no ves
+function ayuda(e, yo, c, v) {
+  const tengo = [...e.dados[yo]].filter(d => +d === v || (e.opciones.comodines && d === '1')).length;
+  const tapados = total(e) - e.cant[yo], faltan = Math.max(0, c - tengo);
+  return `vos tenés <b>${tengo}</b> · ${faltan ? `${faltan === 1 ? 'tiene que haber' : 'tienen que haber'} <b>${faltan}</b> más entre los ${tapados} que no ves`
+    : 'ya alcanza con los tuyos'}`;
 }
 
 export function dibujar(c) {
@@ -106,27 +115,38 @@ export function dibujar(c) {
         <div class="dm-caras">${[1, 2, 3, 4, 5, 6].map(v => `<button data-a="cara" data-v="${v}" class="${v === selV ? 'on' : ''}"
           ${v < minCara(e) ? 'disabled' : ''} aria-label="${v}">${cara(v)}</button>`).join('')}</div>
       </div>
+      <p class="note dm-ayuda">Para ${textoApuesta(selC, selV)}: ${ayuda(e, yo, selC, selV)}</p>
       <div class="dm-botones">
         <button class="main grande" data-a="apostar" ${vale ? '' : 'disabled'}>Apostar: hay ${textoApuesta(selC, selV)}</button>
-        ${puedeDudar ? `<button class="grande dm-dudo" data-a="dudo">🤨 ¡Dudo!</button>` : ''}
+        ${puedeDudar ? `<p class="note dm-ayuda">¿No le creés a ${esc(ctx.nombre(e.ap.p))}? Para ${textoApuesta(e.ap.c, e.ap.v)}: ${ayuda(e, yo, e.ap.c, e.ap.v)}</p>
+        <div class="dm-contra"><button class="grande dm-dudo" data-a="dudo" title="Hay menos de los que dijo">🤨 ¡Dudo!</button>
+          <button class="grande dm-justo" data-a="justo" title="Hay exactamente los que dijo">🎯 ¡Justo!</button></div>` : ''}
       </div>
       ${vale ? '' : `<p class="note">Tiene que subir: más de ${e.ap.c} dados, o ${e.ap.c} de un número más alto que el ${e.ap.v}.</p>`}`;
   }
 
   // ---------- Se levantan los vasos ----------
   $('dmVer').hidden = !viendo;
+  if (!viendo) verHtml = '';
   if (viendo && e.res) {
     const r = e.res, cuentan = d => +d === r.v || (e.opciones.comodines && d === '1');
-    $('dmVer').innerHTML = `<p class="dm-veredicto">${quien(r.d)} dudó de ${quien(r.a)}: “hay ${textoApuesta(r.c, r.v)}”</p>
+    // Los dados se van mostrando de a uno y recién al final aparece la cuenta
+    let n = 0;
+    const todos = e.dados.map((ds, i) => ds ? `<li>${quien(i)} <span class="dm-dados chicos">${[...ds].map(d =>
+      cara(+d, cuentan(d) ? 'cuenta' : 'no').replace('<svg ', `<svg style="--i:${n++}" `)).join('')}</span></li>` : '').join('');
+    const pierde = r.perd < 0 ? `¡Justo! Pierden un dado todos menos ${quien(r.d)}`
+      : `${r.j ? 'No era justo' : r.hay >= r.c ? 'Había suficientes' : 'No alcanzaban'}: pierde un dado ${quien(r.perd)}${e.cant[r.perd] ? '' : ' y queda afuera'}`;
+    const html = `<p class="dm-veredicto">${quien(r.d)} ${r.j ? 'dijo ¡Justo! a' : 'dudó de'} ${quien(r.a)}: “hay ${textoApuesta(r.c, r.v)}”</p>
+      <ul class="dm-todos">${todos}</ul>
+      <div class="dm-final" style="--i:${n + 2}">
       <p class="dm-grande dm-habia">Había <b>${r.hay}</b> ${cara(r.v, 'chico')}</p>
-      <p class="dm-perdio">${r.hay >= r.c ? 'Había suficientes' : 'No alcanzaban'}: pierde un dado ${quien(r.perd)}${e.cant[r.perd] ? '' : ' y queda afuera'}</p>
-      <ul class="dm-todos">${e.dados.map((ds, i) => ds ? `<li>${quien(i)} <span class="dm-dados chicos">${[...ds].map(d =>
-        cara(+d, cuentan(d) ? 'cuenta' : 'no')).join('')}</span></li>` : '').join('')}</ul>
-      ${termino ? '' : `<button class="main grande" data-a="seguir">🎲 Otra ronda (empieza ${esc(ctx.nombre(e.turno))})</button>`}`;
+      <p class="dm-perdio">${pierde}</p>
+      ${termino ? '' : `<button class="main grande" data-a="seguir">🎲 Otra ronda (empieza ${esc(ctx.nombre(e.turno))})</button>`}</div>`;
+    if (html !== verHtml) { verHtml = html; $('dmVer').innerHTML = html; }   // sin repetir la animación en cada refresco
   }
 
   if (viendo || termino) return '';
   if (!e.cant[yo]) return '';
-  if (e.turno === yo) return e.ap.c ? 'Subí la apuesta o decí ¡Dudo!' : 'Arrancás vos: hacé la primera apuesta';
+  if (e.turno === yo) return e.ap.c ? 'Subí la apuesta, o decí ¡Dudo! o ¡Justo!' : 'Arrancás vos: hacé la primera apuesta';
   return `Está pensando ${ctx.nombre(e.turno)}… el que sigue es ${ctx.nombre(siguiente(e, e.turno))}`;
 }

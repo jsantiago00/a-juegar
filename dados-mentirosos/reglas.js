@@ -20,8 +20,9 @@ export const info = {
     'Por turnos, cada uno apuesta cuántos dados de un número hay en TODA la mesa, contando los de todos (por ejemplo: "hay cuatro cincos").',
     'Cada apuesta tiene que subir: más dados, o la misma cantidad de un número más alto.',
     'En vez de subir, podés decir ¡Dudo! Se muestran todos los dados: si hay menos de los que se apostaron, pierde un dado el que apostó; si hay esos o más, pierde un dado el que dudó.',
+    'También podés decir ¡Justo! si creés que hay exactamente los que se apostaron: si acertás, pierden un dado todos los demás; si no, lo perdés vos.',
     'El que perdió el dado arranca la ronda siguiente. Quien se queda sin dados, queda afuera. Gana el último que tiene dados.',
-    'Con la opción de comodines, los unos cuentan como cualquier número (y no se puede apostar a los unos).',
+    'Los unos son comodines: cuentan como cualquier número (y no se puede apostar a los unos). Se puede jugar sin comodines desde las opciones.',
   ],
 };
 
@@ -40,7 +41,7 @@ export const sube = (e, c, v) => c >= 1 && c <= total(e) && v >= minCara(e) && v
 
 export function nuevoJuego(n, op, quien = 0) {
   const cant = Array(n).fill(DADOS);
-  return {n, opciones: {comodines: !!(op && op.comodines)}, cant, dados: cant.map(tirar), ap: {c: 0, v: 0, p: -1}, hist: '',
+  return {n, opciones: {comodines: op && op.comodines != null ? !!op.comodines : true}, cant, dados: cant.map(tirar), ap: {c: 0, v: 0, p: -1}, hist: '',
           fase: 'apostar', ronda: 1, turno: quien, empieza: quien, ganador: -1, ultima: ''};
 }
 export function normalizar(e) {
@@ -50,7 +51,7 @@ export function normalizar(e) {
   const a = e.ap || {};
   e.ap = {c: +a.c || 0, v: +a.v || 0, p: a.p == null ? -1 : +a.p};
   e.hist = String(e.hist || '');
-  e.res = e.res ? {d: +e.res.d, a: +e.res.a, c: +e.res.c, v: +e.res.v, hay: +e.res.hay, perd: +e.res.perd} : null;
+  e.res = e.res ? {d: +e.res.d, a: +e.res.a, c: +e.res.c, v: +e.res.v, hay: +e.res.hay, perd: +e.res.perd, j: +e.res.j || 0} : null;
   e.ronda = +e.ronda || 1;
   e.ultima = e.ultima || '';
   return e;
@@ -59,7 +60,7 @@ export const detalle = (e, i) => (e.cant[i] ? `🎲 ${e.cant[i]}` : 'afuera');
 // Las apuestas de esta ronda: [{p, c, v}]
 export const apuestas = e => (e.hist ? e.hist.split(',').map(x => { const [p, c, v] = x.split(':').map(Number); return {p, c, v}; }) : []);
 
-// Por turno: {tipo:'apostar', c, v}   {tipo:'dudo'}
+// Por turno: {tipo:'apostar', c, v}   {tipo:'dudo'}   {tipo:'justo'}
 export function aplicar(e, j, nombre) {
   const p = e.turno;
   if (e.fase !== 'apostar' || !e.cant[p]) return null;
@@ -82,6 +83,21 @@ export function aplicar(e, j, nombre) {
     const vs = vivos(e);
     if (vs.length === 1) e.ganador = vs[0];
     else e.turno = e.cant[perd] ? perd : siguiente(e, perd);   // arranca la próxima el que perdió (si sigue)
+    return e;
+  }
+  // ¡Justo!: hay exactamente los apostados. Si acierta pierden un dado todos los demás (res.perd = -1); si no, él
+  if (j.tipo === 'justo') {
+    if (!e.ap.c || e.ap.p === p) return null;
+    const hay = cuenta(e, e.ap.v), acerto = hay === e.ap.c;
+    e.res = {d: p, a: e.ap.p, c: e.ap.c, v: e.ap.v, hay, perd: acerto ? -1 : p, j: 1};
+    if (acerto) e.cant = e.cant.map((k, i) => (i !== p && k > 0 ? k - 1 : k));
+    else e.cant[p]--;
+    e.fase = 'ver';
+    e.ultima = acerto ? `${nombre(p)} dijo ¡Justo! y había ${hay}: pierden un dado los demás`
+      : `${nombre(p)} dijo ¡Justo! pero había ${hay}: pierde un dado`;
+    const vs = vivos(e);
+    if (vs.length === 1) e.ganador = vs[0];
+    else e.turno = e.cant[p] ? p : siguiente(e, p);
     return e;
   }
   return null;

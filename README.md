@@ -38,7 +38,7 @@ cuatro-en-linea/      Cuatro en línea (2): tablero de 7×6, las fichas caen
 mancala/              Mancala (Kalah, 2): 6 hoyos y un granero por lado; volver a jugar y robar las de enfrente
 duelo-de-palabras/    Duelo de palabras: cada uno esconde una palabra de 4, 5 o 6 letras y adivina la del otro por turnos (2, solo online);
                       solo valen palabras que existen: palabras-4/5/6.txt, de an-array-of-spanish-words (MIT, ver LICENCIA-palabras.txt)
-dados-mentirosos/     Dados mentirosos (Dudo): apuestas sobre los dados de toda la mesa y ¡Dudo!; comodines opcionales (2 a 6, solo online)
+dados-mentirosos/     Dados mentirosos (Dudo): apuestas sobre los dados de toda la mesa ¡Dudo! y ¡Justo!; los unos son comodines (se puede sacar) (2 a 6, solo online)
 carrera-al-100/       Carrera al 100: tirás un dado y sumás su valor o diez veces eso; tras 5 tiradas gana el más cerca del 100 (2 a 6)
 ordenados/            Ordenados: número secreto del 1 al 100, una pista por tema y entre todos las ordenan (3 a 8, cooperativo, solo online)
 dos-verdades/         Dos verdades y una mentira: cada uno escribe tres frases y los demás votan la mentira (3 a 8, solo online)

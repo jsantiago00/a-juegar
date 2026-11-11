@@ -54,15 +54,22 @@
 .dm-botones{display:grid;gap:10px;margin-top:14px}
 .dm-botones .grande{width:100%}
 .dm-dudo{background:var(--bad);color:#fff;box-shadow:0 5px 0 #b33a4d}
+.dm-justo{background:#3fbf7f;color:#fff;box-shadow:0 5px 0 #2a8a58}
+.dm-contra{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dm-panel .dm-ayuda{text-align:center;margin:10px 0 0}
+.dm-botones .dm-ayuda{margin:4px 0 0}
 
 /* Se levantan los vasos */
 .dm-veredicto{margin:0 0 6px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.dm-habia{margin:4px 0;justify-content:center;width:100%}
+.dm-habia{margin:10px 0 4px;justify-content:center;width:100%}
 .dm-perdio{text-align:center;margin:0 0 12px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px}
 .dm-todos{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:8px}
 .dm-todos li{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;background:rgba(10,5,40,.3);border-radius:14px;padding:8px 10px}
 .dm-todos .dm-dados{margin-left:auto}
 #dmVer .grande{width:100%}
+/* Suspenso: los dados aparecen de a uno y después la cuenta */
+.dm-todos .dm-dado{animation:entra .3s backwards;animation-delay:calc(var(--i) * 110ms)}
+.dm-final{animation:entra .4s backwards;animation-delay:calc(var(--i) * 110ms)}
 </style>
 </head>
 <body>
